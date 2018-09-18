@@ -1,0 +1,210 @@
+/*
+*********************************************************************************************************
+*
+*	                    引脚分配表(按功能排列)
+*
+*********************************************************************************************************
+*/
+
+【SWD调试接口】
+	PA13/JTMS-SWDIO
+	PA14/JTCK-SWCLK
+
+【8M 主晶振】
+	PH0-OSC_IN
+	PH1-OSC_OUT
+
+【32768Hz RTC晶振】
+	PC14-OSC32_IN
+	PC15-OSC32_OUT
+	
+【LED】
+    PD0-LED
+
+【MOTOR1 步进电机1】
+	PB0-CWB
+	PD4-EN	
+	PE9-TIM1_CH1-CLOCK
+	PE8-TQ1
+	PF14-TQ2
+	PF13-FAULT
+
+【MOTOR2 步进电机2】
+	PB1-CWB
+	PD5-EN
+	PD15-TIM4_CH4-CLOCK
+	PE12-TQ1
+	PG0-TQ2
+	PF15-FAULT
+
+【MOTOR3 步进电机3】
+	PF12-CWB
+	PG9-EN	
+	PB5-TIM3_CH2-CLOCK	
+	PB11-FAULT
+	PE13-TQ1
+	PE15-TQ2
+
+【MOTOR4 步进电机4】
+	PF11-CWB
+	PG10-EN	
+	PD12-TIM4_CH1-CLOCK
+	PB10-TQ1
+	PG1-TQ2
+	PE14-FAULT
+
+【MOTOR5 步进电机5】
+	PB13-CWB
+	PG11-EN	
+	PE5-TIM9_CH1-CLOCK
+	PB14-TQ1
+	PD11-TQ2
+	PD10-FAULT
+
+【MOTOR6 步进电机6】
+	PB12-CWB
+	PG12-EN	
+	PE11-TIM1_CH2-CLOCK
+	PB15-TQ1
+	PD14-TQ2
+	PD13-FAULT
+
+【光耦】
+
+    PE1
+
+
+【RS232串口 USART2】
+	PA2/USART2_TX
+	PD6/USART2_RX
+
+【SPI设备】
+	【串行Flash】
+		PB3/SPI3_SCK
+		PB4/SPI3_MISO
+		PB5/SPI3_MOSI
+
+		PF8/SF_CS			--- 串行Flash片选
+
+
+【I2C设备】 （）内是总线地址
+
+	PE6/I2C_SCL			--- I2C时钟线
+	PF0/I2C_SDA			--- I2C数据线
+
+	PF1		 --- WAVE
+
+【捕获检测】
+
+
+
+【GPS 接收串口 USART2】
+	PA2/USART2_TX/ETH_MDIO	    --- 这个引脚缺省用于以太网；无需向GPS模块发送命令（只有需要对GPS模块刷新固件时才会用到)
+	PA3/USART2_RX	;接GPS模块输出
+	
+【RS485 串口USART3】
+	PB10/USART3_TX
+	PB11/USART3_RX
+	PB2-BOOT1/RS485_TXEN		--- 控制RS485发送和接收模式切换
+
+【GPRS模块 串口6 硬件流控】
+	PG14/USART6_TX/ETH_RMII_TXD1
+	PC7/USART6_RX
+	PG8/USART6_RTS
+	PG15/USART6_CTS
+	PI0/GPRS_TERM_ON		--- GPS模块开关控制
+	PB7/GPRS_RESET		    --- GPS模块硬件复位控制
+
+【CAN1 CAN2】
+	PB12/I2S2_WS/CAN2_RX      
+	PB13/I2S2_CK/CAN2_TX/ETH_RMII_TXD1	--- I2S数字音频接口时钟信号/CAN2发送/以太网RMII接口TXD1
+
+	PI9/CAN1_RX
+	PH13/CAN1_TX
+
+
+
+
+
+【LED指示灯，和4个SPI设备的片选复用，可以监视SPI设备的访问情况】
+	LD1 : PI10/TP_NCS
+	LD2 : PF7/NRF24L01_CSN
+	LD3 : PF8/SF_CS
+	LD4 : PC2/NRF905_CSN/VS1053_XCS
+
+【I2S音频设备：WM8978 音频编解码CODEC】
+	--- I2S总线传输音频数据留
+	PB12/I2S2_WS/CAN2_RX						I2S数字音频接口声道选择信号/CAN2接收
+	PB13/I2S2_CK/CAN2_TX/ETH_RMII_TXD1			I2S数字音频接口时钟信号/CAN2发送/以太网RMII接口TXD1
+	PI2/I2S2ext_SD								I2S数字音频接口数据线（录音用）
+	PC3/I2S2_SD									I2S数字音频接口数据线（放音用）
+	PC6/I2S2_MCK								I2S数字音频接口时钟源
+
+	--- I2C总线控制WM8978
+	PH4/I2C2_SCL
+	PH5/I2C2_SDA
+
+【DCIM设备： 摄像头  和 AD7606 模块不能同时使用】
+	PA6/DCMI_PIXCLK
+	PH8/DCMI_HSYNC
+	PH9/DCMI_D0/AD7606_OS0
+	PH10/DCMI_D1/AD7606_OS1
+	PH11/DCMI_D2/AD7606_OS2
+	PH12/DCMI_D3/AD7606_CONVST
+	PH14/DCMI_D4/AD7606_RAGE
+	PI4/DCMI_D5/AD7606_RESET
+	PI5/DCMI_VSYNC
+	PI6/DCMI_D6/AD7606_BUSY
+	PI7/DCMI_D7/NRF905_CD
+
+	--- I2C总线控制摄像头
+	PH4/I2C2_SCL
+	PH5/I2C2_SDA
+
+【SDIO设备: Micro SD卡或WIFI模块】
+	PC8/SDIO_D0
+	PC9/SDIO_D1
+	PC10/SDIO_D2
+	PC11/SDIO_D3
+	PC12/SDIO_CK
+	PD2/SDIO_CMD
+
+	PE2/FSMC_A23/SD_DETECT	--- Micro SD卡插入信号或WIFI模块电源控制
+
+【以太网 RMII】
+	PA1/ETH_RMII_RX_CLK
+	PA2/ETH_MDIO
+	PA7/RMII_CRS_DV
+	PC1/ETH_MDC
+	PC4/ETH_RMII_RX_D0
+	PC5/ETH_RMII_RX_D1
+	PG11/ETH_RMII_TX_EN
+	PG13/FSMC_A24/ETH_RMII_TXD0
+	PG14/ETH_RMII_TXD1
+	PH6/MII_INT
+
+【OTG_FS】
+	PA11/OTG_FS_DM
+	PA12/OTG_FS_DP
+	//	PA9/OTG_FS_VBUS
+	//	PA10/OTG_FS_ID
+
+【ADC】 --- ADC 和 DAC 口线均引到 CN26双排母（2*6P), 用于外扩示波器模块。
+	PA0-WKUP/ADC123_IN0
+	PC0/ADC123_IN10
+	PF9/ADC3_IN7
+	PF10/ADC3_IN8
+
+【DAC】 --- ADC 和 DAC 口线均引到 CN26双排母（2*6P), 用于外扩示波器模块。
+	PA4/NRF905_TX_EN/NRF24L01_CE/DAC1_OUT
+	PA5/NRF905_TRX_CE/VS1053_XDCS/DAC2_OUT
+
+【红外遥控发射】
+	PA8/IR_TX
+
+【红外遥控接收】
+	PB0/IR_RX
+
+【1-WIRE 单总线 DS18B20 / DHT11】
+	PB1/1-WIRE
+
