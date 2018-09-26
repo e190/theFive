@@ -17,6 +17,10 @@
 #include <stm32f4xx.h>
 #include <stm32f4xx_hal.h>
 #include <rtthread.h>
+
+#define SOFTWARE_VERSION     "1.07.15"
+#define HARDWARE_VERSION     "1.2"
+
 #if defined(SOC_STM32F407ZE)
 
     #define STM32F4xx_PIN_NUMBERS 144

@@ -14,7 +14,7 @@ applications/ServerData.o: ../applications/ServerData.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtservice.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtm.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\at\include/at.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\at\include/at.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdbg.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\packages\cJSON-v1.0.2/cJSON.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\packages\cJSON-v1.0.2/cJSON_util.h \
@@ -52,7 +52,7 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtm.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\at\include/at.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\at\include/at.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdbg.h:
 

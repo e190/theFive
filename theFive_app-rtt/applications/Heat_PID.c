@@ -2,7 +2,7 @@
 #include <string.h>
 #include "Heat_PID.h"
 
-HeatSystem_t HeatHandle1;
+struct HeatSystem_t HeatHandle_1, HeatHandle_2, HeatHandle_3, HeatHandle_4;
 
 /**
  * @brief  计算PID
@@ -11,8 +11,7 @@ HeatSystem_t HeatHandle1;
  *
  * @return
  */
-
-float pid_calculate(HeatSystem_t* h_heat)
+float pid_calculate(struct HeatSystem_t* h_heat)
 {
 	rt_uint8_t index = 0;
 	float _temp = 0;
@@ -50,7 +49,7 @@ void set_heat_pos()
 /*
  * 初始化加热系统
  */
-void heat_init(HeatSystem_t* h_heat)
+void heat_init(struct HeatSystem_t* h_heat)
 {
 	h_heat->deviceName = "pwm1";
 	h_heat->PWM_channel = 3;
@@ -73,7 +72,7 @@ void heat_init(HeatSystem_t* h_heat)
  * 设置PWM占空比
  * percent : 占空比 * 1000
  */
-int set_duty(HeatSystem_t* h_heat, rt_uint16_t percent)
+int set_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent)
 {
 	rt_err_t result = RT_EOK;
 	rt_uint32_t pulse = 0;
@@ -94,7 +93,7 @@ _exit:
  */
 int head_system_init(void)
 {
-	heat_init(&HeatHandle1);
+	heat_init(&HeatHandle_1);
 	
 	return 0;
 }
@@ -102,7 +101,7 @@ INIT_APP_EXPORT(head_system_init);
 /*
  * 开始加热
  */
-rt_err_t start_heat(HeatSystem_t* h_heat)
+rt_err_t start_heat(struct HeatSystem_t* h_heat)
 {
 	rt_err_t result = RT_EOK;
 	struct rt_pwm_configuration configuration;
@@ -130,7 +129,7 @@ _exit:
 /*
  * 停止加热
  */
-rt_err_t stop_heat(HeatSystem_t* h_heat)
+rt_err_t stop_heat(struct HeatSystem_t* h_heat)
 {
 	rt_err_t result = RT_EOK;
 	struct rt_pwm_configuration configuration;
@@ -148,13 +147,4 @@ _exit:
 	return result;
 }
 
-void Function_Heat_PID(void* parameter)
-{
-	while(1)
-	{
-		
-		rt_thread_delay(100);
-	}
-	
-}
 

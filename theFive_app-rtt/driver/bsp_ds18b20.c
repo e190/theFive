@@ -2,8 +2,7 @@
 #include <rtthread.h>
 #include "bsp_ds18b20.h"
 
-OneWire_t OneWire1;
-	
+OneWire_t OneWire1, OneWire2, OneWire3, OneWire4;
 
 static void bsp_udelay(rt_uint32_t us)
 {

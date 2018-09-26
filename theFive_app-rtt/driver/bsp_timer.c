@@ -7,9 +7,9 @@ TIM_HandleTypeDef TIM6_Handler;         //定时器句柄
  /**
  * @brief  TIM6_Init
  *         基本定时器6中断初始化
- *		   定时器溢出时间计算方法:Tout=((arr+1)*(psc+1))/Ft us.
+ *		        定时器溢出时间计算方法:Tout=((arr+1)*(psc+1))/Ft us.
  *		   Ft=定时器工作频率,单位:Mhz
- *		   这里使用的是定时器3!(定时器3挂在APB1上，时钟为HCLK/2)
+ *		       这里使用的是定时器3!(定时器3挂在APB1上，时钟为HCLK/2)
  * @param 
  *			arr：自动重装值。
  *			psc：时钟预分频数
@@ -18,7 +18,7 @@ TIM_HandleTypeDef TIM6_Handler;         //定时器句柄
 
 void TIM6_Init(uint16_t arr,uint16_t psc)
 {  
-	  TIM_MasterConfigTypeDef sMasterConfig;
+	TIM_MasterConfigTypeDef sMasterConfig;
 	
     TIM6_Handler.Instance = TIM6;                         	 //基本定时器6
     TIM6_Handler.Init.Prescaler = psc;                    	 //分频系数
@@ -79,19 +79,23 @@ void TIM6_DAC_IRQHandler(void)
 * 
 * @retval 
 */
-
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 #if (MOTOR_MULTI)
 	MotorHandle_t* motor[4] = {&Motor1, &Motor2, &Motor3, &Motor4};
 	for(rt_uint8_t i=0;i<4;i++)
 	{
-		if(motor[i]->MotionStatus != 0)	
-		{
+		if(motor[i]->MotionStatus != 0)
 			StepMotor_PeriodSet(motor[i]);
+		if(motor[i]->LightSwitch) //光耦检测
+		{
+			if(motor[i]->optofun())
+			{
+				motor[i]->CurrentPosition_Pulse = 0;
+				StopMotorTimer(motor[i]);
+				motor[i]->LightSwitch = 0;
+			}
 		}
-	
 	}
 #else	
     if(htim == (&TIM6_Handler))

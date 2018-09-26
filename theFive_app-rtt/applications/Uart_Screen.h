@@ -62,9 +62,13 @@
 #define RFID_WET   			0x4107
 
 #define LIGHT_1   			0x4221
-#define LIGHT_2   			0x4235
-#define LIGHT_3   			0x4249
-#define LIGHT_4   			0x425D
+#define LIGHT_2   			0x4223
+#define LIGHT_3   			0x4225
+#define LIGHT_4   			0x4227
+#define LIGHT_5   			0x4229
+#define LIGHT_6   			0x422B
+#define LIGHT_7   			0x422D
+#define LIGHT_8   			0x422F
 
 #define TEMP_1   			0x4331
 #define TEMP_2   			0x4335
@@ -147,18 +151,22 @@
 #define SAMPLE4_SWITCH_IOC  0x1024
 /********************************/
 
-#define CUP1_ICO  			0x4211
-#define CUP2_ICO  			0x4212
-#define CUP3_ICO  			0x4213
-#define CUP4_ICO  			0x4214
-#define LED1_ICO  			0x4215
-#define LED2_ICO  			0x4216
-#define LED3_ICO  			0x4217
-#define LED4_ICO  			0x4218
-#define LED1_SWITCH_ICO  	0x4219
-#define LED2_SWITCH_ICO  	0x421A
-#define LED3_SWITCH_ICO  	0x421B
-#define LED4_SWITCH_ICO  	0x421C
+#define LED1_ICO  			0x4210
+#define LED2_ICO  			0x4211
+#define LED3_ICO  			0x4212
+#define LED4_ICO  			0x4213
+#define LED5_ICO  			0x4214
+#define LED6_ICO  			0x4215
+#define LED7_ICO  			0x4216
+#define LED8_ICO  			0x4217
+#define LED1_SWITCH_ICO  	0x4218
+#define LED2_SWITCH_ICO  	0x4219
+#define LED3_SWITCH_ICO  	0x421A
+#define LED4_SWITCH_ICO  	0x421B
+#define LED5_SWITCH_ICO  	0x421C
+#define LED6_SWITCH_ICO  	0x421D
+#define LED7_SWITCH_ICO  	0x421E
+#define LED8_SWITCH_ICO  	0x421F
 
 #define LDOOR_ICO  			0x4911
 #define RDOOR_ICO  			0x4912
@@ -225,7 +233,10 @@
 #define LIGHT_SWITCH_2		0x4202
 #define LIGHT_SWITCH_3		0x4203
 #define LIGHT_SWITCH_4		0x4204
-
+#define LIGHT_SWITCH_5		0x4205
+#define LIGHT_SWITCH_6		0x4206
+#define LIGHT_SWITCH_7		0x4207
+#define LIGHT_SWITCH_8		0x4208
 
 #define TEMP_OK				0x4301
 #define TEMP_STOP			0x4302
@@ -266,25 +277,20 @@
 #define KEY_SERVER_SET		0x4A03
 #define KEY_SERVER_TEST		0x4A04
 
-struct switch_config_t
+struct RealTime_t
 {
-	rt_uint8_t sample_start;
-	rt_uint8_t sample_stop;
-	rt_uint8_t en_Light_1;
-	rt_uint8_t en_Temp_1;
-	rt_uint8_t en_Heat_1;
-	rt_uint8_t sample_1;
-	rt_uint8_t sample_2;
-	rt_uint8_t sample_3;
-	rt_uint8_t sample_4;
-	
+	rt_uint8_t year;
+	rt_uint8_t month;
+	rt_uint8_t day;
+	rt_uint8_t hour;
+	rt_uint8_t minute;
 };
 
 struct MotorParaBuf_t
 {
 	rt_uint8_t channel;
 	MotorHandle_t* h_Motor;
-	rt_uint16_t position;
+	rt_int16_t position;
 	rt_uint16_t speed;
 	rt_uint16_t acceltime;
 	rt_uint16_t deceltime;
@@ -308,7 +314,7 @@ struct ServerSetBuf_t
 struct HeatSetBuf_t
 {
 	rt_uint32_t Ioc;
-	pHeatSystem_t pHeatTemp;
+	struct HeatSystem_t *pHeatTemp;
 };
 
 typedef struct 
@@ -316,14 +322,13 @@ typedef struct
 	rt_uint8_t rxCount;          //接收buff
     rt_uint8_t txCount;          //发送buff 
     rt_uint8_t rxBuff[20];          //接收buff
-    //rt_uint8_t txBuff[20];          //发送buff    
+    //rt_uint8_t txBuff[20];          //发送buff
+    struct RealTime_t RealTime;
 	struct MotorParaBuf_t MotorPara;
 	struct ServerSetBuf_t ServerSetBuf;
 	struct HeatSetBuf_t HeatSetBuf;
 	struct printer_t printer;
 }UartBuff_t;
-
-extern struct switch_config_t switch_config;;
 
 rt_err_t uart_open(const char *name);
 rt_uint8_t ScreenSendData(rt_uint16_t s_addr, rt_uint8_t* str, rt_uint8_t len);

@@ -1,3 +1,4 @@
+#include <board.h>
 #include "RunLED.h"
 #include "bsp_G780.h"
 #include "ServerData.h"
@@ -49,6 +50,7 @@ void Function_RunLED(void* parameter)
 	while(1)
 	{
 		rt_pin_write(RunLED_gpio, !(_Bool)rt_pin_read(RunLED_gpio)); //GPIO输出状态为：当前状态的反向状态。
+
 		if(1 == aa)
 		{
 			aa = 0;

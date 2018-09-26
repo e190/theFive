@@ -3,10 +3,11 @@
 #include "ServerData.h"
 #include "WorkTask.h"
 #include "bsp_RMD8.h"
+#include "SenseData.h"
 #include "TMC5130.h"
 
 UartBuff_t UartBuff;
-struct switch_config_t switch_config;
+
 /* 串口接收事件标志 */
 #define UART_RX_EVENT (1 << 0)
 
@@ -104,8 +105,8 @@ static int sample_start(rt_uint16_t _addr)
 }
 static int set_work_heat(rt_uint16_t _addr, rt_uint16_t value)
 {
-	rt_uint16_t* pheat_time[4] = {&work_param_1.heat_time, &work_param_2.heat_time,
-									&work_param_3.heat_time, &work_param_4.heat_time};
+	rt_uint16_t* pheat_time[4] = {&sample_param_1.heat_time, &sample_param_2.heat_time,
+									&sample_param_3.heat_time, &sample_param_4.heat_time};
 	if(_addr < SAMPLE1_HEAT_TIME || _addr > SAMPLE4_HEAT_TIME)
 		return RT_ERROR;
 	*pheat_time[(_addr-SAMPLE1_HEAT_TIME)/2] = value;
@@ -114,8 +115,8 @@ static int set_work_heat(rt_uint16_t _addr, rt_uint16_t value)
 }
 static int set_work_read(rt_uint16_t _addr, rt_uint16_t value)
 {
-	rt_uint16_t* pread_time[4] = {&work_param_1.read_time, &work_param_2.read_time,
-									&work_param_3.read_time, &work_param_4.read_time};
+	rt_uint16_t* pread_time[4] = {&sample_param_1.read_time, &sample_param_2.read_time,
+									&sample_param_3.read_time, &sample_param_4.read_time};
 	if(_addr < SAMPLE1_READ_TIME || _addr > SAMPLE4_READ_TIME)
 		return RT_ERROR;
 	*pread_time[(_addr-SAMPLE1_READ_TIME)/2] = value;
@@ -124,8 +125,8 @@ static int set_work_read(rt_uint16_t _addr, rt_uint16_t value)
 }
 static int set_work_a1(rt_uint16_t _addr, rt_uint16_t value)
 {
-	rt_uint16_t* pa1_time[4] = {&work_param_1.a1_time, &work_param_2.a1_time,
-									&work_param_3.a1_time, &work_param_4.a1_time};
+	rt_uint16_t* pa1_time[4] = {&sample_param_1.a1_time, &sample_param_2.a1_time,
+									&sample_param_3.a1_time, &sample_param_4.a1_time};
 	if(_addr < SAMPLE1_A1_TIME || _addr > SAMPLE4_A1_TIME)
 		return RT_ERROR;
 	*pa1_time[(_addr-SAMPLE1_A1_TIME)/2] = value;
@@ -134,8 +135,8 @@ static int set_work_a1(rt_uint16_t _addr, rt_uint16_t value)
 }
 static int set_work_a2(rt_uint16_t _addr, rt_uint16_t value)
 {
-	rt_uint16_t* pa2_time[4] = {&work_param_1.a2_time, &work_param_2.a2_time,
-									&work_param_3.a2_time, &work_param_4.a2_time};
+	rt_uint16_t* pa2_time[4] = {&sample_param_1.a2_time, &sample_param_2.a2_time,
+									&sample_param_3.a2_time, &sample_param_4.a2_time};
 	if(_addr < SAMPLE1_A2_TIME || _addr > SAMPLE4_A2_TIME)
 		return RT_ERROR;
 	*pa2_time[(_addr-SAMPLE1_A2_TIME)/2] = value;
@@ -144,8 +145,8 @@ static int set_work_a2(rt_uint16_t _addr, rt_uint16_t value)
 }
 static int sample_switch(rt_uint16_t _addr)
 {
-	rt_uint8_t* en_sample[4] = {&switch_config.sample_1, &switch_config.sample_2,
-								&switch_config.sample_3, &switch_config.sample_4};	
+	rt_uint8_t* en_sample[4] = {&switch_config.en_sample_1, &switch_config.en_sample_2,
+								&switch_config.en_sample_3, &switch_config.en_sample_4};
 	
 	if(_addr < SAMPLE_1_SWITCH || _addr > SAMPLE_4_SWITCH)
 		return RT_ERROR;
@@ -166,23 +167,24 @@ static int sample_switch(rt_uint16_t _addr)
 }
 static int light_switch(rt_uint16_t _addr)
 {
-	static rt_uint8_t en_led[4] = {0, 0, 0, 0};	
-	rt_uint8_t led_gpio[4] = {LED1_gpio, LED2_gpio, LED3_gpio, LED4_gpio};
+	static rt_uint8_t en_led[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+	rt_uint8_t led_gpio[8] = {LED1_gpio, LED2_gpio, LED3_gpio, LED4_gpio,
+								LED5_gpio, LED6_gpio, LED7_gpio, LED8_gpio};
 	
-	if(_addr < LIGHT_SWITCH_1 || _addr > LIGHT_SWITCH_4)
+	if(_addr < LIGHT_SWITCH_1 || _addr > LIGHT_SWITCH_8)
 		return RT_ERROR;
 	rt_uint8_t num =  _addr - LIGHT_SWITCH_1;
 	if(en_led[num])
 	{
 		en_led[num] = 0;
 		ScreenDisICON(LED1_SWITCH_ICO + num, 0);
-		rt_pin_write(led_gpio[num], 1);
+		rt_pin_write(led_gpio[num], 0);
 	}
 	else
 	{
 		en_led[num] = 1;
 		ScreenDisICON(LED1_SWITCH_ICO + num, 1);
-		rt_pin_write(led_gpio[num], 0);
+		rt_pin_write(led_gpio[num], 1);
 	}
 	return RT_EOK;
 }
@@ -226,8 +228,8 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 	{
 	case SAMPLE:
 		{
-			rt_uint8_t* en_sample[4] = {&switch_config.sample_1, &switch_config.sample_2,
-										&switch_config.sample_3, &switch_config.sample_4};
+			rt_uint8_t* en_sample[4] = {&switch_config.en_sample_1, &switch_config.en_sample_2,
+										&switch_config.en_sample_3, &switch_config.en_sample_4};
 			rt_uint16_t switch_ico[4] = {SAMPLE1_SWITCH_IOC, SAMPLE2_SWITCH_IOC, SAMPLE3_SWITCH_IOC, SAMPLE4_SWITCH_IOC};
 			rt_uint16_t status_ico[4] = {SAMPLE_1_ICO, SAMPLE_2_ICO, SAMPLE_3_ICO, SAMPLE_4_ICO};
 
@@ -244,8 +246,8 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 					ScreenDisICON(status_ico[i], 0);					
 				}					
 			}
-			parameter_display(&work_param_1);
-			parameter_display(&work_param_4);
+			parameter_display(&sample_param_1);
+			parameter_display(&sample_param_4);
 		}
 		break;
 	case QUALITY:
@@ -293,22 +295,23 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		{
 			rt_uint16_t tt = 0;
 			switch_config.en_Temp_1 = 1;
-			tt = (rt_uint16_t)HeatHandle1.iSetVal;
+			tt = (rt_uint16_t)HeatHandle_1.iSetVal;
 			ScreenSendData(TEMP_SET, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)HeatHandle1.CycleTime;
+			tt = (rt_uint16_t)HeatHandle_1.CycleTime;
 			ScreenSendData(TEMP_TIME, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)(HeatHandle1.PID.uKP_Coe * 100);
+			tt = (rt_uint16_t)(HeatHandle_1.PID.uKP_Coe * 100);
 			ScreenSendData(TEMP_KP, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)(HeatHandle1.PID.uKI_Coe * 100);
+			tt = (rt_uint16_t)(HeatHandle_1.PID.uKI_Coe * 100);
 			ScreenSendData(TEMP_KI, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)(HeatHandle1.PID.uKD_Coe * 100);
+			tt = (rt_uint16_t)(HeatHandle_1.PID.uKD_Coe * 100);
 			ScreenSendData(TEMP_KD, (rt_uint8_t*)&tt, 2);	
 		}
 		break;
 	case DC_MOTOR:
 		break;
 	case SET_TIME:
-		rt_kprintf(" SET_TIME\n");
+		_ret = 0x06;
+		ScreenSendCommand(READ_81, 0x20, &_ret, 1);
 		break;
 	case PRINTER:
 		rt_kprintf(" PRINTER\n");
@@ -326,6 +329,10 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 	case LIGHT_SWITCH_2:
 	case LIGHT_SWITCH_3:
 	case LIGHT_SWITCH_4:
+	case LIGHT_SWITCH_5:
+	case LIGHT_SWITCH_6:
+	case LIGHT_SWITCH_7:
+	case LIGHT_SWITCH_8:
 		light_switch(keyval);
 		break;
 	case TEMP_OK:
@@ -382,7 +389,8 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		{
 			rt_memset(string, 0, sizeof(string));
 			ScreenSendCommand(WRITE_82, MOTOR_INFO, (rt_uint8_t*)string,sizeof(string));
-			_ret = StepMotor_AxisMoveRel(&Motor2, 0, 0, 0, 2000);
+			//_ret = StepMotor_AxisMoveRel(UartBuff.MotorPara.h_Motor, 0, 0, 0, 2000);
+			_ret = stepmotor_backzero(UartBuff.MotorPara.channel);
 			if(_ret != 0)
 				rt_kprintf(" error %d\n",_ret);
 		}
@@ -521,6 +529,30 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 	}
 }
 /**
+ * 十六进制转十进制
+ */
+static rt_uint8_t h2d(rt_uint8_t _hex)
+{
+	rt_uint8_t remainder = (_hex&0xf0) >> 1;
+	if(remainder)
+		remainder += 2*((_hex&0xf0) >> 4);
+	else
+		remainder = 0;
+	return remainder + (_hex&0x0f);
+}
+/**
+ * 十进制转十六进制
+ */
+static rt_uint8_t d2h(rt_uint8_t _dec)
+{
+	rt_uint8_t remainder = (_dec >> 4);
+	if(remainder)
+		remainder += 2*((_dec&0xf0) >> 4);
+	else
+		remainder = 0;
+	return remainder + (_dec&0x0f);
+}
+/**
  * @brief  
  *  
  * @param 
@@ -580,7 +612,7 @@ void DealCmd(const rt_uint8_t* _ucData)
 			switch (_rev)
             {
 			case 1:
-				UartBuff.HeatSetBuf.pHeatTemp = &HeatHandle1;
+				UartBuff.HeatSetBuf.pHeatTemp = &HeatHandle_1;
 				UartBuff.HeatSetBuf.Ioc = TEMP1_ICO;
 				break;
 			case 2:
@@ -656,6 +688,21 @@ void DealCmd(const rt_uint8_t* _ucData)
 				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
 			}
 			break;
+		case TIME_YEAR:
+			UartBuff.RealTime.year = _data;
+			break;
+		case TIME_MONTH:
+			UartBuff.RealTime.month = _data;
+			break;
+		case TIME_DAY:
+			UartBuff.RealTime.day = _data;
+			break;
+		case TIME_HOUR:
+			UartBuff.RealTime.hour = _data;
+			break;
+		case TIME_MINUTE:
+			UartBuff.RealTime.minute = _data;
+			break;
 		case PRINTER_FONT:
 			UartBuff.printer.font_size = _data;
 			break;
@@ -695,6 +742,8 @@ void DealCmd(const rt_uint8_t* _ucData)
 		case MOTOR_POSITION:			
 			if(UartBuff.MotorPara.h_Motor)
 			{
+				if(0 == _data)
+					_data++;
 				UartBuff.MotorPara.position = _data;
 				rt_memset(string, 0, sizeof(string));
 				ScreenSendCommand(WRITE_82, MOTOR_INFO, (rt_uint8_t*)string,sizeof(string));
@@ -803,8 +852,26 @@ void DealCmd(const rt_uint8_t* _ucData)
 			break;
         }
 	}
-
+	else if(0x81 == _ucData[0])
+	{
+		if(0x20 == _ucData[1])
+		{
+			UartBuff.RealTime.year = _ucData[3];
+			ScreenSendData_2bytes(TIME_YEAR, h2d(UartBuff.RealTime.year)+2000);
+			UartBuff.RealTime.month = _ucData[4];
+			ScreenSendData_2bytes(TIME_MONTH, h2d(UartBuff.RealTime.month));
+			UartBuff.RealTime.day = _ucData[5];
+			ScreenSendData_2bytes(TIME_DAY, h2d(UartBuff.RealTime.day));
+			UartBuff.RealTime.hour = _ucData[7];
+			ScreenSendData_2bytes(TIME_HOUR, h2d(UartBuff.RealTime.hour));
+			UartBuff.RealTime.minute = _ucData[8];
+			ScreenSendData_2bytes(TIME_MINUTE, h2d(UartBuff.RealTime.minute));
+		}
+	}
 }
+
+
+
 /**
  * @brief  
  *  
@@ -909,9 +976,9 @@ rt_uint8_t ScreenSendData(rt_uint16_t s_addr, rt_uint8_t* str, rt_uint8_t len)
 	if(RT_NULL == sendBuf)
 		return RT_ERROR;
 	sendBuf[i++] = 0xa5;
-	sendBuf[i++] = 0x5a;				/* 頭帧 */
+	sendBuf[i++] = 0x5a;		/* 頭帧 */
 	i++;
-	sendBuf[i++] = WRITE_82;			/* 指令 */
+	sendBuf[i++] = WRITE_82;	/* 指令 */
 
 	sendBuf[i++] = (rt_uint8_t)(s_addr>>8 & 0x00ff);
 	sendBuf[i++] = (rt_uint8_t)(s_addr & 0x00ff);/* 地址 */

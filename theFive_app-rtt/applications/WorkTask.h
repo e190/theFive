@@ -34,16 +34,24 @@ typedef struct
     rt_uint16_t a2_dis_addr;
 	
 	rt_uint16_t surplus_time;
-}work_param_t;
+}sample_param_t;
 
-extern work_param_t work_param_1;
-extern work_param_t work_param_2;
-extern work_param_t work_param_3;
-extern work_param_t work_param_4;
+struct task_thread_para_t
+{
+	rt_uint8_t ch_1;
+	rt_uint8_t ch_2;
+	rt_uint8_t ch_3;
+	rt_uint8_t ch_4;
+};
 
-void parameter_display(work_param_t* work_param);
+extern sample_param_t sample_param_1;
+extern sample_param_t sample_param_2;
+extern sample_param_t sample_param_3;
+extern sample_param_t sample_param_4;
+
+void parameter_display(sample_param_t* sample_param);
 int worktask_init(void);
-void do_worktask(void);
+int stepmotor_backzero(rt_uint8_t _motor_id);
 int work_create(const rt_uint8_t config);
 void work_cancel(const rt_uint8_t config);
 

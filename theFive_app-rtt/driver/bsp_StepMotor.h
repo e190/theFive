@@ -23,12 +23,14 @@ APB2 Timer clocks---168MHz
 #define Opto_3 HAL_GPIO_ReadPin(GPIOF,GPIO_PIN_0)&HAL_GPIO_ReadPin(GPIOE,GPIO_PIN_6)
 #define Opto_4 HAL_GPIO_ReadPin(GPIOF,GPIO_PIN_1)&HAL_GPIO_ReadPin(GPIOF,GPIO_PIN_2)
 
+#define MOTOR_SUBDIVISION     8   //电机细分数
+
 #define	MOTOR1_EN	1
 #define	MOTOR2_EN	1
 #define	MOTOR3_EN	1
 #define	MOTOR4_EN	1
 
-#define	MOTOR_MULTI	 1
+#define	MOTOR_MULTI	 1     //多电机同时运动
 
 /* 类型定义 ------------------------------------------------------------------*/
 typedef enum 
@@ -80,6 +82,7 @@ typedef struct
 	uint8_t (*optofun)();
 	void (*end_cb)();
  
+	HAL_TIM_ActiveChannel activeChannel;
 	TIM_HandleTypeDef* TIMx_Handle;	
 	TIM_TypeDef* TIMx;
 	uint32_t TIMx_CHANNEL;
@@ -97,6 +100,9 @@ extern MotorHandle_t* NowMotor;
 /****************函数声明**************/
 void StepMotorRampDataInit(void);
 void StepMotor_TIMx_Init(void);
+uint8_t set_current_position(MotorHandle_t* _motor, rt_int32_t _pos);
+uint8_t set_max_position(MotorHandle_t* _motor, rt_int32_t _pos);
+uint8_t set_min_position(MotorHandle_t* _motor, rt_int32_t _pos);
 uint8_t StepMotor_AxisMoveRel(MotorHandle_t* Motor, int32_t _position, 
 							  uint32_t _acceltime, uint32_t _deceltime,
 							  uint32_t _MaxSpeed);

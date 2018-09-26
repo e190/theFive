@@ -1,4 +1,15 @@
-applications/RunLED.o: ../applications/RunLED.c ../applications/RunLED.h \
+applications/RunLED.o: ../applications/RunLED.c \
+ D:\Code\eclipse-workspace\theFive_app-rtt\driver/board.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/stm32f4xx.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/stm32f407xx.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cm4.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cmInstr.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/cmsis_gcc.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cmFunc.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cmSimd.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/system_stm32f4xx.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\driver/stm32f4xx_hal_conf.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtthread.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\applications/rtconfig.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdebug.h \
@@ -14,6 +25,30 @@ applications/RunLED.o: ../applications/RunLED.c ../applications/RunLED.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtservice.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtm.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_rcc.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_def.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/Legacy/stm32_hal_legacy.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_rcc_ex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_gpio.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_gpio_ex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_dma.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_dma_ex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_cortex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_flash.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_flash_ex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_flash_ramfunc.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_iwdg.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pwr.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pwr_ex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_spi.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_tim.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_tim_ex.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_uart.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_usart.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pcd.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_ll_usb.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pcd_ex.h \
+ ../applications/RunLED.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/rtdevice.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/ringbuffer.h \
@@ -36,13 +71,33 @@ applications/RunLED.o: ../applications/RunLED.c ../applications/RunLED.h \
  ../applications/ServerData.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_rfid.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/bsp_tmc5130.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130_Register.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TypeDefs.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/Bits.h
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/bsp_tmc5130.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h
 
-../applications/RunLED.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\driver/board.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/stm32f4xx.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/stm32f407xx.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cm4.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cmInstr.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/cmsis_gcc.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cmFunc.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include/core_cmSimd.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/system_stm32f4xx.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\driver/stm32f4xx_hal_conf.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtthread.h:
 
@@ -73,6 +128,54 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtservice.h:
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtm.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_rcc.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_def.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/Legacy/stm32_hal_legacy.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_rcc_ex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_gpio.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_gpio_ex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_dma.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_dma_ex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_cortex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_flash.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_flash_ex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_flash_ramfunc.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_iwdg.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pwr.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pwr_ex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_spi.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_tim.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_tim_ex.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_uart.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_usart.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pcd.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_ll_usb.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pcd_ex.h:
+
+../applications/RunLED.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h:
 
@@ -118,12 +221,12 @@ D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_rfid.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/bsp_tmc5130.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/bsp_tmc5130.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130_Register.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TypeDefs.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/Bits.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h:

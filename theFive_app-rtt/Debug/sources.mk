@@ -20,9 +20,10 @@ SUBDIRS := \
 Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc \
 Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates \
 Libraries/STM32F4xx_HAL_Driver/Src \
-TMC5130 \
 applications \
-at/src \
+components/TMC5130 \
+components/at/src \
+components/cm_backtrace \
 driver \
 rt-thread/components/drivers/i2c \
 rt-thread/components/drivers/misc \

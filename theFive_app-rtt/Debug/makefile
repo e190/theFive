@@ -23,9 +23,10 @@ RM := rm -rf
 -include rt-thread/components/drivers/misc/subdir.mk
 -include rt-thread/components/drivers/i2c/subdir.mk
 -include driver/subdir.mk
--include at/src/subdir.mk
+-include components/cm_backtrace/subdir.mk
+-include components/at/src/subdir.mk
+-include components/TMC5130/subdir.mk
 -include applications/subdir.mk
--include TMC5130/subdir.mk
 -include Libraries/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/subdir.mk
 -include Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/subdir.mk

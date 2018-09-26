@@ -22,7 +22,7 @@ typedef struct
 	float 		err;
 }PID_Value;
 
-typedef struct 
+struct HeatSystem_t
 {
 	rt_device_t dev;
 	char* deviceName;
@@ -32,14 +32,15 @@ typedef struct
 	float 		iSetVal;             //设定值
 	float 		iCurVal;             //实际值
 	PID_Value PID;
-}HeatSystem_t, *pHeatSystem_t;
+};
 
-extern HeatSystem_t HeatHandle1;
 
-float pid_calculate(HeatSystem_t* h_heat);
-int set_duty(HeatSystem_t* h_heat, rt_uint16_t percent);
-rt_err_t start_heat(HeatSystem_t* h_heat);
-rt_err_t stop_heat(HeatSystem_t* h_heat);
+extern struct HeatSystem_t HeatHandle_1, HeatHandle_2, HeatHandle_3, HeatHandle_4;
+
+float pid_calculate(struct HeatSystem_t* h_heat);
+int set_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent);
+rt_err_t start_heat(struct HeatSystem_t* h_heat);
+rt_err_t stop_heat(struct HeatSystem_t* h_heat);
 
 extern void Function_Heat_PID(void* parameter);
 #endif

@@ -72,10 +72,11 @@ applications/Uart_Screen.o: ../applications/Uart_Screen.c \
  ../applications/RunLED.h ../applications/ServerData.h \
  ../applications/WorkTask.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_RMD8.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130_Register.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TypeDefs.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/Bits.h
+ ../applications/SenseData.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h
 
 ../applications/Uart_Screen.h:
 
@@ -225,10 +226,12 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/d
 
 D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_RMD8.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130.h:
+../applications/SenseData.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TMC5130_Register.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/TypeDefs.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\TMC5130/Bits.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h:

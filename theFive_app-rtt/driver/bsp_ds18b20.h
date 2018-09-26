@@ -51,7 +51,7 @@ typedef struct {
 } OneWire_t;
 
 
-extern OneWire_t OneWire1;
+extern OneWire_t OneWire1, OneWire2, OneWire3, OneWire4;
 
 rt_uint16_t ds18b20_read_reg(OneWire_t* OneWire);
 rt_uint8_t ds18b20_read_ID(OneWire_t* OneWire);
