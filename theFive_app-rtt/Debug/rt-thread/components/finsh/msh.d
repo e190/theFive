@@ -18,7 +18,28 @@ rt-thread/components/finsh/msh.o: ../rt-thread/components/finsh/msh.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/shell.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh.h
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_posix.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_file.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/rtdevice.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/ringbuffer.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/completion.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/dataqueue.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/workqueue.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/waitqueue.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/pipe.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/poll.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/spi.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/usb_device.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/usb_common.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/serial.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c_dev.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_fs.h
 
 ../rt-thread/components/finsh/msh.h:
 
@@ -59,3 +80,45 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/shell.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_posix.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_file.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/rtdevice.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/ringbuffer.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/completion.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/dataqueue.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/workqueue.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/waitqueue.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/pipe.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/poll.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/spi.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/usb_device.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/usb_common.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/serial.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c_dev.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_fs.h:

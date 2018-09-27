@@ -25,6 +25,10 @@ components/TMC5130 \
 components/at/src \
 components/cm_backtrace \
 driver \
+rt-thread/components/dfs/filesystems/devfs \
+rt-thread/components/dfs/filesystems/elmfat \
+rt-thread/components/dfs/filesystems/elmfat/option \
+rt-thread/components/dfs/src \
 rt-thread/components/drivers/i2c \
 rt-thread/components/drivers/misc \
 rt-thread/components/drivers/serial \
@@ -34,7 +38,6 @@ rt-thread/components/drivers/src \
 rt-thread/components/drivers/usb/usbdevice/class \
 rt-thread/components/drivers/usb/usbdevice/core \
 rt-thread/components/finsh \
-rt-thread/components/libc/compilers/newlib \
 rt-thread/libcpu/arm/common \
 rt-thread/libcpu/arm/cortex-m4 \
 rt-thread/packages/cJSON-v1.0.2 \
