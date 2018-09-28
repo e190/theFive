@@ -12,6 +12,7 @@ RM := rm -rf
 -include rt-thread/packages/cJSON-v1.0.2/subdir.mk
 -include rt-thread/libcpu/arm/cortex-m4/subdir.mk
 -include rt-thread/libcpu/arm/common/subdir.mk
+-include rt-thread/components/libc/compilers/newlib/subdir.mk
 -include rt-thread/components/finsh/subdir.mk
 -include rt-thread/components/drivers/usb/usbdevice/core/subdir.mk
 -include rt-thread/components/drivers/usb/usbdevice/class/subdir.mk
@@ -29,6 +30,8 @@ RM := rm -rf
 -include components/cm_backtrace/subdir.mk
 -include components/at/src/subdir.mk
 -include components/TMC5130/subdir.mk
+-include components/EasyFlash-v3.1.0/src/subdir.mk
+-include components/EasyFlash-v3.1.0/ports/subdir.mk
 -include applications/subdir.mk
 -include Libraries/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/subdir.mk
@@ -65,7 +68,7 @@ all: theFive_app-rtt.elf secondary-outputs
 theFive_app-rtt.elf: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU ARM Cross C Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "D:\Code\eclipse-workspace\theFive_app-rtt\STM32F407ZETx_FLASH.ld" -Xlinker --gc-sections -Wl,-Map,"theFive_app-rtt.map" --specs=nano.specs --specs=rdimon.specs -o "theFive_app-rtt.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "D:\Code\eclipse-workspace\theFive_app-rtt\STM32F407ZETx_FLASH.ld" -Xlinker --gc-sections -Wl,-Map,"theFive_app-rtt.map" --specs=nano.specs -eentry -o "theFive_app-rtt.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

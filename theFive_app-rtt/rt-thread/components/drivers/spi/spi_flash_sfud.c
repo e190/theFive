@@ -94,10 +94,10 @@ static rt_size_t rt_sfud_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_si
     struct spi_flash_device *rtt_dev = (struct spi_flash_device *) (dev->user_data);
     sfud_flash *sfud_dev = (sfud_flash *) (rtt_dev->user_data);
     /* change the block device¡¯s logic address to physical address */
-//    rt_off_t phy_pos = pos * rtt_dev->geometry.bytes_per_sector;
-//    rt_size_t phy_size = size * rtt_dev->geometry.bytes_per_sector;
+    rt_off_t phy_pos = pos * rtt_dev->geometry.bytes_per_sector;
+    rt_size_t phy_size = size * rtt_dev->geometry.bytes_per_sector;
 
-    if (sfud_read(sfud_dev, pos, size, buffer) != SFUD_SUCCESS) {
+    if (sfud_read(sfud_dev, phy_pos, phy_size, buffer) != SFUD_SUCCESS) {
         return 0;
     } else {
         return size;
@@ -108,10 +108,10 @@ static rt_size_t rt_sfud_write(rt_device_t dev, rt_off_t pos, const void* buffer
     struct spi_flash_device *rtt_dev = (struct spi_flash_device *) (dev->user_data);
     sfud_flash *sfud_dev = (sfud_flash *) (rtt_dev->user_data);
     /* change the block device¡¯s logic address to physical address */
-//    rt_off_t phy_pos = pos * rtt_dev->geometry.bytes_per_sector;
-//    rt_size_t phy_size = size * rtt_dev->geometry.bytes_per_sector;
+    rt_off_t phy_pos = pos * rtt_dev->geometry.bytes_per_sector;
+    rt_size_t phy_size = size * rtt_dev->geometry.bytes_per_sector;
 
-    if (sfud_erase_write(sfud_dev, pos, size, buffer) != SFUD_SUCCESS) {
+    if (sfud_erase_write(sfud_dev, phy_pos, phy_size, buffer) != SFUD_SUCCESS) {
         return 0;
     } else {
         return size;
@@ -293,7 +293,7 @@ rt_spi_flash_device_t rt_sfud_flash_probe(const char *spi_flash_dev_name, const 
         }
 
         /* register device */
-        rtt_dev->flash_device.type = RT_Device_Class_Char;
+        rtt_dev->flash_device.type = RT_Device_Class_Block;
         rtt_dev->flash_device.init = RT_NULL;
         rtt_dev->flash_device.open = RT_NULL;
         rtt_dev->flash_device.close = RT_NULL;

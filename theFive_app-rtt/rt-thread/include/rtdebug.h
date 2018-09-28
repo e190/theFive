@@ -26,7 +26,7 @@
 /* settings depend check */
 #ifdef RT_USING_POSIX
 #if !defined(RT_USING_DFS) || !defined(RT_USING_DFS_DEVFS)
-#error "POSIX poll/select, stdin need file system(RT_USING_DFS) and device file system(RT_USING_DFS_DEVFS)"
+//#error "POSIX poll/select, stdin need file system(RT_USING_DFS) and device file system(RT_USING_DFS_DEVFS)"
 #endif
 
 #if defined(RT_USING_LWIP) && !defined(RT_USING_DFS_NET)

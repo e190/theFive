@@ -21,6 +21,8 @@ Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc \
 Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates \
 Libraries/STM32F4xx_HAL_Driver/Src \
 applications \
+components/EasyFlash-v3.1.0/ports \
+components/EasyFlash-v3.1.0/src \
 components/TMC5130 \
 components/at/src \
 components/cm_backtrace \
@@ -38,6 +40,7 @@ rt-thread/components/drivers/src \
 rt-thread/components/drivers/usb/usbdevice/class \
 rt-thread/components/drivers/usb/usbdevice/core \
 rt-thread/components/finsh \
+rt-thread/components/libc/compilers/newlib \
 rt-thread/libcpu/arm/common \
 rt-thread/libcpu/arm/cortex-m4 \
 rt-thread/packages/cJSON-v1.0.2 \

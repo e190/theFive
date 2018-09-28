@@ -37,9 +37,9 @@
 #define EF_USING_ENV
 
 /* using wear leveling mode for ENV */
-#ifdef PKG_EASYFLASH_ENV_USING_WL_MODE
+ //#ifdef PKG_EASYFLASH_ENV_USING_WL_MODE
 #define EF_ENV_USING_WL_MODE
-#endif
+//#endif
 
 /* using power fail safeguard mode for ENV */
 #ifdef PKG_EASYFLASH_ENV_USING_PFS_MODE
@@ -81,7 +81,7 @@
 #endif
 
 /* the minimum size of flash erasure */
-#define EF_ERASE_MIN_SIZE         PKG_EASYFLASH_ERASE_GRAN
+#define EF_ERASE_MIN_SIZE         4096
 
 /**
  *

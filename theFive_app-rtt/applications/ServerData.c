@@ -522,5 +522,5 @@ rt_uint8_t device_updata(server_data_t* send_data, server_data_t* rev_data)
 void g780_rev_cb(char *buff, size_t bfsz)
 {
 	rt_kprintf( "%s \n",buff);
-	AnalyseJSONFromServer(&buff[6]);
+	//AnalyseJSONFromServer(&buff[6]);
 }

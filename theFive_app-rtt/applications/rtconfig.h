@@ -62,18 +62,18 @@
 /* Command shell */
 
 #define RT_USING_FINSH
-#define FINSH_USING_MSH
-#define FINSH_USING_MSH_DEFAULT
-#define FINSH_USING_MSH_ONLY
 #define FINSH_THREAD_NAME "tshell"
 #define FINSH_USING_HISTORY
+#define FINSH_HISTORY_LINES 5
+#define FINSH_USING_SYMTAB
+#define FINSH_USING_DESCRIPTION
 #define FINSH_THREAD_PRIORITY 20
 #define FINSH_THREAD_STACK_SIZE 4096
 #define FINSH_CMD_SIZE 80
-//#define FINSH_USING_MSH
-//#define FINSH_USING_MSH_DEFAULT
-#define FINSH_USING_SYMTAB
-#define FINSH_USING_DESCRIPTION
+#define FINSH_USING_MSH
+#define FINSH_USING_MSH_DEFAULT
+//#define FINSH_USING_SYMTAB
+//#define FINSH_USING_DESCRIPTION
 
 /* Device virtual file system */
 
@@ -100,8 +100,7 @@
 
 #define RT_USING_DEVICE_IPC
 #define RT_USING_SERIAL
-/* RT_USING_CAN is not set */
-/* RT_USING_HWTIMER is not set */
+
 #define RT_USING_I2C
 #define RT_USING_I2C_BITOPS
 #define RT_USING_I2C_1
@@ -110,17 +109,13 @@
 //#define RT_I2C_BIT_DEBUG
 #define RT_USING_PIN
 #define RT_USING_PWM
-/* RT_USING_MTD_NOR is not set */
-/* RT_USING_MTD_NAND is not set */
-/* RT_USING_RTC is not set */
-/* RT_USING_SDIO is not set */
+
 #define RT_USING_SPI
 //#define RT_USING_W25QXX
 #define RT_USING_SFUD
 #define RT_SFUD_USING_SFDP
 #define RT_SFUD_USING_FLASH_INFO_TABLE
-/* RT_USING_WDT is not set */
-/* RT_USING_WIFI is not set */
+
 
 /* Using USB */
 #define RT_USING_USB_DEVICE
@@ -139,7 +134,8 @@
 /* POSIX layer and C standard library */
 #define RT_USING_LIBC
 #define RT_USING_POSIX
-/* RT_USING_LIBC is not set */
+#define RT_USING_NEWLIB
+
 /* RT_USING_PTHREADS is not set */
 /* Network stack */
 
@@ -164,14 +160,7 @@
 #define AT_USING_SOCKET
 #define AT_USING_CLI
 //#define AT_PRINT_RAW_CMD
-/* VBUS(Virtual Software BUS) */
 
-/* RT_USING_VBUS is not set */
-
-/* Utilities */
-
-/* RT_USING_LOGTRACE is not set */
-/* RT_USING_RYM is not set */
 
 /* RT-Thread online packages */
 
@@ -198,7 +187,11 @@
 /* PKG_USING_JERRYSCRIPT is not set */
 
 /* multimedia packages */
-#define PKG_USING_SAMPLES
+//#define PKG_USING_SAMPLES
+#define PKG_EASYFLASH_ENV
+#define PKG_EASYFLASH_START_ADDR   0
+#define PKG_EASYFLASH_ENV_SETTING_SIZE  (2 * 1024)
+//#define PKG_EASYFLASH_ENV_USING_WL_PFS_MODE
 /* tools packages */
 
 /* PKG_USING_CMBACKTRACE is not set */
@@ -208,15 +201,14 @@
 
 #define SOC_STM32F407ZE
 
-/* RT_USING_HSI is not set */
 #define RT_HSE_VALUE 8000000
 #define RT_HSE_HCLK 168000000
-/* RT_USING_UART1 is not set */
+
 #define RT_USING_UART3
 #define RT_USING_UART2
 #define RT_USING_UART4
 #define RT_USING_UART1
-/* RT_USING_UART6 is not set */
+
 #define BSP_USING_PWM1
 #define BSP_USING_PWM1_CH1
 #define BSP_USING_PWM1_CH2
@@ -231,5 +223,5 @@
 #define RT_USING_SPI2
 #define RT_USING_SPI3
 //#define RT_DEBUG_SFUD  1
-// <<< end of configuration section >>> 
+
 #endif

@@ -528,7 +528,7 @@ void msh_auto_complete(char *prefix)
         {
             if (*ptr == ' ')
             {
-                msh_auto_complete_path(ptr + 1);
+               // msh_auto_complete_path(ptr + 1);
                 break;
             }
 
