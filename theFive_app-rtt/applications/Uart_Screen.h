@@ -12,6 +12,9 @@
 
 #define RT_SCREEN_DEVICE_NAME "uart2"
 
+#define HEAD_1  	0xa5
+#define HEAD_2  	0x5a
+
 #define WRITE_80  	0x80
 #define READ_81  	0x81
 #define WRITE_82  	0x82

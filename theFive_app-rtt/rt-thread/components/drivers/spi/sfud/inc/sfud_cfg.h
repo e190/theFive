@@ -54,6 +54,6 @@
 enum {
     SFUD_W25Q128FV_DEVICE_INDEX = 0,
 };
-#define SFUD_FLASH_DEVICE_TABLE { [SFUD_W25Q128FV_DEVICE_INDEX] = {.name = "W25Q128BV", .spi.name = "SPI3"},}
+#define SFUD_FLASH_DEVICE_TABLE { [SFUD_W25Q128FV_DEVICE_INDEX] = {.name = "W25Q128BV", .spi.name = "SPI3"} }
 
 #endif /* _SFUD_CFG_H_ */

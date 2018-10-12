@@ -64,7 +64,7 @@ struct switch_config_t
 	rt_uint8_t cup4_status;
 };
 
-extern struct light_handle_t h_light_1;
+extern struct light_handle_t h_light_1, h_light_2, h_light_3, h_light_4;
 extern struct switch_config_t switch_config;
 extern void Function_SenseData(void* parameter);
 

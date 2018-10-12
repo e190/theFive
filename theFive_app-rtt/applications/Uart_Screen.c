@@ -869,9 +869,6 @@ void DealCmd(const rt_uint8_t* _ucData)
 		}
 	}
 }
-
-
-
 /**
  * @brief  
  *  
@@ -916,7 +913,6 @@ void GetUartScreenCMD(rt_uint8_t _reData)
     	default:
     		break;
     }
-
 }
 /**
  * @brief  œ‘ æ◊÷∑˚¥Æ∫Õ∑¢ÀÕøÿ÷∆√¸¡Ó
@@ -935,8 +931,8 @@ rt_uint8_t ScreenSendCommand(rt_uint8_t _cmd, rt_uint16_t s_addr, rt_uint8_t* st
 	sendBuf = rt_malloc(sendlen);
 	if(RT_NULL == sendBuf)
 		return RT_ERROR;
-	sendBuf[i++] = 0xa5;
-	sendBuf[i++] = 0x5a;				/* Ó^÷° */
+	sendBuf[i++] = HEAD_1;
+	sendBuf[i++] = HEAD_2;				/* Ó^÷° */
 	i++;
 	sendBuf[i++] = _cmd;				/* ÷∏¡Ó */
 
@@ -975,8 +971,8 @@ rt_uint8_t ScreenSendData(rt_uint16_t s_addr, rt_uint8_t* str, rt_uint8_t len)
 	sendBuf = rt_malloc(sendlen);
 	if(RT_NULL == sendBuf)
 		return RT_ERROR;
-	sendBuf[i++] = 0xa5;
-	sendBuf[i++] = 0x5a;		/* Ó^÷° */
+	sendBuf[i++] = HEAD_1;
+	sendBuf[i++] = HEAD_2;		/* Ó^÷° */
 	i++;
 	sendBuf[i++] = WRITE_82;	/* ÷∏¡Ó */
 
@@ -1006,8 +1002,8 @@ rt_uint8_t ScreenSendData_2bytes(rt_uint16_t s_addr, rt_uint16_t _data)
 	rt_uint8_t sendBuf[8] = {0};
 	rt_uint8_t i = 0;
 		
-	sendBuf[i++] = 0xa5;
-	sendBuf[i++] = 0x5a;				/* Ó^÷° */
+	sendBuf[i++] = HEAD_1;
+	sendBuf[i++] = HEAD_2;				/* Ó^÷° */
 	sendBuf[i++] = 5;					/* ≥§∂» */
 	sendBuf[i++] = WRITE_82;			/* ÷∏¡Ó */
 

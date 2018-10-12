@@ -16,10 +16,10 @@
 #define DIS_CHANNEL_3	0x40
 #define DIS_CHANNEL_4	0x80
 
-#define DEFAULT_HEAT_TIME	295
-#define DEFAULT_READ_TIME	480 
-#define DEFAULT_A1_TIME		300
-#define DEFAULT_A2_TIME		480
+#define DEFAULT_HEAT_TIME	5
+#define DEFAULT_READ_TIME	60
+#define DEFAULT_A1_TIME		30
+#define DEFAULT_A2_TIME		50
 
 typedef struct 
 {

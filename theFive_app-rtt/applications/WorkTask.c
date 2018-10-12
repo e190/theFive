@@ -32,45 +32,45 @@ typedef void (*pwork_t)(void *parameter);
 typedef void (*pworkend_t)(void);
 
 sample_param_t sample_param_1 = {
-							DEFAULT_HEAT_TIME,
-							DEFAULT_READ_TIME,
-							DEFAULT_A1_TIME,
-							DEFAULT_A2_TIME,
-							SAMPLE1_HEAT_TIME,
-							SAMPLE1_READ_TIME,
-							SAMPLE1_A1_TIME,
-							SAMPLE1_A2_TIME
-							};
+								DEFAULT_HEAT_TIME,
+								DEFAULT_READ_TIME,
+								DEFAULT_A1_TIME,
+								DEFAULT_A2_TIME,
+								SAMPLE1_HEAT_TIME,
+								SAMPLE1_READ_TIME,
+								SAMPLE1_A1_TIME,
+								SAMPLE1_A2_TIME
+								};
 sample_param_t sample_param_2 = {
-							DEFAULT_HEAT_TIME,
-							DEFAULT_READ_TIME,
-							DEFAULT_A1_TIME,
-							DEFAULT_A2_TIME,
-							SAMPLE2_HEAT_TIME,
-							SAMPLE2_READ_TIME,
-							SAMPLE2_A1_TIME,
-							SAMPLE2_A2_TIME
-							};
+								DEFAULT_HEAT_TIME,
+								DEFAULT_READ_TIME,
+								DEFAULT_A1_TIME,
+								DEFAULT_A2_TIME,
+								SAMPLE2_HEAT_TIME,
+								SAMPLE2_READ_TIME,
+								SAMPLE2_A1_TIME,
+								SAMPLE2_A2_TIME
+								};
 sample_param_t sample_param_3 = {
-							DEFAULT_HEAT_TIME,
-							DEFAULT_READ_TIME,
-							DEFAULT_A1_TIME,
-							DEFAULT_A2_TIME,
-							SAMPLE3_HEAT_TIME,
-							SAMPLE3_READ_TIME,
-							SAMPLE3_A1_TIME,
-							SAMPLE3_A2_TIME
-							};
+								DEFAULT_HEAT_TIME,
+								DEFAULT_READ_TIME,
+								DEFAULT_A1_TIME,
+								DEFAULT_A2_TIME,
+								SAMPLE3_HEAT_TIME,
+								SAMPLE3_READ_TIME,
+								SAMPLE3_A1_TIME,
+								SAMPLE3_A2_TIME
+								};
 sample_param_t sample_param_4 = {
-							DEFAULT_HEAT_TIME,
-							DEFAULT_READ_TIME,
-							DEFAULT_A1_TIME,
-							DEFAULT_A2_TIME,
-							SAMPLE4_HEAT_TIME,
-							SAMPLE4_READ_TIME,
-							SAMPLE4_A1_TIME,
-							SAMPLE4_A2_TIME
-							};
+								DEFAULT_HEAT_TIME,
+								DEFAULT_READ_TIME,
+								DEFAULT_A1_TIME,
+								DEFAULT_A2_TIME,
+								SAMPLE4_HEAT_TIME,
+								SAMPLE4_READ_TIME,
+								SAMPLE4_A1_TIME,
+								SAMPLE4_A2_TIME
+								};
 
 void motor_1_cb(void)
 {
@@ -96,19 +96,22 @@ void motor_4_cb(void)
 static void timeout(void *parameter)
 {
 	sample_param_t* sample_param[4] = {&sample_param_1, &sample_param_2,
-									&sample_param_3, &sample_param_4};
+										&sample_param_3, &sample_param_4};
 	rt_uint16_t surplus_tim_LCD[4] = {SAMPLE1_SURPLUS_TIME, SAMPLE2_SURPLUS_TIME,
 										SAMPLE3_SURPLUS_TIME, SAMPLE4_SURPLUS_TIME};
+	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
+
 	for(rt_uint8_t i = 0; i<4; i++)
 	{
 	    if (cnt[i] > 0)    
 		{
-			rt_kprintf("periodic timer is timeout\n");
-			if(sample_param_1.a1_time == (sample_param_1.read_time - cnt[i] + 10))
+			//rt_kprintf(" %d timeout:%d\n",i,cnt[i]);
+
+			if(sample_param_1.a1_time == (sample_param_1.read_time - cnt[i] + 9))
 			{
 				h_light_1.a1_status = 1;
 			}
-			if(sample_param_1.a2_time == (sample_param_1.read_time - cnt[i] + 10))
+			if(sample_param_1.a2_time == (sample_param_1.read_time - cnt[i] + 9))
 			{
 				h_light_1.a2_status = 1;
 			}
@@ -118,7 +121,7 @@ static void timeout(void *parameter)
 		}
 		else if(0 == cnt[i])
 		{
-			rt_event_send(&work_event, EVENT_CHANNEL_4);
+			rt_event_send(&work_event, _work_event[i]);
 			cnt[i]--;
 		}
 	}		
@@ -170,14 +173,12 @@ static rt_uint8_t StepMotor_AxisMoveRel_sync(rt_uint8_t motor_id, rt_int32_t pos
 		rt_kprintf("motor para error\n");
 		return 0;
     }
-	//rt_kprintf("task start\n");
 	_rev = StepMotor_AxisMoveRel(motor, position, acceltime, deceltime, TargetSpeed);
 	
 	if(0 == _rev)
 	{
 		/* 接收事件 */
 		rt_event_recv(&work_event, event_temp, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);		
-		//rt_kprintf("task done\n");
 	}
 	else
 		rt_kprintf("motor error %d\n",_rev);
@@ -212,12 +213,15 @@ int stepmotor_backzero(rt_uint8_t _motor_id)
 
 	return 0;
 }
+/**
+ *
+ */
 void parameter_display(sample_param_t* sample_param)
 {
-	ScreenSendData(sample_param->heat_dis_addr, (rt_uint8_t*)&sample_param->heat_time, 2);
-	ScreenSendData(sample_param->read_dis_addr, (rt_uint8_t*)&sample_param->read_time, 2);
-	ScreenSendData(sample_param->a1_dis_addr, (rt_uint8_t*)&sample_param->a1_time, 2);
-	ScreenSendData(sample_param->a2_dis_addr, (rt_uint8_t*)&sample_param->a2_time, 2);
+	ScreenSendData_2bytes(sample_param->heat_dis_addr, sample_param->heat_time);
+	ScreenSendData_2bytes(sample_param->read_dis_addr, sample_param->read_time);
+	ScreenSendData_2bytes(sample_param->a1_dis_addr, sample_param->a1_time);
+	ScreenSendData_2bytes(sample_param->a2_dis_addr, sample_param->a2_time);
 }
 /**
  *样本测试流程
@@ -229,14 +233,15 @@ void sample_task(rt_uint8_t _ch)
 	rt_uint8_t _blender_gpio[4] = {blender1_gpio, blender2_gpio, blender3_gpio, blender4_gpio};
 	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2, &sample_param_3, &sample_param_4};
 	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
+	struct light_handle_t *p_light[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
 
 	/* 搅拌5s */
 	rt_pin_write(_blender_gpio[_ch-1], 0);
 	rt_thread_delay(5000);
 	rt_pin_write(_blender_gpio[_ch-1], 1);
 	/* 温浴 295s */
-	ScreenDisICON(SAMPLE4_1_ICO, 1);
-	cnt[3] = psample_param[_ch-1]->heat_time;
+	ScreenDisICON(SAMPLE1_1_ICO + (_ch-1)*2, 1);
+	cnt[_ch-1] = psample_param[_ch-1]->heat_time;
 	rt_event_recv(&work_event, _work_event[_ch-1],
 				  RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
 	/* 加入R2 */
@@ -248,14 +253,25 @@ void sample_task(rt_uint8_t _ch)
 	rt_thread_delay(5000);
 	rt_pin_write(_blender_gpio[_ch-1], 1);
 	/* 读值8min */
-	ScreenDisICON(SAMPLE4_2_ICO, 1);
+	ScreenDisICON(SAMPLE1_2_ICO + (_ch-1)*2, 1);
 	cnt[_ch-1] = psample_param[_ch-1]->read_time;
 	switch_config.en_Light_1 = 1;
 	rt_event_recv(&work_event, _work_event[_ch-1], RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
 	switch_config.en_Light_1 = 0;
+	rt_kprintf("输出结果：\n");
+	rt_kprintf("A1_1: %d\n", p_light[_ch-1]->ave_a1_1);
+	rt_kprintf("A1_2: %d\n", p_light[_ch-1]->ave_a1_2);
+
+	rt_kprintf("A2_1: %d\n", p_light[_ch-1]->ave_a2_1);
+	rt_kprintf("A2_2: %d\n", p_light[_ch-1]->ave_a2_2);
+	p_light[_ch-1]->ave_a1_1 = 0;
+	p_light[_ch-1]->ave_a1_2 = 0;
+	p_light[_ch-1]->ave_a2_1 = 0;
+	p_light[_ch-1]->ave_a2_2 = 0;
+
 }
 /**
- *测试流程
+ *  测试流程
  *
  *_ch : 通道选择
  */
@@ -329,7 +345,8 @@ void channel_4_end(void)
 void Function_Channel_1(void* parameter)
 {
 	channel_1_init();
-	test_task(1);
+	//test_task(1);
+	sample_task(1);
 	channel_1_end();
 }
 void Function_Channel_2(void* parameter)

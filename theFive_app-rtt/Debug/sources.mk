@@ -21,11 +21,13 @@ Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc \
 Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates \
 Libraries/STM32F4xx_HAL_Driver/Src \
 applications \
-components/EasyFlash-v3.1.0/ports \
-components/EasyFlash-v3.1.0/src \
+components/EasyLogger/plugins/flash \
+components/EasyLogger/port \
+components/EasyLogger/src \
 components/TMC5130 \
 components/at/src \
 components/cm_backtrace \
+components/flash \
 driver \
 rt-thread/components/dfs/filesystems/devfs \
 rt-thread/components/dfs/filesystems/elmfat \

@@ -188,10 +188,11 @@
 
 /* multimedia packages */
 //#define PKG_USING_SAMPLES
-#define PKG_EASYFLASH_ENV
-#define PKG_EASYFLASH_START_ADDR   0
-#define PKG_EASYFLASH_ENV_SETTING_SIZE  (2 * 1024)
-//#define PKG_EASYFLASH_ENV_USING_WL_PFS_MODE
+//#define PKG_EASYFLASH_ENV
+//#define PKG_EASYFLASH_START_ADDR   0
+//#define PKG_EASYFLASH_ENV_SETTING_SIZE  (2 * 1024)
+//#define PKG_EASYFLASH_ENV_USING_WL_MODE
+//#define PKG_EASYFLASH_DEBUG
 /* tools packages */
 
 /* PKG_USING_CMBACKTRACE is not set */
@@ -222,6 +223,6 @@
 //#define BSP_USING_PWM3_CH4
 #define RT_USING_SPI2
 #define RT_USING_SPI3
-//#define RT_DEBUG_SFUD  1
+#define RT_DEBUG_SFUD  0
 
 #endif

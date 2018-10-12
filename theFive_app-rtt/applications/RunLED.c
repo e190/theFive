@@ -5,6 +5,7 @@
 #include "bsp_rfid.h"
 #include "bsp_tmc5130.h"
 #include "TMC5130.h"
+#include "DataBase.h"
 
 rt_device_t dhidd;
 rt_uint8_t data[64] = {5,9,8,7,6,5,1,23,4};
@@ -53,11 +54,16 @@ void Function_RunLED(void* parameter)
 
 		if(1 == aa)
 		{
-			aa = 0;
-			
-			rt_device_write(dhidd, addr, data, 65);	
-			bb = tmc5130_readInt(TMC5130_XACTUAL);
-			rt_kprintf("%x\n",bb);
+			bb++;
+			if(30 == bb)
+			{
+				aa = 0;
+				rt_kprintf("------------------------\n");
+			}
+			flash_test_demo();
+//			rt_device_write(dhidd, addr, data, 65);
+//			bb = tmc5130_readInt(TMC5130_XACTUAL);
+//			rt_kprintf("%x\n",bb);
 		}	
 		else if(2 == aa)
 		{
@@ -70,9 +76,9 @@ void Function_RunLED(void* parameter)
 		else if(3 == aa)
 		{
 			aa = 0;
-
+			//get_flash_para();
+			load_flash();
 		}
-		//rt_kprintf("aff\n");
 		rt_thread_delay(500);       //µÈ´ý500
 	}
 }

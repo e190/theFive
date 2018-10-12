@@ -113,7 +113,10 @@ static EfErrCode del_env(const char *key);
 static EfErrCode save_cur_using_data_addr(uint32_t cur_data_addr);
 static uint32_t calc_env_crc(void);
 static bool env_crc_is_ok(void);
+
+#ifdef EF_ENV_AUTO_UPDATE
 static EfErrCode env_auto_update(void);
+#endif /* EF_ENV_AUTO_UPDATE */
 
 /**
  * Flash ENV initialize.
@@ -145,7 +148,6 @@ EfErrCode ef_env_init(ef_env const *default_env, size_t default_env_size) {
     EF_ASSERT(env_data_section_size >= ENV_USER_SETTING_SIZE);
     /* the ENV data section size should be an integral multiple of erase minimum size. */
     EF_ASSERT(env_data_section_size % EF_ERASE_MIN_SIZE == 0);
-
 
     env_start_addr = EF_START_ADDR;
     default_env_set = default_env;
@@ -588,7 +590,7 @@ void ef_print_env(void) {
         for (j = 0; j < 4; j++) {
             c = (*env_cache_detail_addr) >> (8 * j);
             ef_print("%c", c);
-            if (c == NULL) {
+            if (c == 0) {
                 ef_print("\n");
                 break;
             }

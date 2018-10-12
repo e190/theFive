@@ -62,25 +62,27 @@ static int light_para_init(void)
 static void Get_AdsData(struct light_handle_t *p_light, rt_uint8_t _config)
 { 
 	static rt_uint8_t count = 0, s_count = 0;
-	static rt_uint32_t ADLightDataSum1, ADLightDataSum2;
+	static rt_uint32_t ADLightDataSum1, ADLightDataSum2, test_value = 0;
 	rt_uint8_t _date[2][3] = {0};
 	rt_uint16_t _val_1, _val_2;
 
 	if(_config & 0x01)
 	{
 		ad1110_read_reg(p_light->channel, ED0_ADDR, _date[0]);
-		ScreenDisICON(p_light->dis_icon_1, 1);
+		//_date[0][2] = 0;
+		//ScreenDisICON(p_light->dis_icon_1, 1);
 	}
-	else
-		ScreenDisICON(p_light->dis_icon_1, 0);
-	rt_thread_delay(10);
+//	else
+//		ScreenDisICON(p_light->dis_icon_1, 0);
+	//rt_thread_delay(10);
 	if(_config & 0x02)
 	{
 		ad1110_read_reg(p_light->channel, ED2_ADDR, _date[1]);
-		ScreenDisICON(p_light->dis_icon_2, 1);
+		//_date[1][2] = 0;
+		//ScreenDisICON(p_light->dis_icon_2, 1);
 	}
-	else
-		ScreenDisICON(p_light->dis_icon_2, 0);
+//	else
+//		ScreenDisICON(p_light->dis_icon_2, 0);
 	
 	if(0 == (_date[0][2] & 0x80) && 0 == (_date[1][2] & 0x80))
 	{
@@ -96,9 +98,13 @@ static void Get_AdsData(struct light_handle_t *p_light, rt_uint8_t _config)
 		if(count >= 10)
 		{
 			count = 0;
+			test_value += 1;
 			ADLightDataSum1 = ADLightDataSum1 / 10;
 			ADLightDataSum2 = ADLightDataSum2 / 10;
-			//rt_kprintf("%d\n",ADLightDataSum2);
+//			ADLightDataSum1 = test_value;
+//			ADLightDataSum2 = test_value + 5;
+			//rt_kprintf("%d\n",ADLightDataSum1);
+
 			if(p_light->a1_status)
 			{
 				p_light->ave_a1_1 += ADLightDataSum1;
@@ -112,10 +118,10 @@ static void Get_AdsData(struct light_handle_t *p_light, rt_uint8_t _config)
 					s_count = 0;
 				}
 			}
-			if(h_light_1.a2_status)
+			if(p_light->a2_status)
 			{
-				h_light_1.ave_a2_1 += ADLightDataSum1;
-				h_light_1.ave_a2_2 += ADLightDataSum2;
+				p_light->ave_a2_1 += ADLightDataSum1;
+				p_light->ave_a2_2 += ADLightDataSum2;
 				//rt_kprintf("a22\n");
 				if(++s_count >= 10)
 				{
@@ -127,7 +133,7 @@ static void Get_AdsData(struct light_handle_t *p_light, rt_uint8_t _config)
 			}
 			if(_config & 0x01)
 				ScreenSendData_2bytes(p_light->dis_addr_1, (int)ADLightDataSum1);
-			rt_thread_delay(10);
+			//rt_thread_delay(10);
 			if(_config & 0x02)
 				ScreenSendData_2bytes(p_light->dis_addr_2, (int)ADLightDataSum2);
 			ADLightDataSum1 = 0;
@@ -137,8 +143,8 @@ static void Get_AdsData(struct light_handle_t *p_light, rt_uint8_t _config)
 }
 static void cycle_read_light(void)
 {
-	rt_uint8_t *en_read_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_1,  \
-									&switch_config.en_Light_1, &switch_config.en_Light_1};
+	rt_uint8_t *en_read_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,  \
+									&switch_config.en_Light_3, &switch_config.en_Light_4};
 	struct light_handle_t *ppLight[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
 
 	for(rt_uint8_t i = 0; i<4; i++)
@@ -146,6 +152,7 @@ static void cycle_read_light(void)
 		if(0 == *en_read_light[i])
 			continue;
 		Get_AdsData(ppLight[i], 3);
+
 	}
 }
 /**
@@ -212,6 +219,7 @@ void Function_SenseData(void* parameter)
 		cycle_read_light();
 		cycle_temp_heat();
 		cup_cheak();
+		rt_pin_write(91, !(_Bool)rt_pin_read(91));
 		rt_thread_delay(100); 
 	}
 }

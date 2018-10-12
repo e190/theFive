@@ -75,7 +75,9 @@ applications/RunLED.o: ../applications/RunLED.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/DataBase.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/flash_cfg.h
 
 D:\Code\eclipse-workspace\theFive_app-rtt\driver/board.h:
 
@@ -230,3 +232,7 @@ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h:
 D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/DataBase.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/flash_cfg.h:
