@@ -15,6 +15,8 @@ C_SRCS += \
 ../driver/drv_gpio.c \
 ../driver/drv_i2c.c \
 ../driver/drv_pwm.c \
+../driver/drv_rtc.c \
+../driver/drv_sdio_sd.c \
 ../driver/drv_spi.c \
 ../driver/drv_spiflash.c \
 ../driver/drv_usart.c \
@@ -33,6 +35,8 @@ OBJS += \
 ./driver/drv_gpio.o \
 ./driver/drv_i2c.o \
 ./driver/drv_pwm.o \
+./driver/drv_rtc.o \
+./driver/drv_sdio_sd.o \
 ./driver/drv_spi.o \
 ./driver/drv_spiflash.o \
 ./driver/drv_usart.o \
@@ -51,6 +55,8 @@ C_DEPS += \
 ./driver/drv_gpio.d \
 ./driver/drv_i2c.d \
 ./driver/drv_pwm.d \
+./driver/drv_rtc.d \
+./driver/drv_sdio_sd.d \
 ./driver/drv_spi.d \
 ./driver/drv_spiflash.d \
 ./driver/drv_usart.d \
@@ -62,7 +68,7 @@ C_DEPS += \
 driver/%.o: ../driver/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GNU ARM Cross C Compiler'
-	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -DSTM32F407xx -DHAVE_SYS_SELECT_H -DUSE_HAL_DRIVER -I"D:\Code\eclipse-workspace\theFive_app-rtt\applications" -I"D:\Code\eclipse-workspace\theFive_app-rtt\components\flash" -I"D:\Code\eclipse-workspace\theFive_app-rtt\components\EasyLogger\plugins\flash" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\libc\compilers\newlib" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\libc\compilers\newlib\sys" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\filesystems\devfs" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\filesystems\elmfat" -I"D:\Code\eclipse-workspace\theFive_app-rtt\components\cm_backtrace" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include\drivers" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\packages\cJSON-v1.0.2" -I"D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130" -I"D:\Code\eclipse-workspace\theFive_app-rtt\components\at\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt\components\EasyLogger\inc" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\spi" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\spi\sfud\inc" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt\driver" -I"D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc" -I"D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Include" -I"D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh" -std=c99 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -c -o "$@" "$<"
+	arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -O0 -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -DSTM32F407xx -DHAVE_SYS_SELECT_H -DUSE_HAL_DRIVER -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\applications" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\components\flash" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\components\EasyLogger\plugins\flash" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\libc\compilers\newlib" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\libc\compilers\newlib\sys" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\dfs\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\dfs\filesystems\devfs" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\dfs\filesystems\elmfat" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\components\cm_backtrace" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\drivers\include\drivers" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\packages\cJSON-v1.0.2" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\components\TMC5130" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\components\at\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\components\EasyLogger\inc" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\drivers\spi" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\drivers\spi\sfud\inc" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\drivers\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\driver" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\Libraries\STM32F4xx_HAL_Driver\Inc" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\Libraries\CMSIS\Include" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\Libraries\CMSIS\Device\ST\STM32F4xx\Include" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\include" -I"D:\Code\eclipse-workspace\theFive_app-rtt-v2.1\rt-thread\components\finsh" -std=c99 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

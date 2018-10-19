@@ -314,22 +314,23 @@ struct ServerSetBuf_t
 	char _port[6];
 };
 
-struct HeatSetBuf_t
-{
-	rt_uint32_t Ioc;
-	struct HeatSystem_t *pHeatTemp;
-};
+typedef enum {
+    HEAT_SET_TEMP,
+	HEAT_SET_TIME,
+	HEAT_SET_KP,
+	HEAT_SET_KI,
+	HEAT_SET_KD,
+} HeatConfig;
 
 typedef struct 
 {
 	rt_uint8_t rxCount;          //接收buff
     rt_uint8_t txCount;          //发送buff 
     rt_uint8_t rxBuff[20];          //接收buff
-    //rt_uint8_t txBuff[20];          //发送buff
+	rt_uint8_t HeatSetChannel;
     struct RealTime_t RealTime;
 	struct MotorParaBuf_t MotorPara;
 	struct ServerSetBuf_t ServerSetBuf;
-	struct HeatSetBuf_t HeatSetBuf;
 	struct printer_t printer;
 }UartBuff_t;
 

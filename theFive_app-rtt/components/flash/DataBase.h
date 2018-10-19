@@ -9,10 +9,10 @@ struct flash_para_t{
 	rt_uint32_t bytes_per_sector;
 	rt_uint32_t sector_count;
 	/* ENV start address in flash */
-	uint32_t flash_start_addr;
+	rt_uint32_t flash_start_addr;
+	rt_uint32_t flash_end_addr;
 	/* current using data section address */
-	uint32_t cur_using_data_bak;
-	uint32_t data_detail_addr;
+	rt_uint32_t cur_using_data_bak;
 };
 
 struct mix_door_time_t

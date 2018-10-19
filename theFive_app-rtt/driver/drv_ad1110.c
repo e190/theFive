@@ -4,6 +4,8 @@
 
 static struct rt_i2c_bus_device *ad1110_i2c_bus_1;    /* I2C设备句柄 */
 static struct rt_i2c_bus_device *ad1110_i2c_bus_2;
+static struct rt_i2c_bus_device *ad1110_i2c_bus_3;
+static struct rt_i2c_bus_device *ad1110_i2c_bus_4;
 
 #if METHOD == 0
 /**
@@ -64,8 +66,8 @@ rt_err_t ad1110_read_reg(rt_uint8_t _ch, rt_uint8_t _addr, rt_uint8_t *buf)
     struct rt_i2c_msg msgs[2];
     struct rt_i2c_bus_device *i2c_bus[4] = {ad1110_i2c_bus_1,
 											ad1110_i2c_bus_2,
-											RT_NULL,
-											RT_NULL};
+											ad1110_i2c_bus_3,
+											ad1110_i2c_bus_4};
     rt_uint8_t reg = 0x8c;
 
     msgs[0].addr  = _addr;     		 /* 从机地址 */
@@ -93,6 +95,8 @@ int ad1110_hw_init(void)
 {
     ad1110_i2c_bus_1 = rt_i2c_bus_device_find(AD1110_I2CBUS_1);  /*查找I2C设备*/
     ad1110_i2c_bus_2 = rt_i2c_bus_device_find(AD1110_I2CBUS_2);
+    ad1110_i2c_bus_3 = rt_i2c_bus_device_find(AD1110_I2CBUS_3);
+    ad1110_i2c_bus_4 = rt_i2c_bus_device_find(AD1110_I2CBUS_4);
 
     if (ad1110_i2c_bus_1 == RT_NULL)
     {
@@ -106,6 +110,18 @@ int ad1110_hw_init(void)
         return -RT_ERROR;
     }
     ADDEBUG("ad1110 set i2c bus to %s\r\n", AD1110_I2CBUS_2);
+    if (ad1110_i2c_bus_3 == RT_NULL)
+    {
+    	rt_kprintf("can't find ad1110 %s device\r\n", AD1110_I2CBUS_3);
+        return -RT_ERROR;
+    }
+    ADDEBUG("ad1110 set i2c bus to %s\r\n", AD1110_I2CBUS_3);
+    if (ad1110_i2c_bus_4 == RT_NULL)
+    {
+    	rt_kprintf("can't find ad1110 %s device\r\n", AD1110_I2CBUS_4);
+        return -RT_ERROR;
+    }
+    ADDEBUG("ad1110 set i2c bus to %s\r\n", AD1110_I2CBUS_4);
 
     return RT_EOK;
 }

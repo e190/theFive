@@ -5,6 +5,7 @@
 #include "bsp_RMD8.h"
 #include "SenseData.h"
 #include "TMC5130.h"
+#include "blender.h"
 
 UartBuff_t UartBuff;
 
@@ -191,7 +192,6 @@ static int light_switch(rt_uint16_t _addr)
 static int blender_switch(rt_uint16_t _addr)
 {
 	static rt_uint8_t en_dcmotor[4] = {0, 0, 0, 0};	
-	rt_uint8_t blender_gpio[4] = {blender1_gpio, blender2_gpio, blender3_gpio, blender4_gpio};
 	
 	if(_addr < DCMOTOR_SWITCH_1 || _addr > DCMOTOR_SWITCH_4)
 		return RT_ERROR;
@@ -199,17 +199,109 @@ static int blender_switch(rt_uint16_t _addr)
 	if(en_dcmotor[num])
 	{
 		en_dcmotor[num] = 0;
-		rt_pin_write(blender_gpio[num], 1); 			
+		switch_blender(num, 0);
 		ScreenDisICON(BLENDER1_START_ICO + num, 0);
 		ScreenDisICON(BLENDER1_ICO + num, 0);
 	}
 	else
 	{
 		en_dcmotor[num] = 1;
-		rt_pin_write(blender_gpio[num], 0);
+		switch_blender(num, 1);
 		ScreenDisICON(BLENDER1_START_ICO + num, 1);
 		ScreenDisICON(BLENDER1_ICO + num, 1);
 	}
+
+
+	return RT_EOK;
+}
+
+static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
+{
+	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
+										  &HeatHandle_3, &HeatHandle_4};
+	rt_uint32_t temp_ico[4] = {TEMP1_ICO, TEMP2_ICO, TEMP3_ICO, TEMP4_ICO};
+	rt_uint8_t* en_heat[4] = {&switch_config.en_Heat_1, &switch_config.en_Heat_2,
+								&switch_config.en_Heat_3, &switch_config.en_Heat_4};
+	char str[12] = {0};
+
+	if(_ch)
+	{
+		ScreenDisICON(temp_ico[_ch-1], _config);
+		heat_start_stop(pHeatTemp[_ch-1], _config);
+		*en_heat[_ch-1] = _config;
+		rt_memset(str, 0, sizeof(str));
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
+	}
+	else
+	{
+		rt_sprintf(str, "请选择通道！");
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,rt_strlen(str));
+	}
+
+	return RT_EOK;
+}
+static int set_heat_para(rt_uint8_t _ch, HeatConfig _config, rt_uint16_t set_data)
+{
+	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
+										  &HeatHandle_3, &HeatHandle_4};
+	char str[12] = {0};
+
+	if(_ch)
+	{
+		switch (_config)
+		{
+		case HEAT_SET_TEMP:
+			pHeatTemp[_ch-1]->iSetVal = set_data * 10;
+			rt_kprintf(" TEMP_SET:%d\n",set_data);
+			break;
+		case HEAT_SET_TIME:
+			pHeatTemp[_ch-1]->CycleTime = set_data;
+			rt_kprintf(" TEMP_SET:%d\n",set_data);
+			break;
+		case HEAT_SET_KP:
+			pHeatTemp[_ch-1]->PID.uKP_Coe = (float)set_data / 100;
+			rt_kprintf(" TEMP_SET:%d\n",set_data);
+			break;
+		case HEAT_SET_KI:
+			pHeatTemp[_ch-1]->PID.uKI_Coe = (float)set_data / 100;
+			rt_kprintf(" TEMP_SET:%d\n",set_data);
+			break;
+		case HEAT_SET_KD:
+			pHeatTemp[_ch-1]->PID.uKD_Coe = (float)set_data / 100;
+			rt_kprintf(" TEMP_SET:%d\n",set_data);
+			break;
+		}
+		rt_memset(str, 0, sizeof(str));
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
+	}
+	else
+	{
+		rt_sprintf(str, "请选择通道！");
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,rt_strlen(str));
+	}
+
+	return RT_EOK;
+}
+static int display_heat_para(rt_uint8_t _ch)
+{
+	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
+										  &HeatHandle_3, &HeatHandle_4};
+	rt_uint16_t tt = 0;
+
+	if(_ch)
+	{
+		tt = (rt_uint16_t)pHeatTemp[_ch-1]->iSetVal;
+		ScreenSendData_2bytes(TEMP_SET, tt);
+		tt = (rt_uint16_t)pHeatTemp[_ch-1]->CycleTime;
+		ScreenSendData_2bytes(TEMP_TIME, tt);
+		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKP_Coe * 100);
+		ScreenSendData_2bytes(TEMP_KP, tt);
+		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKI_Coe * 100);
+		ScreenSendData_2bytes(TEMP_KI, tt);
+		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKD_Coe * 100);
+		ScreenSendData_2bytes(TEMP_KD, tt);
+	}
+
 	return RT_EOK;
 }
 /**
@@ -261,7 +353,13 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case BACK_MANU:
 		switch_config.en_Light_1 = 0;
+		switch_config.en_Light_2 = 0;
+		switch_config.en_Light_3 = 0;
+		switch_config.en_Light_4 = 0;
 		switch_config.en_Temp_1 = 0;
+		switch_config.en_Temp_2 = 0;
+		switch_config.en_Temp_3 = 0;
+		switch_config.en_Temp_4 = 0;
 		rt_kprintf(" BACK_MANU\n");
 		break;
 	case SAMPLE_CHANNEL_1:
@@ -290,22 +388,16 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case LIGHT:		
 		switch_config.en_Light_1 = 1;
+		switch_config.en_Light_2 = 1;
+		switch_config.en_Light_3 = 1;
+		switch_config.en_Light_4 = 1;
 		break;
 	case TEMPERATURE:
-		{
-			rt_uint16_t tt = 0;
-			switch_config.en_Temp_1 = 1;
-			tt = (rt_uint16_t)HeatHandle_1.iSetVal;
-			ScreenSendData(TEMP_SET, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)HeatHandle_1.CycleTime;
-			ScreenSendData(TEMP_TIME, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)(HeatHandle_1.PID.uKP_Coe * 100);
-			ScreenSendData(TEMP_KP, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)(HeatHandle_1.PID.uKI_Coe * 100);
-			ScreenSendData(TEMP_KI, (rt_uint8_t*)&tt, 2);	
-			tt = (rt_uint16_t)(HeatHandle_1.PID.uKD_Coe * 100);
-			ScreenSendData(TEMP_KD, (rt_uint8_t*)&tt, 2);	
-		}
+		switch_config.en_Temp_1 = 1;
+		switch_config.en_Temp_2 = 1;
+		switch_config.en_Temp_3 = 1;
+		switch_config.en_Temp_4 = 1;
+
 		break;
 	case DC_MOTOR:
 		break;
@@ -336,34 +428,10 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		light_switch(keyval);
 		break;
 	case TEMP_OK:
-		if(UartBuff.HeatSetBuf.pHeatTemp)
-		{
-			ScreenDisICON(UartBuff.HeatSetBuf.Ioc, 1);
-			start_heat(UartBuff.HeatSetBuf.pHeatTemp);	
-			switch_config.en_Heat_1 = 1;
-			rt_memset(string, 0, sizeof(string));
-			ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-		}
-		else
-		{
-			rt_sprintf(string, "请选择通道！");
-			ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
+		heat_switch(UartBuff.HeatSetChannel, 1);
 		break;
 	case TEMP_STOP:
-		if(UartBuff.HeatSetBuf.pHeatTemp)
-		{
-			ScreenDisICON(UartBuff.HeatSetBuf.Ioc, 0);
-			stop_heat(UartBuff.HeatSetBuf.pHeatTemp);	
-			switch_config.en_Heat_1 = 0;
-			rt_memset(string, 0, sizeof(string));
-			ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-		}
-		else
-		{
-			rt_sprintf(string, "请选择通道！");
-			ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
+		heat_switch(UartBuff.HeatSetChannel, 0);
 		break;
 	case STEPMOTOR_START:
 		if(UartBuff.MotorPara.h_Motor)
@@ -606,87 +674,25 @@ void DealCmd(const rt_uint8_t* _ucData)
 		case RFID_SET:
 			break;
 		case TEMP_CHANNEL:
-			_rev = choose_channel(TEMP_CHANNEL, _data);	
 			rt_memset(string, 0, sizeof(string));
 			ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			switch (_rev)
-            {
-			case 1:
-				UartBuff.HeatSetBuf.pHeatTemp = &HeatHandle_1;
-				UartBuff.HeatSetBuf.Ioc = TEMP1_ICO;
-				break;
-			case 2:
-				break;
-			default:
-				UartBuff.HeatSetBuf.pHeatTemp = RT_NULL;
-				break;
-            }
+			UartBuff.HeatSetChannel = choose_channel(TEMP_CHANNEL, _data);
+			display_heat_para(UartBuff.HeatSetChannel);
 			break;
 		case TEMP_SET:
-			if(UartBuff.HeatSetBuf.pHeatTemp)
-			{
-				UartBuff.HeatSetBuf.pHeatTemp->iSetVal = _data * 10;
-				rt_kprintf(" TEMP_SET:%d\n",_data);
-				rt_memset(string, 0, sizeof(string));
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			}
-			else
-			{
-				rt_sprintf(string, "请选择通道！");
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-			}
+			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_TEMP, _data);
 			break;
 		case TEMP_TIME:
-			if(UartBuff.HeatSetBuf.pHeatTemp)
-			{
-				UartBuff.HeatSetBuf.pHeatTemp->CycleTime = _data;
-				rt_memset(string, 0, sizeof(string));
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			}
-			else
-			{
-				rt_sprintf(string, "请选择通道！");
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-			}
+			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_TIME, _data);
 			break;
 		case TEMP_KP:		
-			if(UartBuff.HeatSetBuf.pHeatTemp)
-			{
-				UartBuff.HeatSetBuf.pHeatTemp->PID.uKP_Coe = (float)_data / 100;
-				rt_memset(string, 0, sizeof(string));
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			}
-			else
-			{
-				rt_sprintf(string, "请选择通道！");
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-			}
+			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_KP, _data);
 			break;
 		case TEMP_KI:			
-			if(UartBuff.HeatSetBuf.pHeatTemp)
-			{
-				UartBuff.HeatSetBuf.pHeatTemp->PID.uKP_Coe = (float)_data / 100;
-				rt_memset(string, 0, sizeof(string));
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			}
-			else
-			{
-				rt_sprintf(string, "请选择通道！");
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-			}
+			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_KI, _data);
 			break;
 		case TEMP_KD:			
-			if(UartBuff.HeatSetBuf.pHeatTemp)
-			{
-				UartBuff.HeatSetBuf.pHeatTemp->PID.uKP_Coe = (float)_data / 100;
-				rt_memset(string, 0, sizeof(string));
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			}
-			else
-			{
-				rt_sprintf(string, "请选择通道！");
-				ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,rt_strlen(string));
-			}
+			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_KD, _data);
 			break;
 		case TIME_YEAR:
 			UartBuff.RealTime.year = _data;
@@ -710,8 +716,10 @@ void DealCmd(const rt_uint8_t* _ucData)
 			UartBuff.printer.gap_size = _data;
 			break;
 		case BLENDER_TIME1:
-			break;
 		case BLENDER_TIME2:
+		case BLENDER_TIME3:
+		case BLENDER_TIME4:
+			set_blender_duty((_addr-BLENDER_TIME1)/2, _data);
 			break;
 		case MOTOR_CHANNEL:
 			UartBuff.MotorPara.channel = _data;

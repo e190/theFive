@@ -21,12 +21,8 @@
 #define SOFTWARE_VERSION     "1.07.15"
 #define HARDWARE_VERSION     "1.2"
 
-#if defined(SOC_STM32F407ZE)
-
-    #define STM32F4xx_PIN_NUMBERS 144
-    #define STM32_SRAM_SIZE (192-64)
-
-#endif
+#define STM32F4xx_PIN_NUMBERS 144
+#define STM32_SRAM_SIZE (192-64)
 
 #define STM32_SRAM_END          (0x20000000 + STM32_SRAM_SIZE * 1024)
 
@@ -42,6 +38,26 @@
 #endif
 
 #define HEAP_END    STM32_SRAM_END
+
+#define RT_USING_UART3
+#define RT_USING_UART2
+#define RT_USING_UART4
+#define RT_USING_UART1
+
+#define BSP_USING_PWM1
+#define BSP_USING_PWM1_CH1
+#define BSP_USING_PWM1_CH2
+#define BSP_USING_PWM1_CH3
+#define BSP_USING_PWM1_CH4
+#define BSP_USING_PWM4
+#define BSP_USING_PWM4_CH1
+#define BSP_USING_PWM4_CH2
+#define BSP_USING_PWM4_CH3
+#define BSP_USING_PWM4_CH4
+#define RT_USING_SPI2
+#define RT_USING_SPI3
+
+
 extern void rt_hw_board_init(void);
 #endif
 

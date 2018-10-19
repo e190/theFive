@@ -13,10 +13,10 @@
  * |----------------------------|
  *
  *		system section
- *		-->section used size (4)
- *		-->data address  (4)
+ *		-->sector header(4) --> used times(2) and  section used size (2)
+ *		-->data address (4)
  *		-->log area address (4)
- *		-->IAP	area address (4)
+ *		-->IAP area address (4)
  *		-->system parameters (...)
  *
  */
@@ -34,10 +34,13 @@
 #define SYS_SIZE		0x1000
 #define LOG_AREA_SIZE	0x1000
 #define IAP_SIZE		0x1000
-#define DATA_SIZE		0x100
+#define DATA_SIZE		0x1000
 
 #define LOG_START_ADDR   0
 #define FLASH_DEBUG
+
+/* sector header size, includes the sector magic code and status magic code */
+#define SECTOR_HEADER_SIZE         4
 
 /* flash ENV parameters part index and size */
 enum {

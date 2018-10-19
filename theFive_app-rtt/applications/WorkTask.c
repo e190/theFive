@@ -5,6 +5,7 @@
 #include "Uart_Screen.h"
 #include "bsp_StepMotor.h"
 #include "RunLED.h"
+#include "blender.h"
 
 /* ¹¤×÷ÊÂ¼þ±êÖ¾ */
 #define EVENT_MOTOR_1	(1 << 0)
@@ -230,15 +231,14 @@ void parameter_display(sample_param_t* sample_param)
  */
 void sample_task(rt_uint8_t _ch)
 {
-	rt_uint8_t _blender_gpio[4] = {blender1_gpio, blender2_gpio, blender3_gpio, blender4_gpio};
 	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2, &sample_param_3, &sample_param_4};
 	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
 	struct light_handle_t *p_light[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
 
 	/* ½Á°è5s */
-	rt_pin_write(_blender_gpio[_ch-1], 0);
+	switch_blender(_ch-1, 0);
 	rt_thread_delay(5000);
-	rt_pin_write(_blender_gpio[_ch-1], 1);
+	switch_blender(_ch-1, 1);
 	/* ÎÂÔ¡ 295s */
 	ScreenDisICON(SAMPLE1_1_ICO + (_ch-1)*2, 1);
 	cnt[_ch-1] = psample_param[_ch-1]->heat_time;
@@ -249,9 +249,9 @@ void sample_task(rt_uint8_t _ch)
 	rt_thread_delay(50);
 	StepMotor_AxisMoveRel_sync(_ch, 1, 150, 150, 10000);
 	/* ½Á°è5s */
-	rt_pin_write(_blender_gpio[_ch-1], 0);
+	switch_blender(_ch-1, 0);
 	rt_thread_delay(5000);
-	rt_pin_write(_blender_gpio[_ch-1], 1);
+	switch_blender(_ch-1, 1);
 	/* ¶ÁÖµ8min */
 	ScreenDisICON(SAMPLE1_2_ICO + (_ch-1)*2, 1);
 	cnt[_ch-1] = psample_param[_ch-1]->read_time;
@@ -332,7 +332,7 @@ void channel_4_end(void)
 	work4 = RT_NULL;
 	motor_set_end_indicate(&Motor4, RT_NULL);
 	cnt[3] = -1;
-	rt_pin_write(blender4_gpio, 1); 
+	switch_blender(3, 0);
 	ScreenDisICON(SAMPLE4_SWITCH_IOC, 0);
 	ScreenDisICON(SAMPLE4_1_ICO, 0);
 	ScreenDisICON(SAMPLE4_2_ICO, 0);
@@ -345,8 +345,8 @@ void channel_4_end(void)
 void Function_Channel_1(void* parameter)
 {
 	channel_1_init();
-	//test_task(1);
-	sample_task(1);
+	test_task(1);
+	//sample_task(1);
 	channel_1_end();
 }
 void Function_Channel_2(void* parameter)
@@ -366,9 +366,9 @@ void Function_Channel_4(void* parameter)
 	rt_kprintf("work4 start\n");
 	channel_4_init();
 	/* ½Á°è5s */
-	rt_pin_write(blender4_gpio, 0); 
+	switch_blender(3, 0);
 	rt_thread_delay(5000);
-	rt_pin_write(blender4_gpio, 1); 
+	switch_blender(3, 1);
 	/* ÎÂÔ¡ 295s */
 	ScreenDisICON(SAMPLE4_1_ICO, 1);
 	cnt[3] = sample_param_4.heat_time;
@@ -379,9 +379,9 @@ void Function_Channel_4(void* parameter)
 	rt_thread_delay(50);
 	StepMotor_AxisMoveRel_sync(4,1,150,150,10000);	
 	/* ½Á°è5s */
-	rt_pin_write(blender4_gpio, 0); 
+	switch_blender(3, 0);
 	rt_thread_delay(5000);
-	rt_pin_write(blender4_gpio, 1); 
+	switch_blender(3, 1);
 	/* ¶ÁÖµ8min */
 	ScreenDisICON(SAMPLE4_2_ICO, 1);
 	cnt[3] = sample_param_4.read_time;

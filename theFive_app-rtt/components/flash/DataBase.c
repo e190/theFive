@@ -3,7 +3,6 @@
 #include "DataBase.h"
 #include "flash_port.h"
 
-static rt_uint32_t flash_cache[ERASE_MIN_SIZE / 4] = { 0 };
 static struct flash_para_t flash_para;
 /**
  * Get current using data section address.
@@ -25,37 +24,30 @@ static void set_cur_using_data_bak(uint32_t using_data_bak)
 }
 
 /**
- * Get ENV detail part end address.
- * It's the first word in ENV.
- *
- * @return ENV end address
- */
-static uint32_t get_data_detail_end_addr(void) {
-    /* it is the first word */
-    return flash_para.data_detail_addr;
-}
-
-/**
- * Set ENV detail part end address.
- * It's the first word in ENV.
- *
- * @param end_addr ENV end address
- */
-static void set_data_detail_end_addr(uint32_t end_addr) {
-	flash_para.data_detail_addr = end_addr;
-}
-
-/**
  *	保存正在使用的sector位置
  */
 EfErrCode save_cur_using_data_bak(rt_uint32_t cur_data_addr)
 {
-	flash_read_sector(flash_para.flash_start_addr, flash_cache);
-	flash_cache[DATA_PARAM_PART_INDEX_ADDR] = cur_data_addr;
-	flash_write_sector(flash_para.flash_start_addr, flash_cache);
+	read_flash_to_cache(flash_para.flash_start_addr);
+	write_cache(flash_para.flash_start_addr, &cur_data_addr, 4);
+	save_cache_to_flash(flash_para.flash_start_addr);
 
 	return 0;
 }
+size_t data_get_used_size(void) {
+    size_t header_total_num = 0, physical_size = 0;
+
+    if (flash_para.flash_start_addr < flash_para.flash_end_addr) {
+        physical_size = flash_para.flash_end_addr - flash_para.flash_start_addr;
+    } else {
+        physical_size = LOG_AREA_SIZE - (flash_para.flash_start_addr - flash_para.flash_end_addr);
+    }
+
+    header_total_num = physical_size / ERASE_MIN_SIZE + 1;
+
+    return physical_size - header_total_num * SECTOR_HEADER_SIZE;
+}
+
 /**
  *	保存样本数据到 flash
  *
@@ -64,24 +56,24 @@ EfErrCode save_sample_data(const void *_buffer, rt_size_t _size)
 {
 	EfErrCode _ret = F_NO_ERR;
 	rt_uint32_t cur_using_addr_bak = get_cur_using_data_bak();
-    rt_uint32_t data_sec_end_addr = get_data_detail_end_addr();
-    char *flash_cache_bak = (char *)flash_cache;
+    rt_uint32_t data_sec_end_addr;
     size_t sector_used_size = 0;
 
     if (_size % 4 != 0)
     {
     	_size = (_size / 4 + 1) * 4;
     }
-    _ret = flash_read_sector(get_cur_using_data_bak(), flash_cache);
+    _ret = read_flash_to_cache(get_cur_using_data_bak());
+    data_sec_end_addr = get_header_used_size();
     if(data_sec_end_addr + _size > ERASE_MIN_SIZE)
     {
     	sector_used_size = ERASE_MIN_SIZE - data_sec_end_addr;
     	/*如果sector_used_size = 0，刚好一块scetion用完*/
     	if(sector_used_size)
     	{
-        	memcpy(&flash_cache_bak[data_sec_end_addr], _buffer, data_sec_end_addr);
-        	flash_cache[SECTION_USED_SIZE] = ERASE_MIN_SIZE;
-        	_ret = flash_write_sector(cur_using_addr_bak, flash_cache);
+    		write_cache(data_sec_end_addr, _buffer, sector_used_size);
+        	set_header_used_size(ERASE_MIN_SIZE);
+          	_ret = save_cache_to_flash(cur_using_addr_bak);
     	}
     	set_cur_using_data_bak(cur_using_addr_bak + 1);
     	sector_used_size = data_sec_end_addr + _size - ERASE_MIN_SIZE;
@@ -90,10 +82,10 @@ EfErrCode save_sample_data(const void *_buffer, rt_size_t _size)
     }
     else
     	sector_used_size = _size;
-    memcpy(&flash_cache_bak[data_sec_end_addr], _buffer, sector_used_size);
-    flash_cache[SECTION_USED_SIZE] = data_sec_end_addr + sector_used_size;
-	_ret = flash_write_sector(get_cur_using_data_bak(), flash_cache);
-	set_data_detail_end_addr(flash_cache[SECTION_USED_SIZE]);
+
+    write_cache(data_sec_end_addr, _buffer, sector_used_size);
+	set_header_used_size(data_sec_end_addr + sector_used_size);
+  	_ret = save_cache_to_flash(cur_using_addr_bak);
 
 	return _ret;
 }
@@ -111,12 +103,10 @@ EfErrCode read_sample_data(const void *_buffer, rt_size_t _size)
 EfErrCode set_system_para(const void *_buffer, rt_size_t _size)
 {
 	EfErrCode _ret = F_NO_ERR;
-	char *flash_cache_bak = (char *)flash_cache;
 
-	_ret = flash_read_sector(flash_para.flash_start_addr, flash_cache);
-	memcpy(&flash_cache_bak[SYSTEM_PARAM_PART_INDEX_ADDR], _buffer, _size);
-	flash_cache[SECTION_USED_SIZE] = _size + 12;
-	_ret = flash_write_sector(flash_para.flash_start_addr, flash_cache);
+	_ret = read_flash_to_cache(flash_para.flash_start_addr);
+	write_cache(SYSTEM_PARAM_PART_INDEX_ADDR*4, _buffer, _size);
+  	_ret = save_cache_to_flash(flash_para.flash_start_addr);
 
 	return _ret;
 }
@@ -135,13 +125,16 @@ EfErrCode get_system_para(struct system_para_t *_system_paras)
 EfErrCode ef_flash_set_default(void)
 {
 	EfErrCode _ret = F_NO_ERR;
+/**
+ * 	flash_cache[SECTION_USED_SIZE] = 20;
+ *	flash_cache[DATA_PARAM_PART_INDEX_ADDR] = 2;
+ *	flash_cache[LOG_PARAM_PART_INDEX_ADDR] = flash_para.sector_count-2;
+ *	flash_cache[IAP_PARAM_PART_INDEX_ADDR] = flash_para.sector_count-1;
+ */
+	rt_uint32_t w_buf[4] = {20, 2, flash_para.sector_count-2, flash_para.sector_count-1};
 
-	flash_cache[DATA_PARAM_PART_INDEX_ADDR] = 2;
-	flash_cache[LOG_PARAM_PART_INDEX_ADDR] = flash_para.sector_count-2;
-	flash_cache[IAP_PARAM_PART_INDEX_ADDR] = flash_para.sector_count-1;
-
-	flash_cache[SECTION_USED_SIZE] = 20;
-	_ret = flash_write_sector(flash_para.flash_start_addr, flash_cache);
+	write_cache(flash_para.flash_start_addr, w_buf, 4*4);
+	_ret = save_cache_to_flash(flash_para.flash_start_addr);
 
 	return _ret;
 }
@@ -149,6 +142,7 @@ EfErrCode load_flash(void)
 {
 	EfErrCode _ret = F_NO_ERR;
 	struct rt_device_blk_geometry _geometry;
+	rt_uint32_t _temp = 0;
 
 	flash_para.flash_start_addr = 0;
 	get_flash_geometry(&_geometry);
@@ -156,23 +150,25 @@ EfErrCode load_flash(void)
 	flash_para.sector_count = _geometry.sector_count;
 	//flash_erase(flash_para.flash_start_addr, flash_para.sector_count );
 	/* read current using data section address */
-	flash_read_sector(flash_para.flash_start_addr, flash_cache);
+	read_flash_to_cache(flash_para.flash_start_addr);
 	/* if ENV is not initialize or flash has dirty data, set default for it */
-	if (flash_cache[SECTION_USED_SIZE] == 0xFFFFFFFF)
+	if (get_header_used_size() == 0xFFFF)
 	{
         /* set default ENV */
 		_ret = ef_flash_set_default();
 	}
-	set_cur_using_data_bak(flash_cache[DATA_PARAM_PART_INDEX_ADDR]);
+	read_cache(flash_para.flash_start_addr, &_temp, 4);
+	set_cur_using_data_bak(_temp);
 
-	flash_read_sector(get_cur_using_data_bak(), flash_cache);
+	read_flash_to_cache(get_cur_using_data_bak());
 
-	if (flash_cache[SECTION_USED_SIZE] == 0xFFFFFFFF)
+	if (get_header_used_size() == 0xFFFF)
 	{
         /* set default ENV */
-		flash_cache[SECTION_USED_SIZE] = 4;
+		set_header_used_size(4);
+		set_header_used_times(0);
+		save_cache_to_flash(get_cur_using_data_bak());
 	}
-	set_data_detail_end_addr(flash_cache[SECTION_USED_SIZE]);
 
 	return _ret;
 }

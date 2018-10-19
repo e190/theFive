@@ -1,64 +1,5 @@
-/*
- * This file is part of the EasyFlash Library.
- *
- * Copyright (c) 2015-2017, Armink, <armink.ztl@gmail.com>
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * 'Software'), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Function: Save logs to flash.
- * Created on: 2015-06-04
- */
 #include "flash_cfg.h"
 #include "flash_port.h"
-
-/* magic code on every sector header. 'EF' is 0x4546 */
-#define LOG_SECTOR_MAGIC               0x4546
-/* sector header size, includes the sector magic code and status magic code */
-#define LOG_SECTOR_HEADER_SIZE         4
-
-/**
- * Sector status magic code
- * The sector status is 16-Bits after LOG_SECTOR_MAGIC at every sector header.
- * =======================
- * | header(4B) | status |
- * -----------------------
- * | 0x4546FFFF |  empty |
- * | 0x4546FFFE |  using |
- * | 0x4546FFFC |  full  |
- * =======================
- *
- * State transition relationship: empty->using->full
- * The FULL status will change to EMPTY after sector clean.
- */
-enum {
-    SECTOR_STATUS_MAGIC_EMPUT = 0xFFFF,
-    SECTOR_STATUS_MAGIC_USING = 0xFFFE,
-    SECTOR_STATUS_MAGIC_FULL = 0xFFFC,
-};
-
-typedef enum {
-    SECTOR_STATUS_EMPUT,
-    SECTOR_STATUS_USING,
-    SECTOR_STATUS_FULL,
-    SECTOR_STATUS_HEADER_ERROR,
-} SectorStatus;
 
 /* the stored logs start address and end address. It's like a ring buffer implemented on flash. */
 static uint32_t log_start_addr = 0, log_end_addr = 0;
@@ -66,9 +7,9 @@ static uint32_t log_start_addr = 0, log_end_addr = 0;
 static uint32_t log_area_start_addr = 0;
 /* initialize OK flag */
 static bool init_ok = false;
+static rt_uint8_t cur_using_sector;
 
-static void find_start_and_end_addr(void);
-static uint32_t get_next_flash_sec_addr(uint32_t cur_addr);
+static void find_cur_using_sector(void);
 
 /**
  * The flash save log function initialize.
@@ -87,87 +28,13 @@ EfErrCode ef_log_init(void) {
 
     log_area_start_addr = LOG_START_ADDR;
 
-
     /* find the log store start address and end address */
-    find_start_and_end_addr();
+    find_cur_using_sector();
     /* initialize OK */
     init_ok = true;
 
     return result;
 }
-
-/**
- * Get flash sector current status.
- *
- * @param addr sector address, this function will auto calculate the sector header address by this address.
- *
- * @return the flash sector current status
- */
-static SectorStatus get_sector_status(uint32_t addr) {
-    uint32_t header = 0, header_addr = 0;
-    uint16_t sector_magic = 0, status_magic = 0;
-
-    /* calculate the sector header address */
-    header_addr = addr / ERASE_MIN_SIZE * ERASE_MIN_SIZE;
-
-    if (ef_port_read(header_addr, &header, sizeof(header)) == F_NO_ERR) {
-        sector_magic = header >> 16;
-        status_magic = header;
-    } else {
-        EF_DEBUG("Error: Read sector header data error.\n");
-        return SECTOR_STATUS_HEADER_ERROR;
-    }
-    /* compare header magic code */
-    if (sector_magic == LOG_SECTOR_MAGIC) {
-        switch (status_magic) {
-        case SECTOR_STATUS_MAGIC_EMPUT:
-            return SECTOR_STATUS_EMPUT;
-        case SECTOR_STATUS_MAGIC_USING:
-            return SECTOR_STATUS_USING;
-        case SECTOR_STATUS_MAGIC_FULL:
-            return SECTOR_STATUS_FULL;
-        default:
-            return SECTOR_STATUS_HEADER_ERROR;
-        }
-    } else {
-        return SECTOR_STATUS_HEADER_ERROR;
-    }
-}
-
-/**
- * Write flash sector current status.
- *
- * @param addr sector address, this function will auto calculate the sector header address by this address.
- * @param status sector cur status
- *
- * @return result
- */
-static EfErrCode write_sector_status(uint32_t addr, SectorStatus status) {
-    uint32_t header = 0, header_addr = 0;
-    uint16_t status_magic;
-
-    /* calculate the sector header address */
-    header_addr = addr / ERASE_MIN_SIZE * ERASE_MIN_SIZE;
-
-    switch (status) {
-    case SECTOR_STATUS_EMPUT: {
-        status_magic = SECTOR_STATUS_MAGIC_EMPUT;
-        break;
-    }
-    case SECTOR_STATUS_USING: {
-        status_magic = SECTOR_STATUS_MAGIC_USING;
-        break;
-    }
-    case SECTOR_STATUS_FULL: {
-        status_magic = SECTOR_STATUS_MAGIC_FULL;
-        break;
-    }
-    }
-    header = (LOG_SECTOR_MAGIC << 16) | status_magic;
-
-    return ef_port_write(header_addr, &header, sizeof(header));
-}
-
 /**
  * Find the current flash sector using end address by continuous 0xFF.
  *
@@ -175,206 +42,47 @@ static EfErrCode write_sector_status(uint32_t addr, SectorStatus status) {
  *
  * @return current flash sector using end address
  */
-static uint32_t find_sec_using_end_addr(uint32_t addr) {
-/* read section data buffer size */
-#define READ_BUF_SIZE                32
+static void find_cur_using_sector(void)
+{
+	size_t sec_total_num = LOG_AREA_SIZE / ERASE_MIN_SIZE;
 
-    uint32_t sector_start = addr, data_start = addr, continue_ff = 0, read_buf_size = 0, i;
-    uint8_t buf[READ_BUF_SIZE];
+	for(rt_uint8_t i=0; i < sec_total_num; i++)
+	{
+		read_flash_to_cache(log_area_start_addr + i);
+		log_end_addr = get_header_used_size();
+		if(log_end_addr < ERASE_MIN_SIZE)
+		{
+			cur_using_sector = log_area_start_addr + i;
+			if(get_header_used_times() > 1)
+				log_start_addr = log_end_addr;
+			else
+				log_start_addr = log_area_start_addr;
+			break;
+		}
+	}
 
-    EF_ASSERT(READ_BUF_SIZE % 4 == 0);
-    /* calculate the sector start and data start address */
-    sector_start = addr / ERASE_MIN_SIZE * ERASE_MIN_SIZE;
-    data_start = sector_start + LOG_SECTOR_HEADER_SIZE;
-
-    /* counts continuous 0xFF which is end of sector */
-    while (data_start < sector_start + ERASE_MIN_SIZE) {
-        if (data_start + READ_BUF_SIZE < sector_start + ERASE_MIN_SIZE) {
-            read_buf_size = READ_BUF_SIZE;
-        } else {
-            read_buf_size = sector_start + ERASE_MIN_SIZE - data_start;
-        }
-        ef_port_read(data_start, (uint32_t *)buf, read_buf_size);
-        for (i = 0; i < read_buf_size; i++) {
-            if (buf[i] == 0xFF) {
-                continue_ff++;
-            } else {
-                continue_ff = 0;
-            }
-        }
-        data_start += read_buf_size;
-    }
-    /* calculate current flash sector using end address */
-    if (continue_ff >= ERASE_MIN_SIZE - LOG_SECTOR_HEADER_SIZE) {
-        /* from 0 to sec_size all sector is 0xFF, so the sector is empty */
-        return sector_start + LOG_SECTOR_HEADER_SIZE;
-    } else if (continue_ff >= 4) {
-        /* form end_addr - 4 to sec_size length all area is 0xFF, so it's used part of the sector.
-         * the address must be word alignment. */
-        if (continue_ff % 4 != 0) {
-            continue_ff = (continue_ff / 4 + 1) * 4;
-        }
-        return sector_start + ERASE_MIN_SIZE - continue_ff;
-    } else {
-        /* all sector not has continuous 0xFF, so the sector is full */
-        return sector_start + ERASE_MIN_SIZE;
-    }
 }
 
-/**
- * Find the log store start address and end address.
- * It's like a ring buffer implemented on flash.
- * The flash log area can be in two states depending on start address and end address:
- *                       state 1                                state 2
- *                   |============|                         |============|
- * log area start--> |############| <-- start address       |############| <-- end address
- *                   |############|                         |   empty    |
- *                   |------------|                         |------------|
- *                   |############|                         |############| <-- start address
- *                   |############|                         |############|
- *                   |------------|                         |------------|
- *                   |     .      |                         |     .      |
- *                   |     .      |                         |     .      |
- *                   |     .      |                         |     .      |
- *                   |------------|                         |------------|
- *                   |############| <-- end address         |############|
- *                   |   empty    |                         |############|
- *  log area end --> |============|                         |============|
- *
- *  LOG_AREA_SIZE = log area end - log area star
- *
- */
-static void find_start_and_end_addr(void) {
-    size_t cur_size = 0;
-    SectorStatus cur_sec_status, last_sec_status;
-    uint32_t cur_using_sec_addr = 0;
-    /* all status sector counts */
-    size_t empty_sec_counts = 0, using_sec_counts = 0, full_sector_counts = 0;
-    /* total sector number */
-    size_t total_sec_num = LOG_AREA_SIZE / ERASE_MIN_SIZE;
-    /* see comment of find_start_and_end_addr function */
-    uint8_t cur_log_sec_state = 0;
-
-    /* get the first sector status */
-    cur_sec_status = get_sector_status(log_area_start_addr);
-    last_sec_status = cur_sec_status;
-
-    for (cur_size = ERASE_MIN_SIZE; cur_size < LOG_AREA_SIZE; cur_size += ERASE_MIN_SIZE) {
-        /* get current sector status */
-        cur_sec_status = get_sector_status(log_area_start_addr + cur_size);
-        /* compare last and current status */
-        switch (last_sec_status) {
-        case SECTOR_STATUS_EMPUT: {
-            switch (cur_sec_status) {
-            case SECTOR_STATUS_EMPUT:
-                break;
-            case SECTOR_STATUS_USING:
-                EF_DEBUG("Error: Log area error! Now will clean all log area.\n");
-                ef_log_clean();
-                return;
-            case SECTOR_STATUS_FULL:
-                EF_DEBUG("Error: Log area error! Now will clean all log area.\n");
-                ef_log_clean();
-                return;
-            }
-            empty_sec_counts++;
-            break;
-        }
-        case SECTOR_STATUS_USING: {
-            switch (cur_sec_status) {
-            case SECTOR_STATUS_EMPUT:
-                /* like state 1 */
-                cur_log_sec_state = 1;
-                log_start_addr = log_area_start_addr;
-                cur_using_sec_addr = log_area_start_addr + cur_size - ERASE_MIN_SIZE;
-                break;
-            case SECTOR_STATUS_USING:
-                EF_DEBUG("Error: Log area error! Now will clean all log area.\n");
-                ef_log_clean();
-                return;
-            case SECTOR_STATUS_FULL:
-                /* like state 2 */
-                cur_log_sec_state = 2;
-                log_start_addr = log_area_start_addr + cur_size;
-                cur_using_sec_addr = log_area_start_addr + cur_size - ERASE_MIN_SIZE;
-                break;
-            }
-            using_sec_counts++;
-            break;
-        }
-        case SECTOR_STATUS_FULL: {
-            switch (cur_sec_status) {
-            case SECTOR_STATUS_EMPUT:
-                /* like state 1 */
-                if (cur_log_sec_state == 2) {
-                    EF_DEBUG("Error: Log area error! Now will clean all log area.\n");
-                    ef_log_clean();
-                    return;
-                } else {
-                    cur_log_sec_state = 1;
-                    log_start_addr = log_area_start_addr;
-                    log_end_addr = log_area_start_addr + cur_size;
-                    cur_using_sec_addr = log_area_start_addr + cur_size - ERASE_MIN_SIZE;
-                }
-                break;
-            case SECTOR_STATUS_USING:
-                if(total_sec_num <= 2) {
-                    /* like state 1 */
-                    cur_log_sec_state = 1;
-                    log_start_addr = log_area_start_addr;
-                    cur_using_sec_addr = log_area_start_addr + cur_size;
-                } else {
-                    /* like state 2 when the sector is the last one */
-                    if (cur_size + ERASE_MIN_SIZE >= LOG_AREA_SIZE) {
-                        cur_log_sec_state = 2;
-                        log_start_addr = log_area_start_addr + cur_size;
-                        cur_using_sec_addr = log_area_start_addr + cur_size - ERASE_MIN_SIZE;
-                    }
-                }
-                break;
-            case SECTOR_STATUS_FULL:
-                break;
-            }
-            full_sector_counts++;
-            break;
-        }
-        case SECTOR_STATUS_HEADER_ERROR:
-            EF_DEBUG("Error: Log sector header error! Now will clean all log area.\n");
-            ef_log_clean();
-            return;
-        }
-        last_sec_status = cur_sec_status;
-    }
-
-    /* the last sector status counts */
-    if (cur_sec_status == SECTOR_STATUS_EMPUT) {
-        empty_sec_counts++;
-    } else if (cur_sec_status == SECTOR_STATUS_USING) {
-        using_sec_counts++;
-    } else if (cur_sec_status == SECTOR_STATUS_FULL) {
-        full_sector_counts++;
-    } else if (cur_sec_status == SECTOR_STATUS_HEADER_ERROR) {
-        EF_DEBUG("Error: Log sector header error! Now will clean all log area.\n");
-        ef_log_clean();
-        return;
-    }
-
-    if (using_sec_counts != 1) {
-        /* this state is almost impossible */
-        EF_DEBUG("Error: There must be only one sector status is USING! Now will clean all log area.\n");
-        ef_log_clean();
-    } else {
-        /* find the end address */
-        log_end_addr = find_sec_using_end_addr(cur_using_sec_addr);
-    }
-}
-
+//EfErrCode log_set_default(void)
+//{
+//	EfErrCode _ret = F_NO_ERR;
+//
+//    read_flash_to_cache(cur_using_sector);
+//    read_cache(log_area_start_addr, &sector_header, 4);
+//	if (get_header_used_size() == 0xFFFF)
+//	{
+//        /* set default ENV */
+//		_ret = ef_flash_set_default();
+//	}
+//
+//	return _ret;
+//}
 /**
  * Get log used flash total size.
  *
  * @return log used flash total size. @note NOT contain sector headers
  */
-size_t ef_log_get_used_size(void) {
+size_t log_get_used_size(void) {
     size_t header_total_num = 0, physical_size = 0;
     /* must be call this function after initialize OK */
     if (!init_ok) {
@@ -389,7 +97,7 @@ size_t ef_log_get_used_size(void) {
 
     header_total_num = physical_size / ERASE_MIN_SIZE + 1;
 
-    return physical_size - header_total_num * LOG_SECTOR_HEADER_SIZE;
+    return physical_size - header_total_num * SECTOR_HEADER_SIZE;
 }
 
 /**
@@ -401,24 +109,25 @@ size_t ef_log_get_used_size(void) {
  *
  * @return result
  */
-static EfErrCode log_seq_read(uint32_t addr, uint32_t *log, size_t size) {
+static EfErrCode log_seq_read(rt_uint32_t addr, rt_uint32_t *log, size_t size) {
     EfErrCode result = F_NO_ERR;
     size_t read_size = 0, read_size_temp = 0;
 
     while (size) {
         /* move to sector data address */
         if ((addr + read_size) % ERASE_MIN_SIZE == 0) {
-            addr += LOG_SECTOR_HEADER_SIZE;
+            addr += SECTOR_HEADER_SIZE;
         }
         /* calculate current sector last data size */
         read_size_temp = ERASE_MIN_SIZE - (addr % ERASE_MIN_SIZE);
         if (size < read_size_temp) {
             read_size_temp = size;
         }
-        result = ef_port_read(addr + read_size, log + read_size / 4, read_size_temp);
+        result = read_flash_to_cache(addr + read_size);
         if (result != F_NO_ERR) {
             return result;
         }
+        read_cache(addr + read_size, log + read_size / 4, read_size_temp);
         read_size += read_size_temp;
         size -= read_size_temp;
     }
@@ -433,12 +142,12 @@ static EfErrCode log_seq_read(uint32_t addr, uint32_t *log, size_t size) {
  *
  * @return flash physical address
  */
-static uint32_t log_index2addr(size_t index) {
+static rt_uint32_t log_index2addr(size_t index) {
     size_t header_total_offset = 0;
     /* total include sector number */
-    size_t sector_num = index / (ERASE_MIN_SIZE - LOG_SECTOR_HEADER_SIZE) + 1;
+    size_t sector_num = index / (ERASE_MIN_SIZE - SECTOR_HEADER_SIZE) + 1;
 
-    header_total_offset = sector_num * LOG_SECTOR_HEADER_SIZE;
+    header_total_offset = sector_num * SECTOR_HEADER_SIZE;
     if (log_start_addr < log_end_addr) {
         return log_start_addr + index + header_total_offset;
     } else {
@@ -464,7 +173,7 @@ static uint32_t log_index2addr(size_t index) {
  */
 EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size) {
     EfErrCode result = F_NO_ERR;
-    size_t cur_using_size = ef_log_get_used_size();
+    size_t cur_using_size = log_get_used_size();
     size_t read_size_temp = 0;
     size_t header_total_num = 0;
 
@@ -528,7 +237,7 @@ EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size) {
             read_size_temp = (log_area_start_addr + LOG_AREA_SIZE) - log_index2addr(index);
             header_total_num = read_size_temp / ERASE_MIN_SIZE;
             /* Minus some ignored bytes */
-            read_size_temp -= header_total_num * LOG_SECTOR_HEADER_SIZE;
+            read_size_temp -= header_total_num * SECTOR_HEADER_SIZE;
             result = log_seq_read(log_index2addr(index), log, read_size_temp);
             if (result == F_NO_ERR) {
                 result = log_seq_read(log_area_start_addr, log + read_size_temp / 4, size - read_size_temp);
@@ -566,107 +275,40 @@ EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size) {
  * @return result
  */
 EfErrCode ef_log_write(const uint32_t *log, size_t size) {
-    EfErrCode result = F_NO_ERR;
+    EfErrCode _ret = F_NO_ERR;
     size_t write_size = 0, writable_size = 0;
-    uint32_t write_addr = log_end_addr, erase_addr;
-    SectorStatus sector_status;
+    rt_uint32_t sector_header, write_addr = log_end_addr, erase_addr;
 
     EF_ASSERT(size % 4 == 0);
     /* must be call this function after initialize OK */
     if (!init_ok) {
         return F_DATA_INIT_FAILED;
     }
-
-    if ((sector_status = get_sector_status(write_addr)) == SECTOR_STATUS_HEADER_ERROR) {
-        return F_WRITE_ERR;
+    read_flash_to_cache(cur_using_sector);
+    if(log_end_addr + size > ERASE_MIN_SIZE)
+    {
+    	writable_size = ERASE_MIN_SIZE - log_end_addr;
+    	if(writable_size)
+    	{
+    		write_cache(log_end_addr, log, writable_size);
+        	set_header_used_size(ERASE_MIN_SIZE);
+          	_ret = save_cache_to_flash(cur_using_sector);
+    	}/*如果writable_size = 0，刚好一块scetion用完*/
+    	cur_using_sector += 1;
+    	writable_size = log_end_addr + size - ERASE_MIN_SIZE;
+    	log_end_addr = 4;		//存储从每块的第4个位置开始
     }
-    /* write some log when current sector status is USING and EMPTY */
-    if ((sector_status == SECTOR_STATUS_USING) || (sector_status == SECTOR_STATUS_EMPUT)) {
-        /* write the already erased but not used area */
-        writable_size = ERASE_MIN_SIZE - ((write_addr - log_area_start_addr) % ERASE_MIN_SIZE);
-        if (size >= writable_size) {
-            result = ef_port_write(write_addr, log, writable_size);
-            if (result != F_NO_ERR) {
-                goto exit;
-            }
-            /* change the current sector status to FULL */
-            result = write_sector_status(write_addr, SECTOR_STATUS_FULL);
-            if (result != F_NO_ERR) {
-                goto exit;
-            }
-            write_size += writable_size;
-        } else {
-            result = ef_port_write(write_addr, log, size);
-            log_end_addr = write_addr + size;
-            goto exit;
-        }
-    }
-    /* erase and write remain log */
-    while (true) {
-        /* calculate next available sector address */
-        erase_addr = write_addr = get_next_flash_sec_addr(write_addr - 4);
-        /* move the flash log start address to next available sector address */
-        if (log_start_addr == erase_addr) {
-            log_start_addr = get_next_flash_sec_addr(log_start_addr);
-        }
-        /* erase sector */
-        result = ef_port_erase(erase_addr, ERASE_MIN_SIZE);
-        if (result != F_NO_ERR) {
-            goto exit;
-        }
-        /* change the sector status to USING when write begin sector start address */
-        result = write_sector_status(write_addr, SECTOR_STATUS_USING);
-        if (result == F_NO_ERR) {
-            write_addr += LOG_SECTOR_HEADER_SIZE;
-        } else {
-            goto exit;
-        }
-        /* calculate current sector writable data size */
-        writable_size = ERASE_MIN_SIZE - LOG_SECTOR_HEADER_SIZE;
-        if (size - write_size >= writable_size) {
-            result = ef_port_write(write_addr, log + write_size / 4, writable_size);
-            if (result != F_NO_ERR) {
-                goto exit;
-            }
-            /* change the current sector status to FULL */
-            result = write_sector_status(write_addr, SECTOR_STATUS_FULL);
-            if (result != F_NO_ERR) {
-                goto exit;
-            }
-            log_end_addr = write_addr + writable_size;
-            write_size += writable_size;
-            write_addr += writable_size;
-        } else {
-            result = ef_port_write(write_addr, log + write_size / 4, size - write_size);
-            if (result != F_NO_ERR) {
-                goto exit;
-            }
-            log_end_addr = write_addr + (size - write_size);
-            break;
-        }
-    }
+    else
+    	writable_size = size;
 
-exit:
-    return result;
-}
+    write_cache(log_end_addr, log, writable_size);
+	set_header_used_size(log_end_addr + writable_size);
+  	_ret = save_cache_to_flash(cur_using_sector);
+  	log_end_addr += writable_size;
+  	if(log_end_addr < log_start_addr)
+  		log_start_addr = log_end_addr + 1;
 
-/**
- * Get next flash sector address.The log total sector like ring buffer which implement by flash.
- *
- * @param cur_addr cur flash address
- *
- * @return next flash sector address
- */
-static uint32_t get_next_flash_sec_addr(uint32_t cur_addr) {
-    size_t cur_sec_id = (cur_addr - log_area_start_addr) / ERASE_MIN_SIZE;
-    size_t sec_total_num = LOG_AREA_SIZE / ERASE_MIN_SIZE;
-
-    if (cur_sec_id + 1 >= sec_total_num) {
-        /* return to ring head */
-        return log_area_start_addr;
-    } else {
-        return log_area_start_addr + (cur_sec_id + 1) * ERASE_MIN_SIZE;
-    }
+  	return _ret;
 }
 
 /**
@@ -677,25 +319,22 @@ static uint32_t get_next_flash_sec_addr(uint32_t cur_addr) {
 EfErrCode ef_log_clean(void)
 {
     EfErrCode result = F_NO_ERR;
-    uint32_t write_addr = log_area_start_addr;
+    rt_uint32_t write_addr = log_area_start_addr;
 
     /* clean address */
     log_start_addr = log_area_start_addr;
-    log_end_addr = log_start_addr + LOG_SECTOR_HEADER_SIZE;
+    log_end_addr = log_start_addr + SECTOR_HEADER_SIZE;
     /* erase log flash area */
-    result = ef_port_erase(log_area_start_addr, LOG_AREA_SIZE);
+    result = flash_erase(log_area_start_addr, LOG_AREA_SIZE);
     if (result != F_NO_ERR) {
         goto exit;
     }
-    /* setting first sector is USING */
-    write_sector_status(write_addr, SECTOR_STATUS_USING);
     if (result != F_NO_ERR) {
         goto exit;
     }
     write_addr += ERASE_MIN_SIZE;
     /* add sector header */
     while (true) {
-        write_sector_status(write_addr, SECTOR_STATUS_EMPUT);
         if (result != F_NO_ERR) {
             goto exit;
         }

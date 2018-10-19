@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define SenseData_PRIORITY 11         //线程优先级
-#define SenseData_STACK_SIZE 512      //线程栈大小
+#define SenseData_STACK_SIZE 1024      //线程栈大小
 #define SenseData_TIMESLICE 10        //时间片Tick
 
 #define CupSense1_gpio     12

@@ -3,4 +3,5 @@ encoding//components/EasyFlash-v3.1.0/README.md=UTF-8
 encoding//components/EasyFlash-v3.1.0/docs/zh/port.md=UTF-8
 encoding//components/EasyFlash-v3.1.0/ports/README.md=UTF-8
 encoding//components/cm_backtrace/README.md=UTF-8
+encoding//rt-thread/components/drivers/rtc/README.md=UTF-8
 encoding//rt-thread/components/drivers/spi/sfud/README.md=UTF-8

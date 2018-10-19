@@ -9,7 +9,12 @@
 #define Heat_PID_TIMESLICE 10        // ±º‰∆¨Tick
 
 #define  TIME_FREQUENCY   10000000   // 10e9 / period = frequency
+#define heat_name   	"pwm1"
 
+typedef enum {
+	HEAT_STOP,
+    HEAT_START,
+} HeatSwitch;
 
 typedef struct 
 {
@@ -24,7 +29,6 @@ typedef struct
 
 struct HeatSystem_t
 {
-	rt_device_t dev;
 	char* deviceName;
 	rt_uint8_t PWM_channel;
 	rt_uint32_t CycleTime;
@@ -38,9 +42,8 @@ struct HeatSystem_t
 extern struct HeatSystem_t HeatHandle_1, HeatHandle_2, HeatHandle_3, HeatHandle_4;
 
 float pid_calculate(struct HeatSystem_t* h_heat);
-int set_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent);
-rt_err_t start_heat(struct HeatSystem_t* h_heat);
-rt_err_t stop_heat(struct HeatSystem_t* h_heat);
+int set_heat_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent);
+rt_err_t heat_start_stop(struct HeatSystem_t* h_heat, HeatSwitch _status);
 
 extern void Function_Heat_PID(void* parameter);
 #endif

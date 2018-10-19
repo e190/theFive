@@ -455,13 +455,9 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
     {
         __HAL_RCC_TIM1_CLK_ENABLE();
     }
-    else if(tim_pwmHandle->Instance==TIM12)
+    else if(tim_pwmHandle->Instance==TIM4)
     {
-        __HAL_RCC_TIM12_CLK_ENABLE();
-    }
-    else if(tim_pwmHandle->Instance==TIM3)
-    {
-        __HAL_RCC_TIM3_CLK_ENABLE();
+        __HAL_RCC_TIM4_CLK_ENABLE();
     }
 }
 
@@ -484,34 +480,21 @@ static void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
         GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
         HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
     }
-    else if(timHandle->Instance==TIM12)
+    else if(timHandle->Instance==TIM4)
     {
-        __HAL_RCC_GPIOB_CLK_ENABLE();
+        __HAL_RCC_GPIOD_CLK_ENABLE();
         /**TIM12 GPIO Configuration
-        PB14   ------> TIM12_CH1
-        PB15   ------> TIM12_CH2
+        PD12   ------> TIM4_CH1
+        PD13   ------> TIM4_CH2
+        PD14   ------> TIM4_CH1
+        PD15   ------> TIM4_CH2
         */
-        GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
+        GPIO_InitStruct.Pin = GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-        GPIO_InitStruct.Alternate = GPIO_AF9_TIM12;
-        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    }
-    else if(timHandle->Instance==TIM3)
-    {
-        __HAL_RCC_GPIOB_CLK_ENABLE();
-        /**TIM3 GPIO Configuration    
-        PB0     ------> TIM3_CH3
-        PB1     ------> TIM3_CH4 
-        */
-
-//        GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
-//        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-//        GPIO_InitStruct.Pull = GPIO_NOPULL;
-//        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-//        GPIO_InitStruct.Alternate = GPIO_AF2_TIM3;
-//        HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+        GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
+        HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
     }
 
 }
@@ -522,13 +505,9 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
     {
         __HAL_RCC_TIM1_CLK_DISABLE();
     }
-    else if(tim_pwmHandle->Instance==TIM12)
+    else if(tim_pwmHandle->Instance==TIM4)
     {
-        __HAL_RCC_TIM12_CLK_DISABLE();
-    }
-    else if(tim_pwmHandle->Instance==TIM3)
-    {
-        __HAL_RCC_TIM3_CLK_DISABLE();
+        __HAL_RCC_TIM4_CLK_DISABLE();
     }
 } 
 int drv_pwm_init(void)
@@ -559,4 +538,4 @@ int drv_pwm_init(void)
 #endif
     return 0;
 }
-//INIT_DEVICE_EXPORT(drv_pwm_init);
+INIT_DEVICE_EXPORT(drv_pwm_init);

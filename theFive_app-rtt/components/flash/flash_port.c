@@ -30,37 +30,8 @@
 
 extern rt_device_t w25q128;
 
+static rt_uint32_t flash_cache[ERASE_MIN_SIZE / 4] = { 0 };
 static char log_buf[RT_CONSOLEBUF_SIZE];
-
-/**
- *	写入flash--->one sector
- */
-EfErrCode flash_write_sector(rt_uint32_t _addr, const void *_buffer)
-{
-    EfErrCode result = F_NO_ERR;
-    rt_size_t write_result = 0;
-
-    write_result = rt_device_write(w25q128, _addr, _buffer, 1);
-    if(write_result == 0) {
-        result = F_WRITE_ERR;
-    }
-
-	return result;
-}
-/**
- *	读取flash--->one sector
- */
-EfErrCode flash_read_sector(rt_uint32_t _addr, void *_buffer)
-{
-    EfErrCode result = F_NO_ERR;
-    rt_size_t read_result = 0;
-
-    rt_device_read(w25q128, _addr, _buffer, 1);
-    if(read_result == 0) {
-        result = F_READ_ERR;
-    }
-	return result;
-}
 
 EfErrCode flash_erase(uint32_t addr, size_t size)
 {
@@ -92,17 +63,83 @@ EfErrCode get_flash_geometry(struct rt_device_blk_geometry *flash_geometry)
 
 	return _ret;
 }
-EfErrCode ef_port_read(uint32_t addr, uint32_t *buf, size_t size)
+/**
+ *	读取flash到缓冲区
+ */
+EfErrCode read_flash_to_cache(rt_uint32_t _addr)
 {
+    EfErrCode result = F_NO_ERR;
+    rt_size_t read_result = 0;
 
+    _addr = _addr % ERASE_MIN_SIZE;
+    read_result = rt_device_read(w25q128, _addr, flash_cache, 1);
+    if(read_result == 0) {
+        result = F_READ_ERR;
+    }
+	return result;
 }
-EfErrCode ef_port_erase(uint32_t addr, size_t size)
+/**
+ *	从缓冲区读取数据
+ */
+EfErrCode read_cache(rt_uint32_t addr, rt_uint32_t *buf, size_t size)
 {
+    EfErrCode result = F_NO_ERR;
+    rt_size_t read_result = 0;
+    rt_uint16_t sector_num, detail_size;
+	char *flash_cache_bak = (char *)flash_cache;
 
+	detail_size = addr % ERASE_MIN_SIZE;
+
+	rt_memcpy(buf, &flash_cache_bak + detail_size, detail_size);
+
+
+	return result;
 }
-EfErrCode ef_port_write(uint32_t addr, const uint32_t *buf, size_t size)
+/**
+ *	写数据到缓冲区
+ */
+EfErrCode write_cache(rt_uint32_t _sector_offset, const void *_buffer, rt_size_t _size)
 {
+	EfErrCode _ret = F_NO_ERR;
+	uint16_t detail_addr = _sector_offset % ERASE_MIN_SIZE;
+	char *flash_cache_bak = (char *)flash_cache;
 
+	rt_memcpy(&flash_cache_bak + detail_addr, _buffer, _size);
+
+	return _ret;
+}
+/**
+ *	写数据到缓冲区
+ */
+EfErrCode save_cache_to_flash(rt_uint32_t addr)
+{
+    EfErrCode result = F_NO_ERR;
+    rt_size_t write_result = 0;
+
+    write_result = rt_device_write(w25q128, addr, flash_cache, 1);
+    if(write_result == 0) {
+        result = F_WRITE_ERR;
+    }
+
+	return result;
+}
+rt_size_t get_header_used_size(void)
+{
+	return flash_cache[SECTION_USED_SIZE] & 0x0000ffff;
+}
+EfErrCode set_header_used_size(rt_size_t _size)
+{
+	flash_cache[SECTION_USED_SIZE] |= _size & 0x0000ffff;
+	return F_NO_ERR;
+}
+rt_size_t get_header_used_times(void)
+{
+	return flash_cache[SECTION_USED_SIZE] >> 16;
+}
+EfErrCode set_header_used_times(rt_uint32_t _times)
+{
+	flash_cache[SECTION_USED_SIZE] |= _times << 16;
+	return F_NO_ERR;
 }
 
 /**

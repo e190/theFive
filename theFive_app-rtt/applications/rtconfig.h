@@ -105,17 +105,20 @@
 #define RT_USING_I2C_BITOPS
 #define RT_USING_I2C_1
 #define RT_USING_I2C_2
+#define RT_USING_I2C_3
+#define RT_USING_I2C_4
 #define RT_USING_I2C_5
 //#define RT_I2C_BIT_DEBUG
 #define RT_USING_PIN
 #define RT_USING_PWM
+#define RT_USING_RTC
 
 #define RT_USING_SPI
 //#define RT_USING_W25QXX
 #define RT_USING_SFUD
 #define RT_SFUD_USING_SFDP
 #define RT_SFUD_USING_FLASH_INFO_TABLE
-
+#define RT_DEBUG_SFUD  0
 
 /* Using USB */
 #define RT_USING_USB_DEVICE
@@ -200,29 +203,7 @@
 
 /* miscellaneous packages */
 
-#define SOC_STM32F407ZE
-
 #define RT_HSE_VALUE 8000000
 #define RT_HSE_HCLK 168000000
-
-#define RT_USING_UART3
-#define RT_USING_UART2
-#define RT_USING_UART4
-#define RT_USING_UART1
-
-#define BSP_USING_PWM1
-#define BSP_USING_PWM1_CH1
-#define BSP_USING_PWM1_CH2
-#define BSP_USING_PWM1_CH3
-#define BSP_USING_PWM1_CH4
-#define BSP_USING_PWM2
-#define BSP_USING_PWM2_CH1
-#define BSP_USING_PWM2_CH2
-//#define BSP_USING_PWM3
-//#define BSP_USING_PWM3_CH3
-//#define BSP_USING_PWM3_CH4
-#define RT_USING_SPI2
-#define RT_USING_SPI3
-#define RT_DEBUG_SFUD  0
 
 #endif

@@ -35,6 +35,8 @@ rt-thread/components/dfs/filesystems/elmfat/option \
 rt-thread/components/dfs/src \
 rt-thread/components/drivers/i2c \
 rt-thread/components/drivers/misc \
+rt-thread/components/drivers/rtc \
+rt-thread/components/drivers/sdio \
 rt-thread/components/drivers/serial \
 rt-thread/components/drivers/spi/sfud/src \
 rt-thread/components/drivers/spi \

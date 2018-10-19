@@ -37,6 +37,17 @@ struct drv_i2c i2c_bus_1; //ad1110
 struct drv_i2c i2c_bus_2; //ad1110
 #endif /* RT_USING_I2C_2 */
 
+#if defined(RT_USING_I2C_3)
+/*user can change this*/
+#define I2C_3_NAME  "i2c3"
+struct drv_i2c i2c_bus_3; //ad1110
+#endif /* RT_USING_I2C_3 */
+
+#if defined(RT_USING_I2C_4)
+#define I2C_4_NAME  "i2c4"
+struct drv_i2c i2c_bus_4; //ad1110
+#endif /* RT_USING_I2C_4 */
+
 #if defined(RT_USING_I2C_5)
 #define I2C_5_NAME  "i2c5"
 struct drv_i2c i2c_bus_5; //rfid
@@ -46,28 +57,48 @@ static void drv_i2c_gpio_init()
 {	
     GPIO_InitTypeDef GPIO_Initure;
 	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOE_CLK_ENABLE();
 	__HAL_RCC_GPIOF_CLK_ENABLE();
 	
 #if defined(RT_USING_I2C_1)	
-	i2c_bus_1.scl_pin = GPIO_PIN_6;
+	i2c_bus_1.scl_pin = GPIO_PIN_12;
 	i2c_bus_1.scl_port = GPIOB;
-	i2c_bus_1.sda_pin = GPIO_PIN_7;
-	i2c_bus_1.sda_port = GPIOB;
+	i2c_bus_1.sda_pin = GPIO_PIN_6;
+	i2c_bus_1.sda_port = GPIOC;
+
+    GPIO_Initure.Pin = GPIO_PIN_12;
+    GPIO_Initure.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_Initure.Pull = GPIO_NOPULL;
+    GPIO_Initure.Speed = GPIO_SPEED_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_Initure);
+
+    GPIO_Initure.Pin = GPIO_PIN_6;
+    HAL_GPIO_Init(GPIOC, &GPIO_Initure);
+
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+#endif /* RT_USING_I2C_1 */
 	
+#if defined(RT_USING_I2C_2)
+	i2c_bus_2.scl_pin = GPIO_PIN_6;
+	i2c_bus_2.scl_port = GPIOB;
+	i2c_bus_2.sda_pin = GPIO_PIN_7;
+	i2c_bus_2.sda_port = GPIOB;
+
     GPIO_Initure.Pin = GPIO_PIN_6 | GPIO_PIN_7;
     GPIO_Initure.Mode = GPIO_MODE_OUTPUT_OD;
     GPIO_Initure.Pull = GPIO_NOPULL;
     GPIO_Initure.Speed = GPIO_SPEED_HIGH;
     HAL_GPIO_Init(GPIOB, &GPIO_Initure);
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6 | GPIO_PIN_7, GPIO_PIN_SET);
-#endif /* RT_USING_I2C_1 */
+#endif /* RT_USING_I2C_2 */
 	
-#if defined(RT_USING_I2C_2)
-	i2c_bus_2.scl_pin = GPIO_PIN_1;
-	i2c_bus_2.scl_port = GPIOF;
-	i2c_bus_2.sda_pin = GPIO_PIN_0;
-	i2c_bus_2.sda_port = GPIOF;
+#if defined(RT_USING_I2C_3)
+	i2c_bus_3.scl_pin = GPIO_PIN_1;
+	i2c_bus_3.scl_port = GPIOF;
+	i2c_bus_3.sda_pin = GPIO_PIN_0;
+	i2c_bus_3.sda_port = GPIOF;
 
     GPIO_Initure.Pin = GPIO_PIN_0 | GPIO_PIN_1;
     GPIO_Initure.Mode = GPIO_MODE_OUTPUT_OD;
@@ -75,7 +106,26 @@ static void drv_i2c_gpio_init()
     GPIO_Initure.Speed = GPIO_SPEED_HIGH;
     HAL_GPIO_Init(GPIOF, &GPIO_Initure);
     HAL_GPIO_WritePin(GPIOF, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_SET);
-#endif /* RT_USING_I2C_2 */
+#endif /* RT_USING_I2C_3 */
+
+#if defined(RT_USING_I2C_4)
+	i2c_bus_4.scl_pin = GPIO_PIN_8;
+	i2c_bus_4.scl_port = GPIOG;
+	i2c_bus_4.sda_pin = GPIO_PIN_7;
+	i2c_bus_4.sda_port = GPIOC;
+
+    GPIO_Initure.Pin = GPIO_PIN_7;
+    GPIO_Initure.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_Initure.Pull = GPIO_NOPULL;
+    GPIO_Initure.Speed = GPIO_SPEED_HIGH;
+    HAL_GPIO_Init(GPIOC, &GPIO_Initure);
+
+    GPIO_Initure.Pin = GPIO_PIN_8;
+    HAL_GPIO_Init(GPIOG, &GPIO_Initure);
+
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_8, GPIO_PIN_SET);
+#endif /* RT_USING_I2C_4 */
 
 #if defined(RT_USING_I2C_5)	
 	i2c_bus_5.scl_pin = GPIO_PIN_0;
@@ -144,30 +194,46 @@ static const struct rt_i2c_bit_ops drv_bit_ops =
 
 int drv_i2c_init(void)
 {
-    static struct rt_i2c_bus_device i2c2_bus1;
-	static struct rt_i2c_bus_device i2c2_bus2;
-	static struct rt_i2c_bus_device i2c2_bus5;
+    static struct rt_i2c_bus_device i2c_bus1;
+	static struct rt_i2c_bus_device i2c_bus2;
+    static struct rt_i2c_bus_device i2c_bus3;
+	static struct rt_i2c_bus_device i2c_bus4;
+	static struct rt_i2c_bus_device i2c_bus5;
     drv_i2c_gpio_init();
 
 #if defined(RT_USING_I2C_1)	
-    rt_memset((void *)&i2c2_bus1, 0, sizeof(struct rt_i2c_bus_device));
-	i2c2_bus1.pin = &i2c_bus_1;
-    i2c2_bus1.priv = (void *)&drv_bit_ops;
-    rt_i2c_bit_add_bus(&i2c2_bus1, I2C_1_NAME);
+    rt_memset((void *)&i2c_bus1, 0, sizeof(struct rt_i2c_bus_device));
+	i2c_bus1.pin = &i2c_bus_1;
+    i2c_bus1.priv = (void *)&drv_bit_ops;
+    rt_i2c_bit_add_bus(&i2c_bus1, I2C_1_NAME);
 #endif /* RT_USING_I2C_1 */
 
 #if defined(RT_USING_I2C_2)
-    rt_memset((void *)&i2c2_bus2, 0, sizeof(struct rt_i2c_bus_device));
-	i2c2_bus2.pin = &i2c_bus_2;
-    i2c2_bus2.priv = (void *)&drv_bit_ops;
-    rt_i2c_bit_add_bus(&i2c2_bus2, I2C_2_NAME);
+    rt_memset((void *)&i2c_bus2, 0, sizeof(struct rt_i2c_bus_device));
+	i2c_bus2.pin = &i2c_bus_2;
+    i2c_bus2.priv = (void *)&drv_bit_ops;
+    rt_i2c_bit_add_bus(&i2c_bus2, I2C_2_NAME);
 #endif /* RT_USING_I2C_2 */
 
+#if defined(RT_USING_I2C_3)
+    rt_memset((void *)&i2c_bus3, 0, sizeof(struct rt_i2c_bus_device));
+	i2c_bus3.pin = &i2c_bus_3;
+    i2c_bus3.priv = (void *)&drv_bit_ops;
+    rt_i2c_bit_add_bus(&i2c_bus3, I2C_3_NAME);
+#endif /* RT_USING_I2C_3 */
+
+#if defined(RT_USING_I2C_4)
+    rt_memset((void *)&i2c_bus4, 0, sizeof(struct rt_i2c_bus_device));
+	i2c_bus4.pin = &i2c_bus_4;
+    i2c_bus4.priv = (void *)&drv_bit_ops;
+    rt_i2c_bit_add_bus(&i2c_bus4, I2C_4_NAME);
+#endif /* RT_USING_I2C_4 */
+
 #if defined(RT_USING_I2C_5)	
-    rt_memset((void *)&i2c2_bus5, 0, sizeof(struct rt_i2c_bus_device));
-	i2c2_bus5.pin = &i2c_bus_5;
-    i2c2_bus5.priv = (void *)&drv_bit_ops;
-    rt_i2c_bit_add_bus(&i2c2_bus5, I2C_5_NAME);
+    rt_memset((void *)&i2c_bus5, 0, sizeof(struct rt_i2c_bus_device));
+	i2c_bus5.pin = &i2c_bus_5;
+    i2c_bus5.priv = (void *)&drv_bit_ops;
+    rt_i2c_bit_add_bus(&i2c_bus5, I2C_5_NAME);
 #endif /* RT_USING_I2C_5 */
 	
     return RT_EOK;

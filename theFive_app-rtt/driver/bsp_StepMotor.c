@@ -5,10 +5,7 @@
 #include "bsp_timer.h"
 #include "bsp_StepMotor.h"
 
-TIM_HandleTypeDef htim_2;
 TIM_HandleTypeDef htim_3;
-TIM_HandleTypeDef htim_4;
-TIM_HandleTypeDef htim_8;
 
 MotorHandle_t* NowMotor = NULL;
 void StopMotorTimer(MotorHandle_t* Motor);
@@ -53,18 +50,13 @@ void StepMotorRampDataInit(void)
 	Motor1.MinSpeed = 1000;
 	Motor1.MaxSpeed = 12000;
 	Motor1.CurrentPosition = 0;
-	Motor1.MaxPosition = 5000;
-	Motor1.MinPosition = -5000;
-	Motor1.activeChannel = HAL_TIM_ACTIVE_CHANNEL_1;
-	Motor1.TIMx_Handle = &htim_8;
-	Motor1.TIMx_CHANNEL = TIM_CHANNEL_1;
-	Motor1.TIM_IT_CCx = TIM_IT_CC1;
-	Motor1.TIMx = TIM8;
-//	Motor1.activeChannel = HAL_TIM_ACTIVE_CHANNEL_4;
-//	Motor1.TIMx_Handle = &htim_3;
-//	Motor1.TIMx_CHANNEL = TIM_CHANNEL_4;
-//	Motor1.TIM_IT_CCx = TIM_IT_CC4;
-//	Motor1.TIMx = TIM3;
+	Motor1.MaxPosition = 5500;
+	Motor1.MinPosition = -5500;
+	Motor1.activeChannel = HAL_TIM_ACTIVE_CHANNEL_4;
+	Motor1.TIMx_Handle = &htim_3;
+	Motor1.TIMx_CHANNEL = TIM_CHANNEL_4;
+	Motor1.TIM_IT_CCx = TIM_IT_CC4;
+	Motor1.TIMx = TIM3;
 
 	Motor1.CCWfun = M1_CCW;
 	Motor1.LightSwitch = 0;
@@ -76,19 +68,14 @@ void StepMotorRampDataInit(void)
 	Motor2.MinSpeed = 1000;
 	Motor2.MaxSpeed = 12000;
 	Motor2.CurrentPosition = 0;
-	Motor2.MaxPosition = 5000;
-	Motor2.MinPosition = -5000;
+	Motor2.MaxPosition = 5500;
+	Motor2.MinPosition = -5500;
 	Motor2.LightSwitch = 0;
-	Motor2.activeChannel = HAL_TIM_ACTIVE_CHANNEL_1;
-	Motor2.TIMx_Handle = &htim_4;
-	Motor2.TIMx_CHANNEL = TIM_CHANNEL_1;
-	Motor2.TIM_IT_CCx = TIM_IT_CC1;
-	Motor2.TIMx = TIM4;
-//	Motor2.activeChannel = HAL_TIM_ACTIVE_CHANNEL_3;
-//	Motor2.TIMx_Handle = &htim_3;
-//	Motor2.TIMx_CHANNEL = TIM_CHANNEL_3;
-//	Motor2.TIM_IT_CCx = TIM_IT_CC3;
-//	Motor2.TIMx = TIM3;
+	Motor2.activeChannel = HAL_TIM_ACTIVE_CHANNEL_3;
+	Motor2.TIMx_Handle = &htim_3;
+	Motor2.TIMx_CHANNEL = TIM_CHANNEL_3;
+	Motor2.TIM_IT_CCx = TIM_IT_CC3;
+	Motor2.TIMx = TIM3;
 
 	Motor2.CCWfun = M2_CCW;
 	Motor2.HalfCurrent = M2_HalfCurrent;
@@ -99,13 +86,13 @@ void StepMotorRampDataInit(void)
 	Motor3.MinSpeed = 1000;
 	Motor3.MaxSpeed = 12000;
 	Motor3.CurrentPosition = 0;
-	Motor3.MaxPosition = 5000;
-	Motor3.MinPosition = -5000;
+	Motor3.MaxPosition = 5500;
+	Motor3.MinPosition = -5500;
 	Motor3.LightSwitch = 0;
-	Motor3.activeChannel = HAL_TIM_ACTIVE_CHANNEL_1;
+	Motor3.activeChannel = HAL_TIM_ACTIVE_CHANNEL_2;
 	Motor3.TIMx_Handle = &htim_3;
-	Motor3.TIMx_CHANNEL = TIM_CHANNEL_1;
-	Motor3.TIM_IT_CCx = TIM_IT_CC1;
+	Motor3.TIMx_CHANNEL = TIM_CHANNEL_2;
+	Motor3.TIM_IT_CCx = TIM_IT_CC2;
 	Motor3.TIMx = TIM3;
 	Motor3.CCWfun = M3_CCW;
 	Motor3.HalfCurrent = M3_HalfCurrent;
@@ -116,114 +103,20 @@ void StepMotorRampDataInit(void)
 	Motor4.MinSpeed = 1000;
 	Motor4.MaxSpeed = 12000;
 	Motor4.CurrentPosition = 0;
-	Motor4.MaxPosition = 5000;
-	Motor4.MinPosition = -5000;
+	Motor4.MaxPosition = 5500;
+	Motor4.MinPosition = -5500;
 	Motor4.LightSwitch = 0;
 	Motor4.activeChannel = HAL_TIM_ACTIVE_CHANNEL_1;
-	Motor4.TIMx_Handle = &htim_2;
+	Motor4.TIMx_Handle = &htim_3;
 	Motor4.TIMx_CHANNEL = TIM_CHANNEL_1;
 	Motor4.TIM_IT_CCx = TIM_IT_CC1;
-	Motor4.TIMx = TIM2;
+	Motor4.TIMx = TIM3;
 	Motor4.CCWfun = M4_CCW;
 	Motor4.HalfCurrent = M4_HalfCurrent;
 	Motor4.optofun = M4_optofun;
 	Motor4.end_cb = NULL;
 #endif
 
-}
-/**
-* @brief  
-*        TIM8初始化
-* @param 
-* 
-* @retval 
-*/
-void TIM8_Init(void)
-{
-	TIM_ClockConfigTypeDef sClockSourceConfig;             // 定时器时钟
-	TIM_OC_InitTypeDef sConfigOC;                          // 定时器通道比较输出
-	TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig;			
-	
-	/* 定时器基本环境配置 */
-	htim_8.Instance = TIM8;                          // 定时器编号
-	htim_8.Init.Prescaler = TIM8_PRESCALER;           // 定时器预分频器
-	htim_8.Init.CounterMode = TIM_COUNTERMODE_UP;              // 计数方向：向上计数
-	htim_8.Init.Period = STEPMOTOR_TIM_PERIOD;                 // 定时器周期
-	htim_8.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;          // 时钟分频
-
-	if (HAL_TIM_OC_Init(&htim_8) != HAL_OK)
-	{
-		RT_ASSERT(0);
-	}
-
-	/* 定时器时钟源配置 */
-	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;       		// 使用内部时钟源
-	HAL_TIM_ConfigClockSource(&htim_8, &sClockSourceConfig);
-
-	/* 定时器比较输出配置 */
-	sConfigOC.OCMode = TIM_OCMODE_TOGGLE;                 // 比较输出模式：反转输出
-	sConfigOC.Pulse = 0;                                  // 脉冲数
-	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;           // 输出极性
-	sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;         // 互补通道输出极性
-	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;            // 快速模式
-	sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;        // 空闲电平
-	sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;      // 互补通道空闲电平
-	
-	if(HAL_TIM_OC_ConfigChannel(&htim_8, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-	{
-		RT_ASSERT(0);
-	}
-
-	sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
-	sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
-	sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-	sBreakDeadTimeConfig.DeadTime = 0;
-	sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
-	sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-	sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
-	HAL_TIMEx_ConfigBreakDeadTime(&htim_8, &sBreakDeadTimeConfig);
-	
-	/* STEPMOTOR相关GPIO初始化配置 */
-	//HAL_TIM_MspPostInit(&htim_8);
-}
-/**
-* @brief  
-*        TIM4初始化
-* @param 
-* 
-* @retval 
-*/
-void TIM4_Init(void)
-{
-	TIM_ClockConfigTypeDef sClockSourceConfig;             // 定时器时钟
-	TIM_OC_InitTypeDef sConfigOC;                          // 定时器通道比较输出		
-	
-	/* 定时器基本环境配置 */
-	htim_4.Instance = TIM4;                          // 定时器编号
-	htim_4.Init.Prescaler = TIM4_PRESCALER;           // 定时器预分频器
-	htim_4.Init.CounterMode = TIM_COUNTERMODE_UP;              // 计数方向：向上计数
-	htim_4.Init.Period = STEPMOTOR_TIM_PERIOD;                 // 定时器周期
-	htim_4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;          // 时钟分频
-	HAL_TIM_OC_Init(&htim_4);
-
-	/* 定时器时钟源配置 */
-	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;       		// 使用内部时钟源
-	HAL_TIM_ConfigClockSource(&htim_4, &sClockSourceConfig);
-
-	/* 定时器比较输出配置 */
-	sConfigOC.OCMode = TIM_OCMODE_TOGGLE;                 // 比较输出模式：反转输出
-	sConfigOC.Pulse = 0;                                  // 脉冲数
-	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;           // 输出极性
-	sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;         // 互补通道输出极性
-	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;            // 快速模式
-	sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;        // 空闲电平
-	sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;      // 互补通道空闲电平
-	if(HAL_TIM_OC_ConfigChannel(&htim_4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-	{
-		RT_ASSERT(0);
-	}
-	/* STEPMOTOR相关GPIO初始化配置 */
-	//HAL_TIM_MspPostInit(&htim_4);
 }
 /**
 * @brief  
@@ -262,148 +155,23 @@ void TIM3_Init(void)
     {
         RT_ASSERT(0);
     }
-//    if (HAL_TIM_OC_ConfigChannel(&htim_3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
-//    {
-//        RT_ASSERT(0);
-//    }
-//    if (HAL_TIM_OC_ConfigChannel(&htim_3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
-//    {
-//        RT_ASSERT(0);
-//    }
+    if (HAL_TIM_OC_ConfigChannel(&htim_3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+    {
+        RT_ASSERT(0);
+    }
+    if (HAL_TIM_OC_ConfigChannel(&htim_3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+    {
+        RT_ASSERT(0);
+    }
+    if (HAL_TIM_OC_ConfigChannel(&htim_3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+    {
+        RT_ASSERT(0);
+    }
 	/* STEPMOTOR相关GPIO初始化配置 */
 	//HAL_TIM_MspPostInit(&htim_3);
 }
-/**
-* @brief  
-*        TIM2初始化
-* @param 
-* 
-* @retval 
-*/
-void TIM2_Init(void)
-{
-	TIM_ClockConfigTypeDef sClockSourceConfig;             // 定时器时钟
-	TIM_OC_InitTypeDef sConfigOC;                          // 定时器通道比较输出		
-	
-	/* 定时器基本环境配置 */
-	htim_2.Instance = TIM2;                          		// 定时器编号
-	htim_2.Init.Prescaler = TIM2_PRESCALER;           		// 定时器预分频器
-	htim_2.Init.CounterMode = TIM_COUNTERMODE_UP;           // 计数方向：向上计数
-	htim_2.Init.Period = 0xFFFFFFFF;                 		// 定时器周期  0xFFFFFFFF
-	htim_2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;     // 时钟分频
-	HAL_TIM_OC_Init(&htim_2);
 
-	/* 定时器时钟源配置 */
-	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;       		// 使用内部时钟源
-	HAL_TIM_ConfigClockSource(&htim_2, &sClockSourceConfig);
 
-	/* 定时器比较输出配置 */
-	sConfigOC.OCMode = TIM_OCMODE_TOGGLE;                 // 比较输出模式：反转输出
-	sConfigOC.Pulse = 1;                                  // 脉冲数
-	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;           // 输出极性
-	sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;         // 互补通道输出极性
-	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;            // 快速模式
-	sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;        // 空闲电平
-	sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;      // 互补通道空闲电平
-	if(HAL_TIM_OC_ConfigChannel(&htim_2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-	{
-		RT_ASSERT(0);
-	}
-
-	/* STEPMOTOR相关GPIO初始化配置 */
-	//HAL_TIM_MspPostInit(&htim_2);
-}
-/**
-* @brief  TIM8_GPIOInit
-*         TIM8的IO初始化
-* @param 
-* 
-* @retval 
-*/
-void TIM8_GPIOInit(void)
-{
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
-	__HAL_RCC_GPIOE_CLK_ENABLE();
-	GPIO_InitTypeDef GPIO_InitStruct;
-	/**TIM8 GPIO Configuration  
-	PC6     ------> TIM8_CH1  
-	*/
-	GPIO_InitStruct.Pin =  GPIO_PIN_6;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	GPIO_InitStruct.Alternate = GPIO_AF3_TIM8;
-	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_RESET);
-
-	/* 
-	MOTOR1使能EN PD8
-	MOTOR1方向CWB PD9
-	*/
-	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-	/* MOTOR1 REF */
-	GPIO_InitStruct.Pin = GPIO_PIN_15;
-	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);	
-
-	/* 控制电机电流 */
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_15, GPIO_PIN_SET);
-	/*光耦*/
-	GPIO_InitStruct.Pin = GPIO_PIN_5;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-}
-/**
-* @brief  TIM4_GPIOInit
-*         TIM4的IO初始化
-* @param
-*
-* @retval
-*/
-void TIM4_GPIOInit(void)
-{
-	GPIO_InitTypeDef GPIO_InitStruct;
-    /**TIM4 GPIO Configuration
-		PD12     ------> TIM4_CH1
-    */
-	__HAL_RCC_GPIOD_CLK_ENABLE();
-
-    GPIO_InitStruct.Pin = GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8 | GPIO_PIN_10 | GPIO_PIN_12, GPIO_PIN_RESET);
-	/*
-	MOTOR2CWB 使能 PE12
-	MOTOR2CWB 方向 PE10
-	*/
-	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_10 | GPIO_PIN_12;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-
-	/* 控制电机电流 PE8*/
-	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, GPIO_PIN_SET);
-	/*光耦*/
-	GPIO_InitStruct.Pin = GPIO_PIN_9;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-}
 /**
 * @brief  TIM3_GPIOInit
 *         TIM3的IO初始化
@@ -414,14 +182,20 @@ void TIM4_GPIOInit(void)
 void TIM3_GPIOInit(void)
 {
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOD_CLK_ENABLE();
+	__HAL_RCC_GPIOE_CLK_ENABLE();
 	__HAL_RCC_GPIOF_CLK_ENABLE();
 	__HAL_RCC_GPIOG_CLK_ENABLE();
 
 	GPIO_InitTypeDef GPIO_InitStruct;
 	/**TIM3 GPIO Configuration    
 	PA6     ------> TIM3_CH1 
+	PA7     ------> TIM3_CH2
+	PB0     ------> TIM3_CH3
+	PB1     ------> TIM3_CH4
 	*/
-	GPIO_InitStruct.Pin = GPIO_PIN_6;
+	GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -434,21 +208,39 @@ void TIM3_GPIOInit(void)
 	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_1 | GPIO_PIN_0, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GPIOF, GPIO_PIN_15, GPIO_PIN_RESET);
 	/* 
-	MOTOR3 使能EN  PG1
-	MOTOR3 方向CWB PG0
+	MOTOR1 使能EN  --> PD8
+	MOTOR1 方向CWB --> PD9
+	MOTOR1 半流HOLD --> PE15
+
+	MOTOR2 使能EN  --> PE12
+	MOTOR2 方向CWB --> PE10
+	MOTOR2 半流HOLD --> PE8
+
+	MOTOR3 使能EN  --> PG1
+	MOTOR3 方向CWB --> PG0
+	MOTOR3 半流HOLD --> PF15
+
+	MOTOR4 使能EN  --> PF13
+	MOTOR4 方向CWB --> PF12
+	MOTOR4 半流HOLD --> PF11
 	*/
-	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
+	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-	/* TQ2 PF15*/
-	GPIO_InitStruct.Pin = GPIO_PIN_15;
+	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_10 | GPIO_PIN_12 | GPIO_PIN_15;
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_15;
 	HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
-
+	GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1;
+	HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 	/* 控制电机电流 */
 	HAL_GPIO_WritePin(GPIOF, GPIO_PIN_15, GPIO_PIN_SET);
+
 	/*光耦*/
 	GPIO_InitStruct.Pin = GPIO_PIN_8;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -456,49 +248,7 @@ void TIM3_GPIOInit(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
-/**
-* @brief  TIM2_GPIOInit
-*         TIM2的IO初始化
-* @param 
-* 
-* @retval 
-*/
-void TIM2_GPIOInit(void)
-{
-	GPIO_InitTypeDef GPIO_InitStruct;
-    /**TIM2 GPIO Configuration    
-		PA5     ------> TIM2_CH1 
-    */
 
-
-    GPIO_InitStruct.Pin = GPIO_PIN_5;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-		
-	HAL_GPIO_WritePin(GPIOF, GPIO_PIN_12 | GPIO_PIN_13, GPIO_PIN_RESET);
-	/* 
-	MOTOR4 使能EN  PF13
-	MOTOR4 方向CWB PF12
-	*/
-	GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);		
-
-	/* 控制电机电流 */
-	HAL_GPIO_WritePin(GPIOF, GPIO_PIN_11 | GPIO_PIN_13, GPIO_PIN_SET);
-
-	/*光耦*/
-	GPIO_InitStruct.Pin = GPIO_PIN_0;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
-}
 /**
   * 函数功能: 基本定时器硬件初始化配置
   * 输入参数: htim_base：基本定时器句柄类型指针
@@ -507,28 +257,6 @@ void TIM2_GPIOInit(void)
   */
 void HAL_TIM_OC_MspInit(TIM_HandleTypeDef* htim_base)
 {	
-	if(htim_base->Instance == TIM8)
-	{
-		/* 基本定时器外设时钟使能 */
-		__HAL_RCC_TIM8_CLK_ENABLE();
-
-		TIM8_GPIOInit();  
-		
-		/* 配置定时器中断优先级并使能 */
-		HAL_NVIC_SetPriority(TIM8_CC_IRQn, 10, 0);
-		HAL_NVIC_EnableIRQ(TIM8_CC_IRQn);
-	}
-	if(htim_base->Instance == TIM2)
-	{
-		/* 基本定时器外设时钟使能 */
-		__HAL_RCC_TIM2_CLK_ENABLE();
-
-		TIM2_GPIOInit();
-		
-		/* 配置定时器中断优先级并使能 */
-		HAL_NVIC_SetPriority(TIM2_IRQn, 10, 0);
-		HAL_NVIC_EnableIRQ(TIM2_IRQn);
-	}
 	if(htim_base->Instance == TIM3)
 	{
 		/* 基本定时器外设时钟使能 */
@@ -539,17 +267,6 @@ void HAL_TIM_OC_MspInit(TIM_HandleTypeDef* htim_base)
 		/* 配置定时器中断优先级并使能 */
 		HAL_NVIC_SetPriority(TIM3_IRQn, 10, 0);
 		HAL_NVIC_EnableIRQ(TIM3_IRQn);
-	}
-	if(htim_base->Instance == TIM4)
-	{
-		/* 基本定时器外设时钟使能 */
-		__HAL_RCC_TIM4_CLK_ENABLE();
-
-		TIM4_GPIOInit();
-		
-		/* 配置定时器中断优先级并使能 */
-		HAL_NVIC_SetPriority(TIM4_IRQn, 10, 0);
-		HAL_NVIC_EnableIRQ(TIM4_IRQn);
 	}
 }
 
@@ -562,33 +279,12 @@ void HAL_TIM_OC_MspInit(TIM_HandleTypeDef* htim_base)
 void HAL_TIM_OC_MspDeInit(TIM_HandleTypeDef* htim_base)
 {
 
-	if(htim_base->Instance == TIM4)
-	{
-		/* 基本定时器外设时钟禁用 */
-		__HAL_RCC_TIM4_CLK_DISABLE();
-		HAL_GPIO_DeInit(GPIOD,GPIO_PIN_12);
-		HAL_NVIC_DisableIRQ(TIM4_IRQn);
-	}
-	else if(htim_base->Instance == TIM3)
+	if(htim_base->Instance == TIM3)
 	{
 		/* 基本定时器外设时钟禁用 */
 		__HAL_RCC_TIM3_CLK_DISABLE();
 		HAL_GPIO_DeInit(GPIOA,GPIO_PIN_6);
 		HAL_NVIC_DisableIRQ(TIM3_IRQn);
-	}
-	else if(htim_base->Instance == TIM2)
-	{
-		/* 基本定时器外设时钟禁用 */
-		__HAL_RCC_TIM2_CLK_DISABLE();
-		HAL_GPIO_DeInit(GPIOA,GPIO_PIN_5);
-		HAL_NVIC_DisableIRQ(TIM2_IRQn);
-	}
-	else if(htim_base->Instance == TIM8)
-	{
-		/* 基本定时器外设时钟禁用 */
-		__HAL_RCC_TIM8_CLK_DISABLE();
-		HAL_GPIO_DeInit(GPIOC,GPIO_PIN_6);
-		HAL_NVIC_DisableIRQ(TIM8_CC_IRQn);
 	}
 }
 /**
@@ -601,10 +297,7 @@ void HAL_TIM_OC_MspDeInit(TIM_HandleTypeDef* htim_base)
 int bsp_InitStepMotor(void)
 {
 	StepMotorRampDataInit();
-	TIM8_Init();
-	TIM4_Init();
 	TIM3_Init();
-	TIM2_Init();
 	TIM6_Init(1000-1, 84-1);   // 1ms 溢出中断
 	return 0;
 }
@@ -722,22 +415,11 @@ void OptoControl(void)
  *
  * @return
  */
-void TIM4_IRQHandler(void)
-{
-	HAL_TIM_IRQHandler(&htim_4);
-}
 void TIM3_IRQHandler(void)
 {
 	HAL_TIM_IRQHandler(&htim_3);
 }
-void TIM8_CC_IRQHandler(void)
-{
-	HAL_TIM_IRQHandler(&htim_8);
-}
-void TIM2_IRQHandler(void)
-{
-	HAL_TIM_IRQHandler(&htim_2);
-}
+
 /**
 * @brief  定时器中断回调函数
 *        

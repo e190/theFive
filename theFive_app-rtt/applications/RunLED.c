@@ -8,16 +8,20 @@
 #include "DataBase.h"
 
 rt_device_t dhidd;
-rt_uint8_t data[64] = {5,9,8,7,6,5,1,23,4};
+//rt_uint8_t data[64] = {5,9,8,7,6,5,1,23,4};
 void GpioDeviceInit(void)
 {                
 	rt_pin_mode(RunLED_gpio,PIN_MODE_OUTPUT);     //设置Pin为输出模式。
 
 	/* 直射LED */
-	rt_pin_mode(LED1_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。  	
-	rt_pin_mode(LED2_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。  
-	//rt_pin_mode(LED3_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。
-	//rt_pin_mode(LED4_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。
+	rt_pin_mode(LED1_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED2_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED3_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED4_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED5_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED6_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED7_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED8_gpio,PIN_MODE_OUTPUT);
 	
 	/* 开关门 */
 	rt_pin_mode(Ldoor_en_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_B_10。  	
@@ -28,16 +32,9 @@ void GpioDeviceInit(void)
 	rt_pin_mode(Rdoormotor2_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_F_8。
 	rt_pin_write(Ldoor_en_gpio, 0);
 	rt_pin_write(Rdoor_en_gpio, 0);
-	/* 搅拌电机 */	
-	//rt_pin_mode(blender1_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。  	
-	//rt_pin_mode(blender2_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。  
-	//rt_pin_mode(blender3_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_G_13。
-	rt_pin_mode(blender4_gpio, PIN_MODE_OUTPUT);  //定义Pin：GPIO_B_0。
-	
-	rt_pin_write(blender4_gpio, 1);
 	 
-	rt_pin_mode(91,PIN_MODE_OUTPUT);
-	rt_pin_write(91, !(_Bool)rt_pin_read(91));
+//	rt_pin_mode(91,PIN_MODE_OUTPUT);
+//	rt_pin_write(91, !(_Bool)rt_pin_read(91));
 }
 
 
@@ -82,4 +79,3 @@ void Function_RunLED(void* parameter)
 		rt_thread_delay(500);       //等待500
 	}
 }
-

@@ -3,7 +3,7 @@
 #include "Heat_PID.h"
 
 struct HeatSystem_t HeatHandle_1, HeatHandle_2, HeatHandle_3, HeatHandle_4;
-
+rt_device_t heat_dev;
 /**
  * @brief  计算PID
  *  	   位置式PID: 
@@ -17,6 +17,8 @@ float pid_calculate(struct HeatSystem_t* h_heat)
 	float _temp = 0;
 	PID_Value* _pid = &h_heat->PID;
 	
+	if(h_heat->iCurVal < 200)	//低于20度，不正常
+		return 0;
 	_pid->err = h_heat->iSetVal - h_heat->iCurVal;
 	if (_pid->err>20)
 	{
@@ -37,7 +39,7 @@ float pid_calculate(struct HeatSystem_t* h_heat)
 	if(_temp > 100)
 		_temp = 100;
 	else if(_temp < 0)
-		_temp = 0;
+		_temp = 1;
 
 	return _temp;
 }
@@ -49,15 +51,9 @@ void set_heat_pos()
 /*
  * 初始化加热系统
  */
-void heat_init(struct HeatSystem_t* h_heat)
+void heat_para_init(struct HeatSystem_t* h_heat, rt_uint8_t _ch)
 {
-	h_heat->deviceName = "pwm1";
-	h_heat->PWM_channel = 3;
-	h_heat->dev = rt_device_find(h_heat->deviceName);
-	if(!h_heat->dev)
-	{
-		rt_kprintf("%s not found!\n", h_heat->deviceName);
-	}
+	h_heat->PWM_channel = _ch;
 	h_heat->PID.uKP_Coe = 4;
 	h_heat->PID.uKI_Coe = 0.02;
 	h_heat->PID.uKD_Coe = 50;
@@ -72,13 +68,13 @@ void heat_init(struct HeatSystem_t* h_heat)
  * 设置PWM占空比
  * percent : 占空比 * 1000
  */
-int set_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent)
+int set_heat_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent)
 {
 	rt_err_t result = RT_EOK;
 	rt_uint32_t pulse = 0;
 		
 	pulse = (TIME_FREQUENCY / 100) * percent ;
-	if( rt_device_write(h_heat->dev, h_heat->PWM_channel, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
+	if( rt_device_write(heat_dev, h_heat->PWM_channel, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
 	{
 		rt_kprintf("write pwm channel %d: faild! \n", h_heat->PWM_channel);
 		result = -RT_ERROR;
@@ -87,64 +83,67 @@ int set_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent)
 _exit:
 	return result;
 }
-
-/*
- * 
- */
-int head_system_init(void)
-{
-	heat_init(&HeatHandle_1);
-	
-	return 0;
-}
-INIT_APP_EXPORT(head_system_init);
-/*
- * 开始加热
- */
-rt_err_t start_heat(struct HeatSystem_t* h_heat)
+static int heat_pwm_init(void)
 {
 	rt_err_t result = RT_EOK;
 	struct rt_pwm_configuration configuration;
-		
-	result = rt_device_open(h_heat->dev, RT_DEVICE_FLAG_RDWR);
-	if(result != RT_EOK)
+
+	heat_dev = rt_device_find(heat_name);
+	if(!heat_dev)
 	{
-		rt_kprintf("open pwm faild! \n");
-		result = -RT_EIO;
-		goto _exit;
-	}
-	configuration.channel = h_heat->PWM_channel;
-	configuration.period = TIME_FREQUENCY;    // 10e9 / period = frequency 
-	configuration.pulse = 0;
-	
-	if( rt_device_control(h_heat->dev, PWM_CMD_SET, &configuration) != RT_EOK )
-	{
+		rt_kprintf("%s not found!\n", heat_name);
 		result = -RT_ERROR;
 		goto _exit;
 	}
-	rt_device_control(h_heat->dev, PWM_CMD_ENABLE, &configuration);
-_exit:
-	return result;
-}
-/*
- * 停止加热
- */
-rt_err_t stop_heat(struct HeatSystem_t* h_heat)
-{
-	rt_err_t result = RT_EOK;
-	struct rt_pwm_configuration configuration;
-	
-	configuration.channel = h_heat->PWM_channel;
-	result = rt_device_close(h_heat->dev);
+	result = rt_device_open(heat_dev, RT_DEVICE_FLAG_RDWR);
 	if(result != RT_EOK)
 	{
-		//rt_kprintf("close %s faild! \n", argv);
+		rt_kprintf("open %s faild! \n", heat_name);
 		result = -RT_EIO;
 		goto _exit;
 	}
-	rt_device_control(h_heat->dev, PWM_CMD_DISABLE, &configuration);
-_exit:
-	return result;
+
+	configuration.period = TIME_FREQUENCY;    // 10e9 / period = frequency
+	configuration.pulse = configuration.period / 5;
+	for(rt_uint8_t i=0;i<4;i++)
+	{
+		configuration.channel = i;
+		if( rt_device_control(heat_dev, PWM_CMD_SET, &configuration) != RT_EOK )
+		{
+			rt_kprintf("control PWM_CMD_SET channel %d: faild! \n", configuration.channel);
+			result = -RT_ERROR;
+			goto _exit;
+		}
+	}
+//	configuration.channel = 0;
+//	rt_device_control(heat_dev, PWM_CMD_ENABLE, &configuration);
+	_exit:
+		return result;
 }
+/*
+ * 开始加热
+ */
+rt_err_t heat_start_stop(struct HeatSystem_t* h_heat, HeatSwitch _status)
+{
+	struct rt_pwm_configuration configuration;
+		
+	configuration.channel = h_heat->PWM_channel;
+	if(_status == HEAT_START)
+		return rt_device_control(heat_dev, PWM_CMD_ENABLE, &configuration);
+	else
+		return rt_device_control(heat_dev, PWM_CMD_DISABLE, &configuration);
+}
+/*
+ *
+ */
+int head_system_init(void)
+{
+	heat_pwm_init();
+	heat_para_init(&HeatHandle_1, 0);
+	heat_para_init(&HeatHandle_2, 1);
+	heat_para_init(&HeatHandle_3, 2);
+	heat_para_init(&HeatHandle_4, 3);
 
-
+	return 0;
+}
+INIT_APP_EXPORT(head_system_init);

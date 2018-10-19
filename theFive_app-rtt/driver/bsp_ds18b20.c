@@ -179,6 +179,9 @@ static void ds18b20_gpio_init(OneWire_t* OneWireStruct, GPIO_TypeDef* GPIOx, uin
 int ds18b20_hw_init(void)
 {
 	ds18b20_gpio_init(&OneWire1, GPIOG, GPIO_PIN_9);
+	ds18b20_gpio_init(&OneWire2, GPIOG, GPIO_PIN_7);
+	ds18b20_gpio_init(&OneWire3, GPIOG, GPIO_PIN_6);
+	ds18b20_gpio_init(&OneWire4, GPIOG, GPIO_PIN_5);
 	
 	return RT_EOK;
 }
