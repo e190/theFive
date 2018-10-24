@@ -64,4 +64,4 @@ int rt_tmc5130_init(void)
 	tmc5130_init();
     return 0;
 }
-INIT_DEVICE_EXPORT(rt_tmc5130_init);
+//INIT_DEVICE_EXPORT(rt_tmc5130_init);

@@ -21,11 +21,16 @@
  * Date           Author         Notes
  * 2018-01-13     Liu2guang      the first version.
  */
+#include <rtthread.h>
+#include <rtdevice.h>
+#include "string.h"
+#include "board.h"
 #include "drv_sdio_sd.h"
 
 static SD_HandleTypeDef hsdcard;
+static HAL_SD_CardInfoTypeDef  SDCardInfo;         //SD卡信息结构体
 static struct rt_semaphore sd_lock;
-#ifdef SD_DMA_MODE
+#if (SD_DMA_MODE==1)
 static DMA_HandleTypeDef SDTxDMAHandler,SDRxDMAHandler;
 #endif
 
@@ -44,6 +49,9 @@ rt_err_t sdio_sd_init(void)
         rt_kprintf("HAL_SD_Init error\n");
         return RT_EIO;
     }
+	//获取SD卡信息
+	HAL_SD_GetCardInfo(&hsdcard, &SDCardInfo);
+
     if (HAL_SD_ConfigWideBusOperation(&hsdcard, SDIO_BUS_WIDE_4B) != HAL_OK)
     {
         rt_kprintf("HAL_SD_ConfigWideBusOperation error\n");
@@ -65,41 +73,15 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
     GPIO_InitStruct.Pin   = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 |
                             GPIO_PIN_12;
     GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF12_SDIO;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
     GPIO_InitStruct.Pin   = GPIO_PIN_2;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-#if defined(USING_SD_RX_DMA) || defined(USING_SD_TX_DMA)
-    __HAL_RCC_DMA2_CLK_ENABLE();
-    hdma.Instance                 = DMA2_Channel4;
-    hdma.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    hdma.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
-    hdma.Init.Mode                = DMA_NORMAL;
-    hdma.Init.Priority            = DMA_PRIORITY_HIGH;
-#if defined(USING_SD_RX_DMA)
-    hdma.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-    hdma.Init.PeriphInc           = DMA_PINC_DISABLE;
-    hdma.Init.MemInc              = DMA_MINC_ENABLE;
-    __HAL_LINKDMA(&hsdcard, hdmarx, hdma);
-#endif
-#if defined(USING_SD_TX_DMA)
-    hdma.Init.Direction           = DMA_MEMORY_TO_PERIPH;
-    hdma.Init.PeriphInc           = DMA_MINC_ENABLE;
-    hdma.Init.MemInc              = DMA_PINC_DISABLE;
-    __HAL_LINKDMA(&hsdcard, hdmatx, hdma);
-#endif
-    HAL_DMA_DeInit(&hdma);
-    if (HAL_DMA_Init(&hdma) != HAL_OK)
-    {
-        rt_kprintf("HAL_DMA_Init error\n");
-        return RT_EIO;
-    }
-#endif
 #if (SD_DMA_MODE==1)                        //使用DMA模式
-    HAL_NVIC_SetPriority(SDMMC1_IRQn,2,0);  //配置SDMMC1中断，抢占优先级2，子优先级0
-    HAL_NVIC_EnableIRQ(SDMMC1_IRQn);        //使能SDMMC1中断
-
     //配置发送DMA
     SDRxDMAHandler.Instance = DMA2_Stream3;
     SDRxDMAHandler.Init.Channel = DMA_CHANNEL_4;
@@ -145,7 +127,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
     HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 #endif
 
-    HAL_NVIC_SetPriority(SDIO_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(SDIO_IRQn, 2, 0);
     HAL_NVIC_EnableIRQ(SDIO_IRQn);
 }
 void SDIO_IRQHandler(void)
@@ -154,29 +136,25 @@ void SDIO_IRQHandler(void)
     HAL_SD_IRQHandler(&hsdcard);
     rt_interrupt_leave();
 }
+#if (SD_DMA_MODE==1)
 
-#if defined(USING_SD_RX_DMA) || defined(USING_SD_TX_DMA)
-void DMA2_Channel4_5_IRQHandler(void)
+void DMA2_Stream6_IRQHandler(void)
 {
-    rt_interrupt_enter();
-    HAL_DMA_IRQHandler(&hdma);
-    rt_interrupt_leave();
+    HAL_DMA_IRQHandler(hsdcard.hdmatx);
+}
+
+void DMA2_Stream3_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(hsdcard.hdmarx);
 }
 #endif
-
 rt_err_t stm32_read_blocks(uint32_t *data, uint32_t addr, uint32_t num)
 {
     uint32_t timeout = 0;
     HAL_SD_StateTypeDef state_return;
     HAL_SD_CardStateTypeDef sd_card_state_return;
-#if defined(USING_SD_RX_DMA) && defined(USING_SD_TX_DMA)
-    hdma.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    hdma.Init.PeriphInc = DMA_PINC_DISABLE;
-    hdma.Init.MemInc    = DMA_MINC_ENABLE;
-    HAL_DMA_DeInit(&hdma);
-    HAL_DMA_Init(&hdma);
-#endif
-#if defined(USING_SD_RX_DMA)
+
+#if (SD_DMA_MODE==1)
     if (HAL_SD_ReadBlocks_DMA(&hsdcard, (uint8_t *)data, addr, num) != HAL_OK)
 #else
     if (HAL_SD_ReadBlocks(&hsdcard, (uint8_t *)data, addr, num, SDIO_TIMEOUT) != HAL_OK)
@@ -212,14 +190,8 @@ rt_err_t stm32_write_blocks(uint32_t *data, uint32_t addr, uint32_t num)
     uint32_t timeout = 0;
     HAL_SD_StateTypeDef state_return;
     HAL_SD_CardStateTypeDef sd_card_state_return;
-#if defined(USING_SD_RX_DMA) && defined(USING_SD_TX_DMA)
-    hdma.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    hdma.Init.PeriphInc = DMA_MINC_ENABLE;
-    hdma.Init.MemInc    = DMA_PINC_DISABLE;
-    HAL_DMA_DeInit(&hdma);
-    HAL_DMA_Init(&hdma);
-#endif
-#if defined(USING_SD_TX_DMA)
+
+#if (SD_DMA_MODE==1)
     if (HAL_SD_WriteBlocks_DMA(&hsdcard, (uint8_t *)data, addr, num) != HAL_OK)
 #else
     if (HAL_SD_WriteBlocks(&hsdcard, (uint8_t *)data, addr, num, SDIO_TIMEOUT) != HAL_OK)
@@ -341,6 +313,7 @@ int rt_hw_sdcard_init(void)
     {
         return ret;
     }
+    DEBUG_PRINTF("sdcard init success\n");
     return RT_EOK;
 }
 INIT_DEVICE_EXPORT(rt_hw_sdcard_init);

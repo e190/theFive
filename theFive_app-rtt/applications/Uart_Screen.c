@@ -472,7 +472,7 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		//StopMotorTimer(&Motor4);
 		break;
 	case tmc5130_START:
-		tmc5130_moveToAbsolutePosition(UartBuff.MotorPara.tmc5230_position, 0);
+		//tmc5130_moveToAbsolutePosition(UartBuff.MotorPara.tmc5230_position, 0);
 		break;
 	case tmc5130_STOP:
 		rt_kprintf(" tmc5130_STOP\n");
@@ -801,7 +801,8 @@ void DealCmd(const rt_uint8_t* _ucData)
 				ScreenSendCommand(WRITE_82, MOTOR_INFO, (rt_uint8_t*)string,rt_strlen(string));
 			}
 			break;
-/**************≤‚ ‘5130******************/			
+/**************≤‚ ‘5130******************/
+			/*
 		case tmc5130_POSITION:
 			UartBuff.MotorPara.tmc5230_position = _data*1000;
 			break;
@@ -838,7 +839,7 @@ void DealCmd(const rt_uint8_t* _ucData)
 			break;
 		case tmc5130_IRUN:
 			tmc5130_setIRun(_data);
-			break;
+			break;*/
 /**************≤‚ ‘5130******************/		
 		case SERVER_IP:
 			{

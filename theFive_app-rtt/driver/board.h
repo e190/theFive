@@ -55,7 +55,7 @@
 #define BSP_USING_PWM4_CH3
 #define BSP_USING_PWM4_CH4
 #define RT_USING_SPI2
-#define RT_USING_SPI3
+//#define RT_USING_SPI3
 
 
 extern void rt_hw_board_init(void);

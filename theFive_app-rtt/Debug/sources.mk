@@ -24,7 +24,6 @@ applications \
 components/EasyLogger/plugins/flash \
 components/EasyLogger/port \
 components/EasyLogger/src \
-components/TMC5130 \
 components/at/src \
 components/cm_backtrace \
 components/flash \

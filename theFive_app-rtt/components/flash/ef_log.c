@@ -1,3 +1,5 @@
+#include <rthw.h>
+#include <rtthread.h>
 #include "flash_cfg.h"
 #include "flash_port.h"
 
@@ -56,7 +58,7 @@ static void find_cur_using_sector(void)
 			if(get_header_used_times() > 1)
 				log_start_addr = log_end_addr;
 			else
-				log_start_addr = log_area_start_addr;
+				log_start_addr = log_area_start_addr + 4;
 			break;
 		}
 	}
@@ -99,7 +101,6 @@ size_t log_get_used_size(void) {
 
     return physical_size - header_total_num * SECTOR_HEADER_SIZE;
 }
-
 /**
  * Sequential reading log data. It will ignore sector headers.
  *
@@ -150,16 +151,18 @@ static rt_uint32_t log_index2addr(size_t index) {
     header_total_offset = sector_num * SECTOR_HEADER_SIZE;
     if (log_start_addr < log_end_addr) {
         return log_start_addr + index + header_total_offset;
-    } else {
+    }
+    else
+    {
         if (log_start_addr + index + header_total_offset < log_area_start_addr + LOG_AREA_SIZE) {
             return log_start_addr + index + header_total_offset;
-        } else {
+        }
+        else
+        {
             return log_start_addr + index + header_total_offset - LOG_AREA_SIZE;
-
         }
     }
 }
-
 /**
  * Read log from flash.
  *
@@ -265,7 +268,6 @@ EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size) {
 
     return result;
 }
-
 /**
  * Write log to flash.
  *
@@ -310,7 +312,6 @@ EfErrCode ef_log_write(const uint32_t *log, size_t size) {
 
   	return _ret;
 }
-
 /**
  * Clean all log which in flash.
  *
@@ -319,31 +320,15 @@ EfErrCode ef_log_write(const uint32_t *log, size_t size) {
 EfErrCode ef_log_clean(void)
 {
     EfErrCode result = F_NO_ERR;
-    rt_uint32_t write_addr = log_area_start_addr;
 
     /* clean address */
     log_start_addr = log_area_start_addr;
     log_end_addr = log_start_addr + SECTOR_HEADER_SIZE;
     /* erase log flash area */
-    result = flash_erase(log_area_start_addr, LOG_AREA_SIZE);
+    result = flash_erase(log_area_start_addr/ERASE_MIN_SIZE, LOG_AREA_SIZE/ERASE_MIN_SIZE);
     if (result != F_NO_ERR) {
         goto exit;
     }
-    if (result != F_NO_ERR) {
-        goto exit;
-    }
-    write_addr += ERASE_MIN_SIZE;
-    /* add sector header */
-    while (true) {
-        if (result != F_NO_ERR) {
-            goto exit;
-        }
-        write_addr += ERASE_MIN_SIZE;
-        if (write_addr >= log_area_start_addr + LOG_AREA_SIZE) {
-            break;
-        }
-    }
-
 exit:
     return result;
 }

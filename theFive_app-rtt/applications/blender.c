@@ -4,15 +4,15 @@ rt_device_t blender_dev;
 
 /**
  *	_ch : Í¨µÀ
- *	_ctl£º0-->en
- *		  1-->dis
+ *	_ctl£º0-->dis
+ *		  1-->en
  */
 rt_err_t switch_blender(rt_uint8_t _ch, rt_uint8_t _ctl)
 {
 	struct rt_pwm_configuration _configuration;
 
 	RT_ASSERT(blender_dev);
-	_configuration.channel = _ch;
+	_configuration.channel = 3 - _ch;
 	if(0 == _ctl)
 		return rt_device_control(blender_dev, PWM_CMD_DISABLE, &_configuration);
 	else
@@ -36,9 +36,9 @@ int set_blender_duty(rt_uint8_t _ch, rt_uint8_t percent)
 	pulse = 1000000 * (10 - percent) ;
 	RT_ASSERT(blender_dev);
 
-	if( rt_device_write(blender_dev, _ch, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
+	if( rt_device_write(blender_dev, 3-_ch, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
 	{
-		rt_kprintf("write pwm channel %d: faild! \n", _ch);
+		rt_kprintf("write pwm channel %d: faild! \n", 3-_ch);
 		result = -RT_ERROR;
 		goto _exit;
 	}

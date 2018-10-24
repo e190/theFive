@@ -23,21 +23,23 @@
 #ifndef FLASH_CFG_H_
 #define FLASH_CFG_H_
 
-#include <stdint.h>
-#include <stddef.h>
+//#include <stddef.h>
 #include <stdbool.h>
+#define EF_USING_ENV
+#define FLASH_DEBUG
 
 #define TOTAL_SIZE		0x1000000	//flash×ÜÈÝÁ¿16mb (0~0x1000000)
 /* the minimum size of flash erasure */
 #define ERASE_MIN_SIZE  4096
 
+#define DATA_START_ADDR   ERASE_MIN_SIZE * 2
+#define IAP_START_ADDR    0
+#define LOG_START_ADDR    0
+
 #define SYS_SIZE		0x1000
 #define LOG_AREA_SIZE	0x1000
-#define IAP_SIZE		0x1000
-#define DATA_SIZE		0x1000
-
-#define LOG_START_ADDR   0
-#define FLASH_DEBUG
+#define IAP_AREA_SIZE	0x1000
+#define DATA_AREA_SIZE	0x3000
 
 /* sector header size, includes the sector magic code and status magic code */
 #define SECTOR_HEADER_SIZE         4
@@ -46,13 +48,13 @@
 enum {
 	SECTION_USED_SIZE = 0,
     /* data section data detail part end address index */
-    DATA_PARAM_PART_INDEX_ADDR,
+    DATA_PARAM_PART_INDEX_ADDR = 4,
     /* data section CRC32 code index */
-    LOG_PARAM_PART_INDEX_ADDR,
+    LOG_PARAM_PART_INDEX_ADDR = 8,
     /* ENV parameters part word size */
-	IAP_PARAM_PART_INDEX_ADDR,
+	IAP_PARAM_PART_INDEX_ADDR = 12,
     /* ENV parameters part byte size */
-	SYSTEM_PARAM_PART_INDEX_ADDR,
+	SYSTEM_PARAM_PART_INDEX_ADDR = 16,
 };
 
 /* EasyFlash debug print function. Must be implement by user. */

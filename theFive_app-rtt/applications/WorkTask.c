@@ -234,30 +234,32 @@ void sample_task(rt_uint8_t _ch)
 	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2, &sample_param_3, &sample_param_4};
 	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
 	struct light_handle_t *p_light[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
+	rt_uint8_t* en_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,
+								&switch_config.en_Light_3, &switch_config.en_Light_4};
 
 	/* 搅拌5s */
-	switch_blender(_ch-1, 0);
-	rt_thread_delay(5000);
 	switch_blender(_ch-1, 1);
+	rt_thread_delay(5000);
+	switch_blender(_ch-1, 0);
 	/* 温浴 295s */
 	ScreenDisICON(SAMPLE1_1_ICO + (_ch-1)*2, 1);
 	cnt[_ch-1] = psample_param[_ch-1]->heat_time;
 	rt_event_recv(&work_event, _work_event[_ch-1],
 				  RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
 	/* 加入R2 */
-	StepMotor_AxisMoveRel_sync(_ch, 2000, 150, 150, 10000);
+	StepMotor_AxisMoveRel_sync(_ch, 3000, 150, 150, 10000);
 	rt_thread_delay(50);
 	StepMotor_AxisMoveRel_sync(_ch, 1, 150, 150, 10000);
 	/* 搅拌5s */
-	switch_blender(_ch-1, 0);
-	rt_thread_delay(5000);
 	switch_blender(_ch-1, 1);
+	rt_thread_delay(5000);
+	switch_blender(_ch-1, 0);
 	/* 读值8min */
 	ScreenDisICON(SAMPLE1_2_ICO + (_ch-1)*2, 1);
-	cnt[_ch-1] = psample_param[_ch-1]->read_time;
-	switch_config.en_Light_1 = 1;
+	cnt[_ch-1] = psample_param[_ch-1]->read_time;   //开始信号
+	*en_light[_ch-1] = 1;
 	rt_event_recv(&work_event, _work_event[_ch-1], RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
-	switch_config.en_Light_1 = 0;
+	*en_light[_ch-1] = 0;
 	rt_kprintf("输出结果：\n");
 	rt_kprintf("A1_1: %d\n", p_light[_ch-1]->ave_a1_1);
 	rt_kprintf("A1_2: %d\n", p_light[_ch-1]->ave_a1_2);
@@ -286,16 +288,22 @@ static void test_task(rt_uint8_t _ch)
  */
 void channel_1_init(void)
 {
+	ScreenDisICON(SAMPLE_1_ICO, 0);
 	/* 设置电机停止回调函数 */
 	motor_set_end_indicate(&Motor1, motor_1_cb);
+	sample_param_1.surplus_time = sample_param_1.heat_time + sample_param_1.read_time;
 }
 void channel_2_init(void)
 {
+	ScreenDisICON(SAMPLE_2_ICO, 0);
 	motor_set_end_indicate(&Motor2, motor_2_cb);
+	sample_param_2.surplus_time = sample_param_2.heat_time + sample_param_2.read_time;
 }
 void channel_3_init(void)
 {
+	ScreenDisICON(SAMPLE_3_ICO, 0);
 	motor_set_end_indicate(&Motor3, motor_3_cb);
+	sample_param_3.surplus_time = sample_param_3.heat_time + sample_param_3.read_time;
 }
 void channel_4_init(void)
 {
@@ -309,29 +317,44 @@ void channel_4_init(void)
 void channel_1_end(void)
 {
 	work1 = RT_NULL;
+	cnt[0] = -1;
 	motor_set_end_indicate(&Motor1, RT_NULL);
+	switch_blender(0, 0);
 	ScreenDisICON(SAMPLE1_SWITCH_IOC, 0);
+	ScreenDisICON(SAMPLE1_1_ICO, 0);
+	ScreenDisICON(SAMPLE1_2_ICO, 0);
+	ScreenDisICON(SAMPLE_1_ICO, 1);
 	switch_config.en_sample_1 = 0;
 }
 void channel_2_end(void)
 {
 	work2 = RT_NULL;
+	cnt[1] = -1;
 	motor_set_end_indicate(&Motor2, RT_NULL);
+	switch_blender(1, 0);
 	ScreenDisICON(SAMPLE2_SWITCH_IOC, 0);
+	ScreenDisICON(SAMPLE2_1_ICO, 0);
+	ScreenDisICON(SAMPLE2_2_ICO, 0);
+	ScreenDisICON(SAMPLE_2_ICO, 1);
 	switch_config.en_sample_2 = 0;
 }
 void channel_3_end(void)
 {
 	work3 = RT_NULL;
+	cnt[2] = -1;
 	motor_set_end_indicate(&Motor3, RT_NULL);
+	switch_blender(2, 0);
 	ScreenDisICON(SAMPLE3_SWITCH_IOC, 0);
+	ScreenDisICON(SAMPLE3_1_ICO, 0);
+	ScreenDisICON(SAMPLE3_2_ICO, 0);
+	ScreenDisICON(SAMPLE_3_ICO, 1);
 	switch_config.en_sample_3 = 0;
 }
 void channel_4_end(void)
 {
 	work4 = RT_NULL;
-	motor_set_end_indicate(&Motor4, RT_NULL);
 	cnt[3] = -1;
+	motor_set_end_indicate(&Motor4, RT_NULL);
 	switch_blender(3, 0);
 	ScreenDisICON(SAMPLE4_SWITCH_IOC, 0);
 	ScreenDisICON(SAMPLE4_1_ICO, 0);
@@ -345,14 +368,13 @@ void channel_4_end(void)
 void Function_Channel_1(void* parameter)
 {
 	channel_1_init();
-	test_task(1);
-	//sample_task(1);
+	sample_task(1);
 	channel_1_end();
 }
 void Function_Channel_2(void* parameter)
 {
 	channel_2_init();
-	test_task(2);
+	sample_task(2);
 	channel_2_end();
 }
 void Function_Channel_3(void* parameter)
@@ -366,9 +388,9 @@ void Function_Channel_4(void* parameter)
 	rt_kprintf("work4 start\n");
 	channel_4_init();
 	/* 搅拌5s */
-	switch_blender(3, 0);
-	rt_thread_delay(5000);
 	switch_blender(3, 1);
+	rt_thread_delay(5000);
+	switch_blender(3, 0);
 	/* 温浴 295s */
 	ScreenDisICON(SAMPLE4_1_ICO, 1);
 	cnt[3] = sample_param_4.heat_time;
@@ -379,9 +401,9 @@ void Function_Channel_4(void* parameter)
 	rt_thread_delay(50);
 	StepMotor_AxisMoveRel_sync(4,1,150,150,10000);	
 	/* 搅拌5s */
-	switch_blender(3, 0);
-	rt_thread_delay(5000);
 	switch_blender(3, 1);
+	rt_thread_delay(5000);
+	switch_blender(3, 0);
 	/* 读值8min */
 	ScreenDisICON(SAMPLE4_2_ICO, 1);
 	cnt[3] = sample_param_4.read_time;

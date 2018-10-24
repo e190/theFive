@@ -1,12 +1,5 @@
 #ifndef FLASH_PORT_H_
 #define FLASH_PORT_H_
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <sfud.h>
-#include <rthw.h>
-#include <rtthread.h>
-#include "flash_cfg.h"
 
 EfErrCode read_flash_to_cache(rt_uint32_t _addr);
 EfErrCode read_cache(rt_uint32_t addr, rt_uint32_t *buf, size_t size);

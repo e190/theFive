@@ -3,8 +3,8 @@
 #include "bsp_G780.h"
 #include "ServerData.h"
 #include "bsp_rfid.h"
-#include "bsp_tmc5130.h"
-#include "TMC5130.h"
+//#include "bsp_tmc5130.h"
+//#include "TMC5130.h"
 #include "DataBase.h"
 
 rt_device_t dhidd;
@@ -32,7 +32,8 @@ void GpioDeviceInit(void)
 	rt_pin_mode(Rdoormotor2_gpio,PIN_MODE_OUTPUT);  //定义Pin：GPIO_F_8。
 	rt_pin_write(Ldoor_en_gpio, 0);
 	rt_pin_write(Rdoor_en_gpio, 0);
-	 
+
+	rt_pin_mode(SD_IN_gpio, PIN_MODE_INPUT_PULLUP);
 //	rt_pin_mode(91,PIN_MODE_OUTPUT);
 //	rt_pin_write(91, !(_Bool)rt_pin_read(91));
 }
@@ -41,39 +42,40 @@ void GpioDeviceInit(void)
 void Function_RunLED(void* parameter)
 {
 	rt_uint8_t aa = 0;
-	uint32_t addr = 5,bb = 0;
+	rt_uint8_t addr = 5,bb = 0;
 
 	GpioDeviceInit();
 
 	while(1)
 	{
-		rt_pin_write(RunLED_gpio, !(_Bool)rt_pin_read(RunLED_gpio)); //GPIO输出状态为：当前状态的反向状态。
-
+		rt_pin_write(RunLED_gpio, !rt_pin_read(RunLED_gpio)); //GPIO输出状态为：当前状态的反向状态。
+//		if(0 == rt_pin_read(SD_IN_gpio))
+//			rt_kprintf("sd coming\n");
 		if(1 == aa)
 		{
+			//aa = 0;
 			bb++;
-			if(30 == bb)
+			flash_test_demo(bb);
+			if(bb > 16)
 			{
 				aa = 0;
 				rt_kprintf("------------------------\n");
 			}
-			flash_test_demo();
+
 //			rt_device_write(dhidd, addr, data, 65);
-//			bb = tmc5130_readInt(TMC5130_XACTUAL);
 //			rt_kprintf("%x\n",bb);
 		}	
 		else if(2 == aa)
 		{
 			aa = 0;			
-			//TestRFID();
-			dhidd = rt_device_find("hidd");
-			if(dhidd != RT_NULL)
-				rt_device_open(dhidd, RT_DEVICE_FLAG_RDWR);
+//			dhidd = rt_device_find("hidd");
+//			if(dhidd != RT_NULL)
+//				rt_device_open(dhidd, RT_DEVICE_FLAG_RDWR);
+			flash_read_demo(bb);
 		}
 		else if(3 == aa)
 		{
 			aa = 0;
-			//get_flash_para();
 			load_flash();
 		}
 		rt_thread_delay(500);       //等待500
