@@ -238,7 +238,7 @@ void Function_SenseData(void* parameter)
 		cycle_read_light();
 		cycle_temp_heat();
 		cup_cheak();
-		//rt_pin_write(91, !(_Bool)rt_pin_read(91));
+
 		rt_thread_delay(100); 
 	}
 }

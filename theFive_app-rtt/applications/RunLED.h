@@ -21,12 +21,5 @@
 #define LED7_gpio    	129
 #define LED8_gpio     	132
 
-#define Rdoor_en_gpio     		26
-#define Rdoormotor1_gpio     	27
-#define Rdoormotor2_gpio     	22
-#define Ldoor_en_gpio     		20
-#define Ldoormotor1_gpio     	19
-#define Ldoormotor2_gpio     	21
-
 extern void Function_RunLED(void* parameter);
 #endif

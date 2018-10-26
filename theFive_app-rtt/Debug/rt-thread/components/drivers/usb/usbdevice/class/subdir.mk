@@ -4,13 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../rt-thread/components/drivers/usb/usbdevice/class/hid.c 
+../rt-thread/components/drivers/usb/usbdevice/class/hid.c \
+../rt-thread/components/drivers/usb/usbdevice/class/mstorage.c 
 
 OBJS += \
-./rt-thread/components/drivers/usb/usbdevice/class/hid.o 
+./rt-thread/components/drivers/usb/usbdevice/class/hid.o \
+./rt-thread/components/drivers/usb/usbdevice/class/mstorage.o 
 
 C_DEPS += \
-./rt-thread/components/drivers/usb/usbdevice/class/hid.d 
+./rt-thread/components/drivers/usb/usbdevice/class/hid.d \
+./rt-thread/components/drivers/usb/usbdevice/class/mstorage.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

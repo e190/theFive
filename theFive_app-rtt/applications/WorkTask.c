@@ -1,3 +1,4 @@
+#include <dc_motor.h>
 #include <rthw.h>
 #include <rtdevice.h>
 #include <SenseData.h>
@@ -5,7 +6,6 @@
 #include "Uart_Screen.h"
 #include "bsp_StepMotor.h"
 #include "RunLED.h"
-#include "blender.h"
 
 /* 工作事件标志 */
 #define EVENT_MOTOR_1	(1 << 0)

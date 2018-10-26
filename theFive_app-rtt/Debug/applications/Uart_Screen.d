@@ -83,7 +83,7 @@ applications/Uart_Screen.o: ../applications/Uart_Screen.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TMC5130_Register.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h \
- ../applications/blender.h
+ ../applications/dc_motor.h
 
 ../applications/Uart_Screen.h:
 
@@ -255,4 +255,4 @@ D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/TypeDefs.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\components\TMC5130/Bits.h:
 
-../applications/blender.h:
+../applications/dc_motor.h:

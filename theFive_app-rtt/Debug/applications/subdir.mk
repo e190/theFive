@@ -10,7 +10,7 @@ C_SRCS += \
 ../applications/ServerData.c \
 ../applications/Uart_Screen.c \
 ../applications/WorkTask.c \
-../applications/blender.c \
+../applications/dc_motor.c \
 ../applications/main.c 
 
 OBJS += \
@@ -20,7 +20,7 @@ OBJS += \
 ./applications/ServerData.o \
 ./applications/Uart_Screen.o \
 ./applications/WorkTask.o \
-./applications/blender.o \
+./applications/dc_motor.o \
 ./applications/main.o 
 
 C_DEPS += \
@@ -30,7 +30,7 @@ C_DEPS += \
 ./applications/ServerData.d \
 ./applications/Uart_Screen.d \
 ./applications/WorkTask.d \
-./applications/blender.d \
+./applications/dc_motor.d \
 ./applications/main.d 
 
 

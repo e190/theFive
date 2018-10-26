@@ -748,7 +748,7 @@ int rt_mmcsd_core_init(void)
         RT_IPC_FLAG_FIFO);
     RT_ASSERT(ret == RT_EOK);
 
-   ret = rt_mb_init(&mmcsd_hotpluge_mb, "mmcsdhotplugmb",
+    ret = rt_mb_init(&mmcsd_hotpluge_mb, "mmcsdhotplugmb",
         &mmcsd_hotpluge_mb_pool[0], sizeof(mmcsd_hotpluge_mb_pool) / sizeof(mmcsd_hotpluge_mb_pool[0]),
         RT_IPC_FLAG_FIFO);
     RT_ASSERT(ret == RT_EOK);

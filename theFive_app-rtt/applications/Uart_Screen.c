@@ -5,7 +5,7 @@
 #include "bsp_RMD8.h"
 #include "SenseData.h"
 #include "TMC5130.h"
-#include "blender.h"
+#include "dc_motor.h"
 
 UartBuff_t UartBuff;
 
@@ -481,36 +481,16 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		rt_kprintf(" tmc5130_ZERO\n");
 		break;
 	case DOOR_OPEN_1://左门开
-		rt_pin_write(Ldoor_en_gpio, 1);
-		rt_pin_write(Ldoormotor1_gpio, 1); 
-		rt_thread_delay(3000); 
-		rt_pin_write(Ldoormotor1_gpio, 0);
-		rt_pin_write(Ldoor_en_gpio, 0);
-		ScreenDisICON(LDOOR_ICO, 0);
+
 		break;
 	case DOOR_CLOSE_1://左门关
-		rt_pin_write(Ldoor_en_gpio, 1);
-		rt_pin_write(Ldoormotor2_gpio, 1); 
-		rt_thread_delay(3000); 
-		rt_pin_write(Ldoormotor2_gpio, 0); 
-		rt_pin_write(Ldoor_en_gpio, 0);
-		ScreenDisICON(LDOOR_ICO, 1);
+
 		break;
 	case DOOR_OPEN_2://右门开
-		rt_pin_write(Rdoor_en_gpio, 1);
-		rt_pin_write(Rdoormotor1_gpio, 1); 
-		rt_thread_delay(3000); 
-		rt_pin_write(Rdoormotor1_gpio, 0);
-		rt_pin_write(Rdoor_en_gpio, 0);
-		ScreenDisICON(RDOOR_ICO, 0);
+
 		break;
 	case DOOR_CLOSE_2://右门关
-		rt_pin_write(Rdoor_en_gpio, 1);
-		rt_pin_write(Rdoormotor2_gpio, 1); 
-		rt_thread_delay(3000); 
-		rt_pin_write(Rdoormotor2_gpio, 0);
-		rt_pin_write(Rdoor_en_gpio, 0);
-		ScreenDisICON(RDOOR_ICO, 1);
+
 		break;
 	case DCMOTOR_SWITCH_1://搅拌1
 	case DCMOTOR_SWITCH_2://搅拌2

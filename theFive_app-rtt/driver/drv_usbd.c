@@ -270,4 +270,4 @@ int stm_usbd_register(void)
     rt_usb_device_init();
     return RT_EOK;
 }
-//INIT_DEVICE_EXPORT(stm_usbd_register);
+INIT_DEVICE_EXPORT(stm_usbd_register);

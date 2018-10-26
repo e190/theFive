@@ -72,8 +72,6 @@
 #define FINSH_CMD_SIZE 80
 #define FINSH_USING_MSH
 #define FINSH_USING_MSH_DEFAULT
-//#define FINSH_USING_SYMTAB
-//#define FINSH_USING_DESCRIPTION
 
 /* Device virtual file system */
 
@@ -125,14 +123,14 @@
 #define RT_USBD_THREAD_STACK_SZ 4096
 #define USB_VENDOR_ID 0x0483
 #define USB_PRODUCT_ID 0x5710
-#define _RT_USB_DEVICE_HID
+#define RT_USB_DEVICE_COMPOSITE
+#define RT_USB_DEVICE_NONE
+#define RT_USB_DEVICE_MSTORAGE
+#define RT_USB_MSTORAGE_DISK_NAME 	"sd0"
 #define RT_USB_DEVICE_HID
 #define RT_USB_DEVICE_HID_GENERAL
 #define RT_USB_DEVICE_HID_GENERAL_OUT_REPORT_LENGTH 63
 #define RT_USB_DEVICE_HID_GENERAL_IN_REPORT_LENGTH 63
-#define RT_USB_DEVICE_HID_MEDIA
-/* RT_USING_USB_HOST is not set */
-/* RT_USING_USB_DEVICE is not set */
 
 /* POSIX layer and C standard library */
 #define RT_USING_LIBC
@@ -190,12 +188,6 @@
 /* PKG_USING_JERRYSCRIPT is not set */
 
 /* multimedia packages */
-//#define PKG_USING_SAMPLES
-//#define PKG_EASYFLASH_ENV
-//#define PKG_EASYFLASH_START_ADDR   0
-//#define PKG_EASYFLASH_ENV_SETTING_SIZE  (2 * 1024)
-//#define PKG_EASYFLASH_ENV_USING_WL_MODE
-//#define PKG_EASYFLASH_DEBUG
 /* tools packages */
 
 /* PKG_USING_CMBACKTRACE is not set */

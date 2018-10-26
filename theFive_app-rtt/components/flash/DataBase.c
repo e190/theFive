@@ -291,7 +291,7 @@ EfErrCode save_sample_data(const void *_buffer, rt_size_t _size)
     }
     _ret = read_flash_to_cache(cur_using_addr_bak);
     data_sec_end_addr = get_header_used_size();
-    if(data_sec_end_addr + _size > ERASE_MIN_SIZE)
+    if(data_sec_end_addr + _size >= ERASE_MIN_SIZE)
     {
     	sector_used_size = ERASE_MIN_SIZE - data_sec_end_addr;
     	if(sector_used_size)
