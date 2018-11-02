@@ -1,11 +1,11 @@
-#include <dc_motor.h>
 #include <rthw.h>
 #include <rtdevice.h>
-#include <SenseData.h>
+#include <math.h>
+#include "SenseData.h"
 #include "WorkTask.h"
 #include "Uart_Screen.h"
 #include "bsp_StepMotor.h"
-#include "RunLED.h"
+#include "dc_motor.h"
 
 /* 工作事件标志 */
 #define EVENT_MOTOR_1	(1 << 0)
@@ -26,52 +26,47 @@ rt_thread_t work3 = RT_NULL;
 rt_thread_t work4 = RT_NULL;
 /* 定时器的控制块 */
 static rt_timer_t timer;
-struct task_thread_para_t task_thread_para = {1,2,3,4};
+struct task_thread_para_t task_thread_para = {1, 2, 3, 4};
 
-static int cnt[4] = {-1,-1,-1,-1};
+static int cnt[4] = {-1, -1, -1, -1};
 typedef void (*pwork_t)(void *parameter);
-typedef void (*pworkend_t)(void);
+typedef void (*pmotor_cb_t)(void);
 
 sample_param_t sample_param_1 = {
+								0,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
-								DEFAULT_A2_TIME,
-								SAMPLE1_HEAT_TIME,
-								SAMPLE1_READ_TIME,
-								SAMPLE1_A1_TIME,
-								SAMPLE1_A2_TIME
+								DEFAULT_A2_TIME
 								};
 sample_param_t sample_param_2 = {
+								0,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
-								DEFAULT_A2_TIME,
-								SAMPLE2_HEAT_TIME,
-								SAMPLE2_READ_TIME,
-								SAMPLE2_A1_TIME,
-								SAMPLE2_A2_TIME
+								DEFAULT_A2_TIME
 								};
 sample_param_t sample_param_3 = {
+								0,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
-								DEFAULT_A2_TIME,
-								SAMPLE3_HEAT_TIME,
-								SAMPLE3_READ_TIME,
-								SAMPLE3_A1_TIME,
-								SAMPLE3_A2_TIME
+								DEFAULT_A2_TIME
 								};
 sample_param_t sample_param_4 = {
+								0,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
-								DEFAULT_A2_TIME,
-								SAMPLE4_HEAT_TIME,
-								SAMPLE4_READ_TIME,
-								SAMPLE4_A1_TIME,
-								SAMPLE4_A2_TIME
+								DEFAULT_A2_TIME
 								};
+/* 回调函数 */
+void motor_cb(rt_uint8_t motor_ch)
+{
+	 rt_uint8_t motor_event[4] = {EVENT_MOTOR_1, EVENT_MOTOR_2, EVENT_MOTOR_3, EVENT_MOTOR_4};
+    /* 发送事件 */
+    rt_event_send(&work_event, motor_event[motor_ch]);
+}
 
 void motor_1_cb(void)
 {
@@ -93,31 +88,42 @@ void motor_4_cb(void)
     /* 发送事件 */
     rt_event_send(&work_event, EVENT_MOTOR_4);
 }
-/* 定时器超时函数 */
+/* 定时器超时函数 (1000ms) */
 static void timeout(void *parameter)
 {
 	sample_param_t* sample_param[4] = {&sample_param_1, &sample_param_2,
 										&sample_param_3, &sample_param_4};
-	rt_uint16_t surplus_tim_LCD[4] = {SAMPLE1_SURPLUS_TIME, SAMPLE2_SURPLUS_TIME,
-										SAMPLE3_SURPLUS_TIME, SAMPLE4_SURPLUS_TIME};
 	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
+	rt_uint8_t *en_read_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,  \
+									&switch_config.en_Light_3, &switch_config.en_Light_4};
+	struct light_handle_t *ppLight[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
+	rt_uint16_t total_time;
 
 	for(rt_uint8_t i = 0; i<4; i++)
 	{
 	    if (cnt[i] > 0)    
 		{
-			//rt_kprintf(" %d timeout:%d\n",i,cnt[i]);
-
-			if(sample_param_1.a1_time == (sample_param_1.read_time - cnt[i] + 9))
+			if(sample_param[i]->a1_time == (sample_param[i]->read_time - cnt[i] + 9)
+					&& *en_read_light[i])
 			{
-				h_light_1.a1_status = 1;
+				ppLight[i]->a1_status = 10;
 			}
-			if(sample_param_1.a2_time == (sample_param_1.read_time - cnt[i] + 9))
+			if(sample_param[i]->a2_time == (sample_param[i]->read_time - cnt[i] + 9)
+					&& *en_read_light[i])
 			{
-				h_light_1.a2_status = 1;
+				ppLight[i]->a2_status = 10;
 			}
 			sample_param[i]->surplus_time--;
-			ScreenSendData_2bytes(surplus_tim_LCD[i], sample_param[i]->surplus_time);
+			total_time = sample_param[i]->total_time - sample_param[i]->surplus_time;
+			if (total_time == sample_param[i]->total_time_1_5 * 2)
+				ScreenDisICON(SAMPLE1_PROG_IOC + i, 2);
+			else if (total_time == sample_param[i]->total_time_1_5 * 3)
+				ScreenDisICON(SAMPLE1_PROG_IOC + i, 3);
+			else if (total_time == sample_param[i]->total_time_1_5 * 4)
+				ScreenDisICON(SAMPLE1_PROG_IOC + i, 4);
+			else if(total_time == sample_param[i]->total_time)
+				ScreenDisICON(SAMPLE1_PROG_IOC + i, 5);
+
 			cnt[i]--;
 		}
 		else if(0 == cnt[i])
@@ -130,8 +136,8 @@ static void timeout(void *parameter)
 
 static void work_timer_delete(void)
 {
-	if(switch_config.en_sample_1 == 0 && switch_config.en_sample_2 == 0
-		&& switch_config.en_sample_3 == 0 && switch_config.en_sample_4 == 0)
+	if(status_config.flow1_status == FLOW_READY && status_config.flow2_status == FLOW_READY
+		&& status_config.flow3_status == FLOW_READY && status_config.flow4_status == FLOW_READY)
 	{
 		rt_timer_stop(timer);
 		rt_timer_delete(timer);
@@ -193,7 +199,7 @@ int stepmotor_backzero(rt_uint8_t _motor_id)
 {
 	rt_uint8_t _ret = 0;
 	MotorHandle_t* motor[4] = {&Motor1, &Motor2, &Motor3, &Motor4};
-	pworkend_t _end_cb[4] = {motor_1_cb, motor_2_cb, motor_3_cb, motor_4_cb,};
+	pmotor_cb_t _end_cb[4] = {motor_1_cb, motor_2_cb, motor_3_cb, motor_4_cb,};
 
 	motor_set_end_indicate(motor[_motor_id-1], _end_cb[_motor_id-1]);
 	_ret = StepMotor_AxisMoveRel_sync(_motor_id, 0, 150, 150, 10000);
@@ -204,7 +210,7 @@ int stepmotor_backzero(rt_uint8_t _motor_id)
 	rt_thread_delay(10);
 	_ret = StepMotor_AxisMoveRel_sync(_motor_id, 0, 0, 0, 1000);
 	rt_thread_delay(10);
-	_ret = StepMotor_AxisMoveRel_sync(_motor_id, -3800, 150, 150, 10000);
+	_ret = StepMotor_AxisMoveRel_sync(_motor_id, -5300, 150, 150, 10000);
 	if(_ret != 0)
 		return _ret;
 
@@ -214,15 +220,19 @@ int stepmotor_backzero(rt_uint8_t _motor_id)
 
 	return 0;
 }
-/**
- *
- */
-void parameter_display(sample_param_t* sample_param)
+
+static float sample_calculate(rt_uint16_t _a1, rt_uint16_t _a2)
 {
-	ScreenSendData_2bytes(sample_param->heat_dis_addr, sample_param->heat_time);
-	ScreenSendData_2bytes(sample_param->read_dis_addr, sample_param->read_time);
-	ScreenSendData_2bytes(sample_param->a1_dis_addr, sample_param->a1_time);
-	ScreenSendData_2bytes(sample_param->a2_dis_addr, sample_param->a2_time);
+	char str[10] = {0};
+	float _d_value = (float)_a1 / (float)_a2;
+	sprintf(str, "%f", _d_value);
+	rt_kprintf("_d_value: %s\n", str);
+	rt_memset(str, 0, sizeof(str));
+	float _result = log10(_d_value);
+	sprintf(str, "%f", _result);
+	rt_kprintf("result: %s\n", str);
+
+	return _result;
 }
 /**
  *样本测试流程
@@ -231,23 +241,26 @@ void parameter_display(sample_param_t* sample_param)
  */
 void sample_task(rt_uint8_t _ch)
 {
-	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2, &sample_param_3, &sample_param_4};
+	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2,
+											&sample_param_3, &sample_param_4};
 	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
 	struct light_handle_t *p_light[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
 	rt_uint8_t* en_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,
 								&switch_config.en_Light_3, &switch_config.en_Light_4};
+	rt_uint16_t LCD_info = SAMPLE1_INFO + (_ch-1) * 32;
+	char str[25] = {0};
 
 	/* 搅拌5s */
 	switch_blender(_ch-1, 1);
 	rt_thread_delay(5000);
 	switch_blender(_ch-1, 0);
 	/* 温浴 295s */
-	ScreenDisICON(SAMPLE1_1_ICO + (_ch-1)*2, 1);
 	cnt[_ch-1] = psample_param[_ch-1]->heat_time;
+	ScreenDisICON(SAMPLE1_PROG_IOC + _ch - 1, 1); //显示进度条
 	rt_event_recv(&work_event, _work_event[_ch-1],
 				  RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
 	/* 加入R2 */
-	StepMotor_AxisMoveRel_sync(_ch, 3000, 150, 150, 10000);
+	StepMotor_AxisMoveRel_sync(_ch, 5300, 150, 150, 10000);
 	rt_thread_delay(50);
 	StepMotor_AxisMoveRel_sync(_ch, 1, 150, 150, 10000);
 	/* 搅拌5s */
@@ -255,7 +268,6 @@ void sample_task(rt_uint8_t _ch)
 	rt_thread_delay(5000);
 	switch_blender(_ch-1, 0);
 	/* 读值8min */
-	ScreenDisICON(SAMPLE1_2_ICO + (_ch-1)*2, 1);
 	cnt[_ch-1] = psample_param[_ch-1]->read_time;   //开始信号
 	*en_light[_ch-1] = 1;
 	rt_event_recv(&work_event, _work_event[_ch-1], RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
@@ -266,11 +278,14 @@ void sample_task(rt_uint8_t _ch)
 
 	rt_kprintf("A2_1: %d\n", p_light[_ch-1]->ave_a2_1);
 	rt_kprintf("A2_2: %d\n", p_light[_ch-1]->ave_a2_2);
+	sample_calculate(p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a1_2);
 	p_light[_ch-1]->ave_a1_1 = 0;
 	p_light[_ch-1]->ave_a1_2 = 0;
 	p_light[_ch-1]->ave_a2_1 = 0;
 	p_light[_ch-1]->ave_a2_2 = 0;
 
+	rt_sprintf(str, "测试完成，请继续");
+	ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
 }
 /**
  *  测试流程
@@ -286,131 +301,94 @@ static void test_task(rt_uint8_t _ch)
 /*
  * 任务初始化
  */
-void channel_1_init(void)
+rt_uint8_t channel_init(rt_uint8_t _ch)
 {
-	ScreenDisICON(SAMPLE_1_ICO, 0);
+	rt_uint32_t count[4] = {0};
+	MotorHandle_t* motor[4] = {&Motor1, &Motor2, &Motor3, &Motor4};
+	pmotor_cb_t pmotor_cb[4] = {motor_1_cb, motor_2_cb, motor_3_cb, motor_4_cb};
+	rt_uint8_t* cup_en[4] = {&switch_config.en_cup_1, &switch_config.en_cup_2,
+									&switch_config.en_cup_3, &switch_config.en_cup_4};
+	sample_param_t* sample_param[4] = {&sample_param_1, &sample_param_2,
+											&sample_param_3, &sample_param_4};
+	rt_uint16_t LCD_info = SAMPLE1_INFO + _ch * 32;
+	char str[25] = {0};
+
+	*cup_en[_ch] = 1;
+	while(get_door_status(_ch/2))
+	{
+		count[_ch]++;
+		rt_thread_delay(100);
+		if(count[_ch] == 80)
+			return RT_ERROR;
+	}
+	count[_ch] = 0;
+	while(0 == get_cup_status(_ch))
+	{
+		count[_ch]++;
+		rt_thread_delay(100);
+		if(count[_ch] == 3)
+		{
+			rt_sprintf(str, "无杯，请放试剂再测试");
+			ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+			return RT_ERROR;
+		}
+	}
 	/* 设置电机停止回调函数 */
-	motor_set_end_indicate(&Motor1, motor_1_cb);
-	sample_param_1.surplus_time = sample_param_1.heat_time + sample_param_1.read_time;
-}
-void channel_2_init(void)
-{
-	ScreenDisICON(SAMPLE_2_ICO, 0);
-	motor_set_end_indicate(&Motor2, motor_2_cb);
-	sample_param_2.surplus_time = sample_param_2.heat_time + sample_param_2.read_time;
-}
-void channel_3_init(void)
-{
-	ScreenDisICON(SAMPLE_3_ICO, 0);
-	motor_set_end_indicate(&Motor3, motor_3_cb);
-	sample_param_3.surplus_time = sample_param_3.heat_time + sample_param_3.read_time;
-}
-void channel_4_init(void)
-{
-	ScreenDisICON(SAMPLE_4_ICO, 0);
-	motor_set_end_indicate(&Motor4, motor_4_cb);
-	sample_param_4.surplus_time = sample_param_4.heat_time + sample_param_4.read_time;
+	motor_set_end_indicate(motor[_ch], pmotor_cb[_ch]);
+	sample_param[_ch]->surplus_time = sample_param[_ch]->heat_time +      \
+											sample_param[_ch]->read_time;
+	sample_param[_ch]->total_time = sample_param[_ch]->surplus_time;
+	sample_param[_ch]->total_time_1_5 = sample_param[_ch]->total_time / 5;
+	rt_sprintf(str, "正在检测中·····");
+	ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+	*cup_en[_ch] = 0;
+
+	return RT_EOK;
 }
 /*
  * 任务结束
  */
-void channel_1_end(void)
+void channel_end(rt_uint8_t _ch)
 {
-	work1 = RT_NULL;
-	cnt[0] = -1;
-	motor_set_end_indicate(&Motor1, RT_NULL);
-	switch_blender(0, 0);
-	ScreenDisICON(SAMPLE1_SWITCH_IOC, 0);
-	ScreenDisICON(SAMPLE1_1_ICO, 0);
-	ScreenDisICON(SAMPLE1_2_ICO, 0);
-	ScreenDisICON(SAMPLE_1_ICO, 1);
-	switch_config.en_sample_1 = 0;
-}
-void channel_2_end(void)
-{
-	work2 = RT_NULL;
-	cnt[1] = -1;
-	motor_set_end_indicate(&Motor2, RT_NULL);
-	switch_blender(1, 0);
-	ScreenDisICON(SAMPLE2_SWITCH_IOC, 0);
-	ScreenDisICON(SAMPLE2_1_ICO, 0);
-	ScreenDisICON(SAMPLE2_2_ICO, 0);
-	ScreenDisICON(SAMPLE_2_ICO, 1);
-	switch_config.en_sample_2 = 0;
-}
-void channel_3_end(void)
-{
-	work3 = RT_NULL;
-	cnt[2] = -1;
-	motor_set_end_indicate(&Motor3, RT_NULL);
-	switch_blender(2, 0);
-	ScreenDisICON(SAMPLE3_SWITCH_IOC, 0);
-	ScreenDisICON(SAMPLE3_1_ICO, 0);
-	ScreenDisICON(SAMPLE3_2_ICO, 0);
-	ScreenDisICON(SAMPLE_3_ICO, 1);
-	switch_config.en_sample_3 = 0;
-}
-void channel_4_end(void)
-{
-	work4 = RT_NULL;
-	cnt[3] = -1;
-	motor_set_end_indicate(&Motor4, RT_NULL);
-	switch_blender(3, 0);
-	ScreenDisICON(SAMPLE4_SWITCH_IOC, 0);
-	ScreenDisICON(SAMPLE4_1_ICO, 0);
-	ScreenDisICON(SAMPLE4_2_ICO, 0);
-	ScreenDisICON(SAMPLE_4_ICO, 1);
-	switch_config.en_sample_4 = 0;
+	rt_thread_t* ppwork[4] = {&work1, &work2, &work3, &work4};
+	MotorHandle_t* motor[4] = {&Motor1, &Motor2, &Motor3, &Motor4};
+	rt_uint8_t* sample_status[4] = {&status_config.flow1_status, &status_config.flow2_status,
+										&status_config.flow3_status, &status_config.flow4_status};
+
+	ppwork[_ch] = RT_NULL;
+	cnt[_ch] = -1;
+	motor_set_end_indicate(motor[_ch], RT_NULL);
+	switch_blender(_ch, 0);
+	ScreenDisICON(SAMPLE1_SWITCH_IOC + _ch, 0); //显示开始
+	*sample_status[_ch] = FLOW_READY;
 }
 /*
  * 任务运行实体
  */
 void Function_Channel_1(void* parameter)
 {
-	channel_1_init();
-	sample_task(1);
-	channel_1_end();
+	if(channel_init(0) == RT_EOK)
+		sample_task(1);
+	channel_end(0);
 }
 void Function_Channel_2(void* parameter)
 {
-	channel_2_init();
-	sample_task(2);
-	channel_2_end();
+	if(channel_init(1) == RT_EOK)
+		sample_task(2);
+	channel_end(1);
 }
 void Function_Channel_3(void* parameter)
 {
-	channel_3_init();
-	test_task(3);
-	channel_3_end();
+	if(channel_init(2) == RT_EOK)
+		test_task(3);
+	channel_end(2);
 }
 void Function_Channel_4(void* parameter)
 {	
 	rt_kprintf("work4 start\n");
-	channel_4_init();
-	/* 搅拌5s */
-	switch_blender(3, 1);
-	rt_thread_delay(5000);
-	switch_blender(3, 0);
-	/* 温浴 295s */
-	ScreenDisICON(SAMPLE4_1_ICO, 1);
-	cnt[3] = sample_param_4.heat_time;
-	rt_event_recv(&work_event, EVENT_CHANNEL_4,
-				  RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
-	/* 加入R2 */
-	StepMotor_AxisMoveRel_sync(4,2000,150,150,10000);
-	rt_thread_delay(50);
-	StepMotor_AxisMoveRel_sync(4,1,150,150,10000);	
-	/* 搅拌5s */
-	switch_blender(3, 1);
-	rt_thread_delay(5000);
-	switch_blender(3, 0);
-	/* 读值8min */
-	ScreenDisICON(SAMPLE4_2_ICO, 1);
-	cnt[3] = sample_param_4.read_time;
-	switch_config.en_Light_1 = 1;
-	rt_event_recv(&work_event, EVENT_CHANNEL_4, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
-	switch_config.en_Light_1 = 0;
-	channel_4_end();
+	if(channel_init(3) == RT_EOK)
+		sample_task(4);
+	channel_end(3);
 	rt_kprintf("work4 done\n");
 }
 
@@ -418,18 +396,15 @@ void Function_Channel_4(void* parameter)
 /**
  * @brief  工作任务创建
  *  
- * @param  config ：1：使能通道一
- *					2：使能通道二
- *					4：使能通道三
- *					8：使能通道四
+ * @param  _ch ：0 ~ 3
+ *
  * @return
  */
-int work_create(const rt_uint8_t config)
+int work_create(const rt_uint8_t _ch)
 {
 	int result = RT_EOK;
 	char *workname[4] = {"Cnl_1", "Cnl_2", "Cnl_3", "Cnl_4"};
 	pwork_t work[4] = {Function_Channel_1, Function_Channel_2, Function_Channel_3, Function_Channel_4};
-	rt_uint8_t en_confg[4] = {EN_CHANNEL_1, EN_CHANNEL_2, EN_CHANNEL_3, EN_CHANNEL_4};
 	work1 = work2 = work3 = work4 = RT_NULL;
 	rt_thread_t *hth[4] = {&work1, &work2, &work3, &work4};
 	
@@ -439,33 +414,28 @@ int work_create(const rt_uint8_t config)
 		timer = rt_timer_create("timer", /* 定时器名字是 timer */
 								 timeout, /* 超时时回调的处理函数 */
 								 RT_NULL, /* 超时函数的入口参数 */
-								 1000, /* 定时长度，以OS Tick为单位，即10个OS Tick */
+								 1000, 	  /* 定时长度，以OS Tick为单位，即1000个OS Tick */
 								 RT_TIMER_FLAG_PERIODIC); /* 周期性定时器 */
 
 		/* 启动定时器 */
 		if (timer != RT_NULL) rt_timer_start(timer);
 	}
-	for(rt_uint8_t i = 0; i<4; i++)
+
+	*hth[_ch] = rt_thread_create(workname[_ch],            //线程名称。
+								 work[_ch],      			   //线程入口函数。
+								 &task_thread_para.ch_1 + _ch, //线程入口参数。
+								 CHANNEL_STACK_SIZE,       //线程栈大小。
+								 CHANNEL_PRIORITY,         //线程优先级。
+								 CHANNEL_TIMESLICE);       //时间片Tick。
+
+	if(*hth[_ch] == RT_NULL)            //判断线程是否创建成功。
 	{
-		if(en_confg[i] & config)
-		{
-			*hth[i] = rt_thread_create(workname[i],            //线程名称。
-									 work[i],      			   //线程入口函数。
-									 &task_thread_para.ch_1+i, //线程入口参数。
-									 CHANNEL_STACK_SIZE,       //线程栈大小。
-									 CHANNEL_PRIORITY,         //线程优先级。
-									 CHANNEL_TIMESLICE);       //时间片Tick。
-									
-			if(*hth[i] == RT_NULL)            //判断线程是否创建成功。
-			{
-				result = -RT_ERROR;		
-			}
-			else
-			{
-				//rt_kprintf("addr: %x\n",*hth[i]);
-				rt_thread_startup(*hth[i]);
-			}
-		}
+		result = -RT_ERROR;
+	}
+	else
+	{
+		rt_kprintf("addr: %x\n",*hth[_ch]);
+		rt_thread_startup(*hth[_ch]);
 	}
 	
 	return result; 
@@ -473,22 +443,17 @@ int work_create(const rt_uint8_t config)
 /*
  * 工作取消
  */
-void work_cancel(const rt_uint8_t config)
+rt_uint8_t work_cancel(const rt_uint8_t _ch)
 {
 	rt_thread_t *hth[4] = {&work1, &work2, &work3, &work4};
-	rt_uint8_t dis_confg[4] = {DIS_CHANNEL_1, DIS_CHANNEL_2, DIS_CHANNEL_3, DIS_CHANNEL_4};
-	pworkend_t workend[4] = {channel_1_end, channel_2_end, channel_3_end, channel_4_end};
+	rt_uint8_t _rev;
 	
 	work_timer_delete();
-	for(rt_uint8_t i=0;i<4;i++)
-	{
-		if(config & dis_confg[i])
-		{
-			rt_thread_suspend(*hth[i]);
-			rt_thread_delete(*hth[i]);
-			workend[i]();
-		}
-	}
+	_rev = rt_thread_suspend(*hth[_ch]);
+	_rev = rt_thread_delete(*hth[_ch]);
+	channel_end(_ch);
+
+	return _rev;
 }
 
 int worktask_init(void)

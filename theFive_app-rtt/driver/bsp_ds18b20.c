@@ -4,9 +4,12 @@
 
 OneWire_t OneWire1, OneWire2, OneWire3, OneWire4;
 
+/**
+ *	很准 us
+ */
 static void bsp_udelay(rt_uint32_t us)
 {
-    int i = (HAL_RCC_GetHCLKFreq() / 4000000 * us);
+    int i = (HAL_RCC_GetHCLKFreq() / 2000000 * us / 5);
     while (i)
     {
         i--;
@@ -21,7 +24,6 @@ rt_err_t ds18b20_reset(OneWire_t* OneWire)
 
 	/* disable interrupt */
     level = rt_hw_interrupt_disable();
-	//rt_enter_critical();
 
 	/* 复位，如果失败则返回0 */
 	for (i = 0; i < 1; i++)
@@ -31,7 +33,6 @@ rt_err_t ds18b20_reset(OneWire_t* OneWire)
 		ONEWIRE_HIGH(OneWire);				/* 释放DQ */
 
 		bsp_udelay(15);	/* 等待15us */
-
 		/* 检测DQ电平是否为低 */
 		for (k = 0; k < 10; k++)
 		{
@@ -130,9 +131,7 @@ rt_uint16_t ds18b20_read_reg(OneWire_t* OneWire)
 
 	ds18b20_write_byte(OneWire, 0xcc);	/* 发命令 */
 	ds18b20_write_byte(OneWire, 0x44);	/* 发转换命令 */
-
 	ds18b20_reset(OneWire);		/* 总线复位 */
-
 	ds18b20_write_byte(OneWire, 0xcc);	/* 发命令 */
 	ds18b20_write_byte(OneWire, 0xbe);
 

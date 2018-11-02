@@ -79,8 +79,12 @@ applications/RunLED.o: ../applications/RunLED.c \
  ../applications/ServerData.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_rfid.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h \
+ ../applications/Uart_Screen.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_StepMotor.h \
+ ../applications/Heat_PID.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/DataBase.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/flash_cfg.h
+ D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/flash_cfg.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\applications/WorkTask.h
 
 D:\Code\eclipse-workspace\theFive_app-rtt\driver/board.h:
 
@@ -242,6 +246,14 @@ D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_rfid.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h:
 
+../applications/Uart_Screen.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_StepMotor.h:
+
+../applications/Heat_PID.h:
+
 D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/DataBase.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\components\flash/flash_cfg.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\applications/WorkTask.h:

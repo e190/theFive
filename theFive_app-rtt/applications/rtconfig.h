@@ -137,20 +137,6 @@
 #define RT_USING_POSIX
 #define RT_USING_NEWLIB
 
-/* RT_USING_PTHREADS is not set */
-/* Network stack */
-
-/* light weight TCP/IP stack */
-
-/* RT_USING_LWIP is not set */
-
-/* Modbus master and slave stack */
-
-/* RT_USING_MODBUS is not set */
-
-/* RT-Thread UI Engine */
-
-/* PKG_USING_GUIENGINE is not set */
 /* AT commands */
 
 #define RT_USING_AT
@@ -162,36 +148,30 @@
 #define AT_USING_CLI
 //#define AT_PRINT_RAW_CMD
 
-
 /* RT-Thread online packages */
 
 /* system packages */
 
-/* PKG_USING_PARTITION is not set */
-/* PKG_USING_SQLITE is not set */
+#define RT_USING_ULOG
+#define ULOG_OUTPUT_LVL_DEBUG
+#define ULOG_OUTPUT_LVL 7
+#define ULOG_ASSERT_ENABLE
+#define ULOG_LINE_BUF_SIZE 128
+
+/* log format */
+
+#define ULOG_OUTPUT_FLOAT
+#define ULOG_USING_COLOR
+#define ULOG_OUTPUT_TIME
+#define ULOG_OUTPUT_LEVEL
+#define ULOG_OUTPUT_TAG
+#define ULOG_BACKEND_USING_CONSOLE
+#define ULOG_SW_VERSION_NUM 0x00100
 
 /* IoT - internet of things */
 
 #define PKG_USING_CJSON
 #define PKG_USING_CJSON_V102
-/* PKG_USING_PAHOMQTT is not set */
-/* PKG_USING_WEBCLIENT is not set */
-/* PKG_USING_MONGOOSE is not set */
-/* PKG_USING_WEBTERMINAL is not set */
-
-/* security packages */
-
-/* PKG_USING_MBEDTLS is not set */
-
-/* language packages */
-
-/* PKG_USING_JERRYSCRIPT is not set */
-
-/* multimedia packages */
-/* tools packages */
-
-/* PKG_USING_CMBACKTRACE is not set */
-/* PKG_USING_EASYLOGGER is not set */
 
 /* miscellaneous packages */
 

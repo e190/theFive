@@ -31,7 +31,7 @@ struct HeatSystem_t
 {
 	char* deviceName;
 	rt_uint8_t PWM_channel;
-	rt_uint32_t CycleTime;
+	rt_uint32_t CycleTime;			 //周期时间
 	rt_uint16_t duty;                //占空比 * 1000
 	float 		iSetVal;             //设定值
 	float 		iCurVal;             //实际值

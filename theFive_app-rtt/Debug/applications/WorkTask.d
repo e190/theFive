@@ -1,5 +1,5 @@
 applications/WorkTask.o: ../applications/WorkTask.c \
- D:\Code\eclipse-workspace\theFive_app-rtt\applications/dc_motor.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtthread.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\applications/rtconfig.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdebug.h \
@@ -15,7 +15,6 @@ applications/WorkTask.o: ../applications/WorkTask.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtservice.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtm.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/rtdevice.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/ringbuffer.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/completion.h \
@@ -34,8 +33,8 @@ applications/WorkTask.o: ../applications/WorkTask.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\applications/SenseData.h \
- ../applications/WorkTask.h ../applications/Uart_Screen.h \
+ ../applications/SenseData.h ../applications/WorkTask.h \
+ ../applications/Uart_Screen.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\driver/bsp_StepMotor.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/stm32f4xx.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\CMSIS\Device\ST\STM32F4xx\Include/stm32f407xx.h \
@@ -77,9 +76,9 @@ applications/WorkTask.o: ../applications/WorkTask.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm32f4xx_hal_pcd_ex.h \
  ../applications/Heat_PID.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
- ../applications/RunLED.h
+ ../applications/dc_motor.h
 
-D:\Code\eclipse-workspace\theFive_app-rtt\applications/dc_motor.h:
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtthread.h:
 
@@ -110,8 +109,6 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtservice.h:
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtm.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h:
-
-D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/rtdevice.h:
 
@@ -149,7 +146,7 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/d
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h:
 
-D:\Code\eclipse-workspace\theFive_app-rtt\applications/SenseData.h:
+../applications/SenseData.h:
 
 ../applications/WorkTask.h:
 
@@ -237,4 +234,4 @@ D:\Code\eclipse-workspace\theFive_app-rtt\Libraries\STM32F4xx_HAL_Driver\Inc/stm
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h:
 
-../applications/RunLED.h:
+../applications/dc_motor.h:

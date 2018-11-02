@@ -5,7 +5,7 @@
 #include <drivers/pin.h>
 
 #define RunLED_PRIORITY   12       //线程优先级
-#define RunLED_STACK_SIZE 1536      //线程栈大小
+#define RunLED_STACK_SIZE 1536     //线程栈大小
 #define RunLED_TIMESLICE  10       //时间片Tick
 
 #define RunLED_gpio     117    //定义Pin：GPIO_D_3。

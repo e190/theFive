@@ -23,16 +23,14 @@
 
 typedef struct 
 {
+	rt_uint8_t mix_time;
     rt_uint16_t heat_time;
     rt_uint16_t read_time;
     rt_uint16_t a1_time;
     rt_uint16_t a2_time;
 	
-	rt_uint16_t heat_dis_addr;
-    rt_uint16_t read_dis_addr;
-    rt_uint16_t a1_dis_addr;
-    rt_uint16_t a2_dis_addr;
-	
+    rt_uint16_t total_time;   //总时间
+	rt_uint16_t total_time_1_5;   //总时间的1/5
 	rt_uint16_t surplus_time;
 }sample_param_t;
 
@@ -49,10 +47,9 @@ extern sample_param_t sample_param_2;
 extern sample_param_t sample_param_3;
 extern sample_param_t sample_param_4;
 
-void parameter_display(sample_param_t* sample_param);
 int worktask_init(void);
 int stepmotor_backzero(rt_uint8_t _motor_id);
 int work_create(const rt_uint8_t config);
-void work_cancel(const rt_uint8_t config);
+rt_uint8_t work_cancel(const rt_uint8_t config);
 
 #endif

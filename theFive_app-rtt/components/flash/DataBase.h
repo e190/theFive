@@ -1,6 +1,7 @@
 #ifndef __SAVEFLASH_H__
 #define __SAVEFLASH_H__
 #include "flash_cfg.h"
+#include "WorkTask.h"
 
 struct flash_para_t{
 	rt_uint32_t bytes_per_sector;
@@ -14,22 +15,39 @@ struct flash_para_t{
 	rt_uint8_t init_ok;
 };
 
-struct mix_door_time_t
+struct mix_door_para_t
 {
-	rt_uint8_t mix_time_1;	//搅拌时间   单位：s
-	rt_uint8_t mix_time_2;
-	rt_uint8_t mix_time_3;
-	rt_uint8_t mix_time_4;
-	rt_uint16_t door_time_1; //开关门时间   单位：ms
-	rt_uint16_t door_time_2;
-	rt_uint16_t door_time_3;
-	rt_uint16_t door_time_4;
+	rt_uint8_t mix_potency_1;	//搅拌力度   （1~10）
+	rt_uint8_t mix_potency_2;
+	rt_uint8_t mix_potency_3;
+	rt_uint8_t mix_potency_4;
+	rt_uint16_t door_range; 	//开门幅度   （50~80）
 };
+
+struct flash_heat_para_t
+{
+	rt_uint32_t CycleTime;
+	float 		iSetVal;             //设定值
+	float 		uKP_Coe;             //比例系数
+	float 		uKI_Coe;             //积分常数
+	float 		uKD_Coe;             //微分常数
+};
+// 存储数据
 struct sample_data_t{
 	char data[500];
 };
-struct system_para_t{
 
+// 系统参数
+struct system_para_t{
+	struct mix_door_para_t mix_door_para;
+	sample_param_t sample_para_1;
+	sample_param_t sample_para_2;
+	sample_param_t sample_para_3;
+	sample_param_t sample_para_4;
+	struct flash_heat_para_t heat_para_1;
+	struct flash_heat_para_t heat_para_2;
+	struct flash_heat_para_t heat_para_3;
+	struct flash_heat_para_t heat_para_4;
 };
 
 EfErrCode load_flash(void);

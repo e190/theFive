@@ -5,7 +5,7 @@
     #define SDIO_CLK_DIV 2
 #endif
 #define SDIO_TIMEOUT ((uint32_t)0x100000)
-#define SD_DMA_MODE		0
+#define SD_DMA_MODE		1
 #define SD_DEBUG
 
 #ifdef SD_DEBUG

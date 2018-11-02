@@ -16,7 +16,10 @@ UartBuff_t UartBuff;
 static struct rt_event event;
 /* 串口设备句柄 */
 static rt_device_t uart_device = RT_NULL;
-    
+
+static rt_uint8_t SetVD_Central(rt_uint16_t range);
+static rt_uint8_t SetX_amp(rt_uint8_t _amp);
+
 /* 回调函数 */
 static rt_err_t uart_intput(rt_device_t dev, rt_size_t size)
 {
@@ -60,7 +63,7 @@ void uart_putchar(const rt_uint8_t c)
  */
 static rt_uint8_t choose_channel(rt_uint32_t _addr, rt_uint8_t _channel)
 {
-	char str[2] = {0};
+	char str[3] = {0};
 	
 	switch (_channel)
 	{
@@ -81,91 +84,149 @@ static rt_uint8_t choose_channel(rt_uint32_t _addr, rt_uint8_t _channel)
 		ScreenSendCommand(WRITE_82, _addr, (rt_uint8_t*)str,rt_strlen(str));
 		break;
 	default:
+		_channel = 0;
 		break;
 	}
 	
 	return _channel;
 }
+/**
+ *  启动样本测试
+ */
 static int sample_start(rt_uint16_t _addr)
 {		
-	if(_addr < SAMPLE_CHANNEL_1 || _addr > SAMPLE_CHANNEL_4)
+	char str[25] = {0};
+	rt_uint8_t _rev;
+	if(_addr < SAMPLE_SWITCH_1 || _addr > SAMPLE_SWITCH_4)
 		return RT_ERROR;
-	rt_uint8_t num =  _addr - SAMPLE_CHANNEL_1;
-	
-	if(switch_config.sample_start & (0x01<<num))
+	rt_uint8_t* sample_status[4] = {&status_config.flow1_status, &status_config.flow2_status,
+										&status_config.flow3_status, &status_config.flow4_status};
+	rt_uint8_t ch =  _addr - SAMPLE_SWITCH_1;
+	rt_uint16_t LCD_info = SAMPLE1_INFO + ch * 32;
+
+	switch (*sample_status[ch])
 	{
-		ScreenDisICON(SAMPLE1_ICO + num, 0);
-		switch_config.sample_start &= ~(0x01<<num);
+	case FLOW_READY:
+		ch = ch / 2 * 2;
+		if(*sample_status[ch] == FLOW_RUN || *sample_status[ch + 1] == FLOW_RUN)
+		{
+			rt_sprintf(str, "有测试正在运行中");
+			ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+			return RT_ERROR;
+		}
+		LCD_info = SAMPLE1_INFO + ch * 32;
+		*sample_status[ch] = *sample_status[ch + 1] = FLOW_ADD;
+		ScreenDisICON(SAMPLE1_SWITCH_IOC + ch, 2);	 //显示继续
+		ScreenDisICON(SAMPLE1_SWITCH_IOC + ch + 1, 2);
+		ScreenDisICON(SAMPLE1_PROG_IOC + ch, 0);
+		ScreenDisICON(SAMPLE1_PROG_IOC + ch + 1, 0);
+		rt_sprintf(str, "请放入试剂，开始测试");
+		ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+		ScreenSendCommand(WRITE_82, LCD_info + 32, (rt_uint8_t*)str, sizeof(str));
+		door_start(ch/2, 1);
+		break;
+	case FLOW_ADD:
+		door_start(ch/2, 0);
+		*sample_status[ch] = FLOW_RUN;
+		ScreenDisICON(SAMPLE1_SWITCH_IOC + ch, 1); //显示停止
+		rt_sprintf(str, "准备中···");
+		ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+		_rev = work_create(ch);	//创建任务
+		if(_rev != RT_EOK)
+			rt_kprintf("create work failed\n");
+		break;
+	case FLOW_RUN:
+		*sample_status[ch] = FLOW_READY;
+		rt_sprintf(str, "已终止，请重新开始");
+		ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+		_rev = work_cancel(ch);	//取消任务
+		if(_rev != RT_EOK)
+			rt_kprintf("cancel work failed\n");
+		break;
+	default:
+		*sample_status[ch] = FLOW_READY;
+		ScreenDisICON(SAMPLE1_SWITCH_IOC + ch, 0);
+		rt_sprintf(str, "点击开始，然后放入试剂");
+		ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str,rt_strlen(str));
+		break;
 	}
-	else	
+
+	return RT_EOK;
+}
+/**
+ *  显示状态
+ */
+static int dis_sample_status(void)
+{
+	rt_uint8_t* sample_status[4] = {&status_config.flow1_status, &status_config.flow2_status,
+										&status_config.flow3_status, &status_config.flow4_status};
+	rt_uint16_t switch_ico[4] = {SAMPLE1_SWITCH_IOC, SAMPLE2_SWITCH_IOC, SAMPLE3_SWITCH_IOC, SAMPLE4_SWITCH_IOC};
+	rt_uint16_t LCD_info[4] = {SAMPLE1_INFO, SAMPLE2_INFO, SAMPLE3_INFO, SAMPLE4_INFO};
+	char str[25] = {0};
+
+	for(rt_uint8_t i = 0; i<4; i++)
 	{
-		ScreenDisICON(SAMPLE1_ICO + num, 1);
-		switch_config.sample_start |= 0x01 << num;	
+		if(*sample_status[i] == FLOW_READY)
+		{
+			ScreenDisICON(switch_ico[i], 0);
+			rt_sprintf(str, "点击开始，然后放入试剂");
+			ScreenSendCommand(WRITE_82, LCD_info[i], (rt_uint8_t*)str,rt_strlen(str));
+		}
 	}
-	return RT_EOK;
 }
-static int set_work_heat(rt_uint16_t _addr, rt_uint16_t value)
+/**
+ *	设置样本流程参数
+ */
+static int set_sample_para(rt_uint8_t _ch)
 {
-	rt_uint16_t* pheat_time[4] = {&sample_param_1.heat_time, &sample_param_2.heat_time,
-									&sample_param_3.heat_time, &sample_param_4.heat_time};
-	if(_addr < SAMPLE1_HEAT_TIME || _addr > SAMPLE4_HEAT_TIME)
-		return RT_ERROR;
-	*pheat_time[(_addr-SAMPLE1_HEAT_TIME)/2] = value;
-	
-	return RT_EOK;
-}
-static int set_work_read(rt_uint16_t _addr, rt_uint16_t value)
-{
-	rt_uint16_t* pread_time[4] = {&sample_param_1.read_time, &sample_param_2.read_time,
-									&sample_param_3.read_time, &sample_param_4.read_time};
-	if(_addr < SAMPLE1_READ_TIME || _addr > SAMPLE4_READ_TIME)
-		return RT_ERROR;
-	*pread_time[(_addr-SAMPLE1_READ_TIME)/2] = value;
-	
-	return RT_EOK;
-}
-static int set_work_a1(rt_uint16_t _addr, rt_uint16_t value)
-{
-	rt_uint16_t* pa1_time[4] = {&sample_param_1.a1_time, &sample_param_2.a1_time,
-									&sample_param_3.a1_time, &sample_param_4.a1_time};
-	if(_addr < SAMPLE1_A1_TIME || _addr > SAMPLE4_A1_TIME)
-		return RT_ERROR;
-	*pa1_time[(_addr-SAMPLE1_A1_TIME)/2] = value;
-	
-	return RT_EOK;
-}
-static int set_work_a2(rt_uint16_t _addr, rt_uint16_t value)
-{
-	rt_uint16_t* pa2_time[4] = {&sample_param_1.a2_time, &sample_param_2.a2_time,
-									&sample_param_3.a2_time, &sample_param_4.a2_time};
-	if(_addr < SAMPLE1_A2_TIME || _addr > SAMPLE4_A2_TIME)
-		return RT_ERROR;
-	*pa2_time[(_addr-SAMPLE1_A2_TIME)/2] = value;
-	
-	return RT_EOK;
-}
-static int sample_switch(rt_uint16_t _addr)
-{
-	rt_uint8_t* en_sample[4] = {&switch_config.en_sample_1, &switch_config.en_sample_2,
-								&switch_config.en_sample_3, &switch_config.en_sample_4};
-	
-	if(_addr < SAMPLE_1_SWITCH || _addr > SAMPLE_4_SWITCH)
-		return RT_ERROR;
-	rt_uint8_t num =  _addr - SAMPLE_1_SWITCH;
-	if(*en_sample[num])
+	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2,
+											&sample_param_3, &sample_param_4};
+	char str[12] = {0};
+
+	if(_ch > 0 && _ch < 5)
 	{
-			*en_sample[num] = 0;
-			ScreenDisICON(SAMPLE1_SWITCH_IOC + num, 0);
-			work_cancel(0x10 << num);
+		psample_param[_ch-1]->mix_time = UartBuff.flow_para.mix_time;
+		psample_param[_ch-1]->heat_time = UartBuff.flow_para.heat_time;
+		psample_param[_ch-1]->read_time = UartBuff.flow_para.read_time;
+		psample_param[_ch-1]->a1_time = UartBuff.flow_para.a1_time;
+		psample_param[_ch-1]->a2_time = UartBuff.flow_para.a2_time;
+		rt_memset(str, 0, sizeof(str));
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
 	}
 	else
 	{
-			ScreenDisICON(SAMPLE1_SWITCH_IOC + num, 1);
-			work_create(0x01 << num);
-			*en_sample[num] = 1;
+		rt_sprintf(str, "请选择通道！");
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,rt_strlen(str));
 	}
+
 	return RT_EOK;
 }
+/**
+ *	显示流程参数
+ */
+static void flow_para_display(rt_uint8_t _ch)
+{
+	sample_param_t *psample_param[4] = {&sample_param_1, &sample_param_2,
+											&sample_param_3, &sample_param_4};
+
+	if(_ch > 0 && _ch < 5)
+	{
+		UartBuff.flow_para.mix_time = psample_param[_ch-1]->mix_time;
+		UartBuff.flow_para.heat_time = psample_param[_ch-1]->heat_time;
+		UartBuff.flow_para.read_time = psample_param[_ch-1]->read_time;
+		UartBuff.flow_para.a1_time = psample_param[_ch-1]->a1_time;
+		UartBuff.flow_para.a2_time = psample_param[_ch-1]->a2_time;
+		ScreenSendData_2bytes(SAMPLE_MIX_TIME, psample_param[_ch-1]->mix_time);
+		ScreenSendData_2bytes(SAMPLE_HEAT_TIME, psample_param[_ch-1]->heat_time);
+		ScreenSendData_2bytes(SAMPLE_READ_TIME, psample_param[_ch-1]->read_time);
+		ScreenSendData_2bytes(SAMPLE_A1_TIME, psample_param[_ch-1]->a1_time);
+		ScreenSendData_2bytes(SAMPLE_A2_TIME, psample_param[_ch-1]->a2_time);
+	}
+}
+
+/**
+ *	直射灯 开关
+ */
 static int light_switch(rt_uint16_t _addr)
 {
 	static rt_uint8_t en_led[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -189,6 +250,9 @@ static int light_switch(rt_uint16_t _addr)
 	}
 	return RT_EOK;
 }
+/**
+ *	搅拌电机 开关
+ */
 static int blender_switch(rt_uint16_t _addr)
 {
 	static rt_uint8_t en_dcmotor[4] = {0, 0, 0, 0};	
@@ -214,7 +278,9 @@ static int blender_switch(rt_uint16_t _addr)
 
 	return RT_EOK;
 }
-
+/**
+ *	加热系统 开关
+ */
 static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
 {
 	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
@@ -240,7 +306,10 @@ static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
 
 	return RT_EOK;
 }
-static int set_heat_para(rt_uint8_t _ch, HeatConfig _config, rt_uint16_t set_data)
+/**
+ *	设置加热系统参数
+ */
+static int set_heat_para(rt_uint8_t _ch)
 {
 	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
 										  &HeatHandle_3, &HeatHandle_4};
@@ -248,29 +317,12 @@ static int set_heat_para(rt_uint8_t _ch, HeatConfig _config, rt_uint16_t set_dat
 
 	if(_ch)
 	{
-		switch (_config)
-		{
-		case HEAT_SET_TEMP:
-			pHeatTemp[_ch-1]->iSetVal = set_data * 10;
-			rt_kprintf(" TEMP_SET:%d\n",set_data);
-			break;
-		case HEAT_SET_TIME:
-			pHeatTemp[_ch-1]->CycleTime = set_data;
-			rt_kprintf(" TEMP_SET:%d\n",set_data);
-			break;
-		case HEAT_SET_KP:
-			pHeatTemp[_ch-1]->PID.uKP_Coe = (float)set_data / 100;
-			rt_kprintf(" TEMP_SET:%d\n",set_data);
-			break;
-		case HEAT_SET_KI:
-			pHeatTemp[_ch-1]->PID.uKI_Coe = (float)set_data / 100;
-			rt_kprintf(" TEMP_SET:%d\n",set_data);
-			break;
-		case HEAT_SET_KD:
-			pHeatTemp[_ch-1]->PID.uKD_Coe = (float)set_data / 100;
-			rt_kprintf(" TEMP_SET:%d\n",set_data);
-			break;
-		}
+		pHeatTemp[_ch-1]->iSetVal = UartBuff.heat_para.iSetVal;
+		pHeatTemp[_ch-1]->CycleTime = UartBuff.heat_para.CycleTime;
+		pHeatTemp[_ch-1]->PID.uKP_Coe = UartBuff.heat_para.uKP_Coe;
+		pHeatTemp[_ch-1]->PID.uKI_Coe = UartBuff.heat_para.uKI_Coe;
+		pHeatTemp[_ch-1]->PID.uKD_Coe = UartBuff.heat_para.uKD_Coe;
+
 		rt_memset(str, 0, sizeof(str));
 		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
 	}
@@ -282,6 +334,9 @@ static int set_heat_para(rt_uint8_t _ch, HeatConfig _config, rt_uint16_t set_dat
 
 	return RT_EOK;
 }
+/**
+ *	显示加热系统参数
+ */
 static int display_heat_para(rt_uint8_t _ch)
 {
 	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
@@ -305,13 +360,39 @@ static int display_heat_para(rt_uint8_t _ch)
 	return RT_EOK;
 }
 /**
+ *	设置串口屏时间
+ */
+static int set_LCD_time(void)
+{
+	/*
+	 * 5A A5 0A 80 1F 5A 15 07 03  00 16 05 59
+                （更改为2015年07月03日16：05：59星期 用的00自动换算）
+	 *
+	 * */
+	rt_uint8_t wirte_buf[9] = {0x1f, 0x5a, 0, 0, 0, 0, 0, 0, 0};
+
+	rt_memcpy(&wirte_buf[2], &UartBuff.RealTime.year, 3);
+	rt_memcpy(&wirte_buf[6], &UartBuff.RealTime.hour, 2);
+
+	ScreenSendCommand(WRITE_80, 0x20, wirte_buf, sizeof(wirte_buf));
+
+	return RT_EOK;
+}
+/**
+ *	设置串口屏亮度
+ */
+static int set_LCD_light(void)
+{
+	return RT_EOK;
+}
+/**
  * @brief  处理屏幕按键
  *  
  * @param  keyval ：按键值
  *
  * @return
  */
-void LcdKeyValDeal(rt_uint16_t keyval)
+static void LcdKeyValDeal(rt_uint16_t keyval)
 {	
 	char string[30] = {0};
 	rt_uint8_t _ret = 0;
@@ -319,28 +400,7 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 	switch (keyval)
 	{
 	case SAMPLE:
-		{
-			rt_uint8_t* en_sample[4] = {&switch_config.en_sample_1, &switch_config.en_sample_2,
-										&switch_config.en_sample_3, &switch_config.en_sample_4};
-			rt_uint16_t switch_ico[4] = {SAMPLE1_SWITCH_IOC, SAMPLE2_SWITCH_IOC, SAMPLE3_SWITCH_IOC, SAMPLE4_SWITCH_IOC};
-			rt_uint16_t status_ico[4] = {SAMPLE_1_ICO, SAMPLE_2_ICO, SAMPLE_3_ICO, SAMPLE_4_ICO};
-
-			for(rt_uint8_t i = 0; i<4; i++)
-			{
-				if(*en_sample[i])	
-				{					
-					ScreenDisICON(switch_ico[i], 1);	
-					ScreenDisICON(status_ico[i], 1);
-				}
-				else
-				{
-					ScreenDisICON(switch_ico[i], 0);	
-					ScreenDisICON(status_ico[i], 0);					
-				}					
-			}
-			parameter_display(&sample_param_1);
-			parameter_display(&sample_param_4);
-		}
+		dis_sample_status();
 		break;
 	case QUALITY:
 		rt_kprintf(" QUALITY\n");
@@ -362,29 +422,20 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		switch_config.en_Temp_4 = 0;
 		rt_kprintf(" BACK_MANU\n");
 		break;
-	case SAMPLE_CHANNEL_1:
-	case SAMPLE_CHANNEL_2:
-	case SAMPLE_CHANNEL_3:
-	case SAMPLE_CHANNEL_4:
+	case SAMPLE_SWITCH_1:
+	case SAMPLE_SWITCH_2:
+	case SAMPLE_SWITCH_3:
+	case SAMPLE_SWITCH_4:
 		sample_start(keyval);
 		break;
-	case SAMPLE_START:		
-		_ret = work_create(switch_config.sample_start);
-		switch_config.sample_start = 0;
-		rt_kprintf(" SAMPLE_OK \n");
+	case SAMPLE_PARA_OK:
+		set_sample_para(UartBuff.flow_para.channel);
 		break;
-	case SAMPLE_STOP:		
-		rt_kprintf(" SAMPLE_STOP \n");
-		break;
-	case SAMPLE_1_SWITCH:		
-	case SAMPLE_2_SWITCH:
-	case SAMPLE_3_SWITCH:
-	case SAMPLE_4_SWITCH:		
-		sample_switch(keyval);
+	case SAMPLE_SET_PARA:
+
 		break;
 	case RFID:
 		rt_kprintf(" RFID\n");
-	
 		break;
 	case LIGHT:		
 		switch_config.en_Light_1 = 1;
@@ -428,10 +479,11 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		light_switch(keyval);
 		break;
 	case TEMP_OK:
-		heat_switch(UartBuff.HeatSetChannel, 1);
+		set_heat_para(UartBuff.heat_para.channel);
+		heat_switch(UartBuff.heat_para.channel, 1);
 		break;
 	case TEMP_STOP:
-		heat_switch(UartBuff.HeatSetChannel, 0);
+		heat_switch(UartBuff.heat_para.channel, 0);
 		break;
 	case STEPMOTOR_START:
 		if(UartBuff.MotorPara.h_Motor)
@@ -457,7 +509,6 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		{
 			rt_memset(string, 0, sizeof(string));
 			ScreenSendCommand(WRITE_82, MOTOR_INFO, (rt_uint8_t*)string,sizeof(string));
-			//_ret = StepMotor_AxisMoveRel(UartBuff.MotorPara.h_Motor, 0, 0, 0, 2000);
 			_ret = stepmotor_backzero(UartBuff.MotorPara.channel);
 			if(_ret != 0)
 				rt_kprintf(" error %d\n",_ret);
@@ -481,16 +532,16 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		rt_kprintf(" tmc5130_ZERO\n");
 		break;
 	case DOOR_OPEN_1://左门开
-
+		door_start(0, DOOR_OPEN);
 		break;
 	case DOOR_CLOSE_1://左门关
-
+		door_start(0, DOOR_CLOSE);
 		break;
 	case DOOR_OPEN_2://右门开
-
+		door_start(1, DOOR_OPEN);
 		break;
 	case DOOR_CLOSE_2://右门关
-
+		door_start(1, DOOR_CLOSE);
 		break;
 	case DCMOTOR_SWITCH_1://搅拌1
 	case DCMOTOR_SWITCH_2://搅拌2
@@ -502,6 +553,7 @@ void LcdKeyValDeal(rt_uint16_t keyval)
 		rt_kprintf(" CALI_OK\n");
 		break;
 	case SET_TIME_OK:
+		set_LCD_time();
 		rt_kprintf(" SET_TIME_OK\n");
 		break;
 	case SET_TIME_CANCEL:
@@ -607,7 +659,7 @@ static rt_uint8_t d2h(rt_uint8_t _dec)
  *
  * @return
  */
-void DealCmd(const rt_uint8_t* _ucData)
+static void DealCmd(const rt_uint8_t* _ucData)
 {
 	rt_uint16_t _addr = 0;
 	rt_uint16_t _data = 0;
@@ -624,29 +676,27 @@ void DealCmd(const rt_uint8_t* _ucData)
 		case KEY_RETURN:			
 			LcdKeyValDeal(_data);
 			break;
-		case SAMPLE1_HEAT_TIME:
-		case SAMPLE2_HEAT_TIME:
-		case SAMPLE3_HEAT_TIME:
-		case SAMPLE4_HEAT_TIME:
-			set_work_heat(_addr, _data);
+		case SAMPLE_CHANNEL:
+			UartBuff.flow_para.channel = choose_channel(SAMPLE_CHANNEL + 2, _data);
+			flow_para_display(UartBuff.flow_para.channel);
 			break;
-		case SAMPLE1_READ_TIME:
-		case SAMPLE2_READ_TIME:
-		case SAMPLE3_READ_TIME:
-		case SAMPLE4_READ_TIME:
-			set_work_read(_addr, _data);
+		case SAMPLE_PRO:
+
 			break;
-		case SAMPLE1_A1_TIME:
-		case SAMPLE2_A1_TIME:
-		case SAMPLE3_A1_TIME:
-		case SAMPLE4_A1_TIME:
-			set_work_a1(_addr, _data);
+		case SAMPLE_MIX_TIME:
+			UartBuff.flow_para.mix_time = _data;
 			break;
-		case SAMPLE1_A2_TIME:
-		case SAMPLE2_A2_TIME:
-		case SAMPLE3_A2_TIME:
-		case SAMPLE4_A2_TIME:
-			set_work_a2(_addr, _data);
+		case SAMPLE_HEAT_TIME:
+			UartBuff.flow_para.heat_time = _data;
+			break;
+		case SAMPLE_READ_TIME:
+			UartBuff.flow_para.read_time = _data;
+			break;
+		case SAMPLE_A1_TIME:
+			UartBuff.flow_para.a1_time = _data;
+			break;
+		case SAMPLE_A2_TIME:
+			UartBuff.flow_para.a2_time = _data;
 			break;
 		case RESULT_SLIDER:			
 			rt_kprintf("RESULT_SLIDER %d\n", _data);
@@ -656,23 +706,23 @@ void DealCmd(const rt_uint8_t* _ucData)
 		case TEMP_CHANNEL:
 			rt_memset(string, 0, sizeof(string));
 			ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)string,sizeof(string));
-			UartBuff.HeatSetChannel = choose_channel(TEMP_CHANNEL, _data);
-			display_heat_para(UartBuff.HeatSetChannel);
+			UartBuff.heat_para.channel = choose_channel(TEMP_CHANNEL + 2, _data);
+			display_heat_para(UartBuff.heat_para.channel);
 			break;
 		case TEMP_SET:
-			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_TEMP, _data);
+			UartBuff.heat_para.iSetVal = _data * 10;
 			break;
 		case TEMP_TIME:
-			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_TIME, _data);
+			UartBuff.heat_para.CycleTime = _data;
 			break;
 		case TEMP_KP:		
-			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_KP, _data);
+			UartBuff.heat_para.uKP_Coe = (float)_data / 100;
 			break;
 		case TEMP_KI:			
-			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_KI, _data);
+			UartBuff.heat_para.uKI_Coe = (float)_data / 100;
 			break;
 		case TEMP_KD:			
-			set_heat_para(UartBuff.HeatSetChannel, HEAT_SET_KD, _data);
+			UartBuff.heat_para.uKD_Coe = (float)_data / 100;
 			break;
 		case TIME_YEAR:
 			UartBuff.RealTime.year = _data;
@@ -710,14 +760,12 @@ void DealCmd(const rt_uint8_t* _ucData)
             {
 			case 1:
 				UartBuff.MotorPara.h_Motor = &Motor1;
-				//UartBuff.HeatSetBuf.Ioc = TEMP1_IOC;
 				break;
 			case 2:
 				UartBuff.MotorPara.h_Motor = &Motor2;
 				break;
 			case 3:
 				UartBuff.MotorPara.h_Motor = &Motor3;
-				//UartBuff.HeatSetBuf.Ioc = TEMP1_IOC;
 				break;
 			case 4:
 				UartBuff.MotorPara.h_Motor = &Motor4;
@@ -837,13 +885,19 @@ void DealCmd(const rt_uint8_t* _ucData)
 					UartBuff.ServerSetBuf._port[port_len-1] = 0;
 			}
 			break;
+		case CURVE_Y:
+			SetVD_Central(_data);
+			break;
+		case CURVE_X:
+			SetX_amp(_data);
+			break;
 		default:
 			break;
         }
 	}
 	else if(0x81 == _ucData[0])
 	{
-		if(0x20 == _ucData[1])
+		if(0x20 == _ucData[1])  // 获取串口屏RTC
 		{
 			UartBuff.RealTime.year = _ucData[3];
 			ScreenSendData_2bytes(TIME_YEAR, h2d(UartBuff.RealTime.year)+2000);
@@ -855,6 +909,9 @@ void DealCmd(const rt_uint8_t* _ucData)
 			ScreenSendData_2bytes(TIME_HOUR, h2d(UartBuff.RealTime.hour));
 			UartBuff.RealTime.minute = _ucData[8];
 			ScreenSendData_2bytes(TIME_MINUTE, h2d(UartBuff.RealTime.minute));
+			/* 设置 片上RTC */
+			set_time(UartBuff.RealTime.hour, UartBuff.RealTime.minute, 0);
+			set_date(UartBuff.RealTime.year, UartBuff.RealTime.month, UartBuff.RealTime.day);
 		}
 	}
 }
@@ -865,7 +922,7 @@ void DealCmd(const rt_uint8_t* _ucData)
  *
  * @return
  */
-void GetUartScreenCMD(rt_uint8_t _reData)
+static void GetUartScreenCMD(rt_uint8_t _reData)
 {	
 	static uint8_t pos = 0;
 	static uint8_t len = 0;
@@ -1014,12 +1071,105 @@ rt_uint8_t ScreenSendData_2bytes(rt_uint16_t s_addr, rt_uint16_t _data)
  */
 rt_uint8_t ScreenDisICON(rt_uint16_t s_addr, rt_uint8_t status)
 {
-	rt_uint8_t _temp[2] = {0, status};
-	ScreenSendCommand(WRITE_82, s_addr, _temp, 2);
+	/* 								頭帧       长度    指令            地址        数据  */
+	rt_uint8_t sendBuf[8] = {HEAD_1, HEAD_2, 5, WRITE_82, 0, 0, 0, status};
+
+	sendBuf[4] = (rt_uint8_t)(s_addr>>8 & 0x00ff);
+	sendBuf[5] = (rt_uint8_t)(s_addr & 0x00ff);	/* 地址 */
+
+	for(rt_uint8_t i = 0;i < 8;i++)
+	{
+		uart_putchar(sendBuf[i]);
+    }
 	
 	return RT_EOK;
 }
+/**
+ * @brief  写入曲线
+ *
+ * @param 	_ch:通道
+ * 			_ch的每一个bit对应一个通道，0x0f-->使能1~4通道
+ *			_data：数据
+ * @return
+ */
+rt_uint8_t ScreenCurve(rt_uint8_t _ch, rt_uint16_t* _data)
+{
+	rt_uint8_t* sendBuf = RT_NULL;
+	rt_uint8_t n = 0, i = 0, len = 0;
 
+	for(i = 0;i < 4;i++)
+	{
+		if(_ch & (0x01<<i))
+			len++;
+	}
+	if(0 == len)
+		return RT_ERROR;
+	sendBuf = rt_malloc(len*2 + 5);
+	if(RT_NULL == sendBuf)
+		return RT_ERROR;
+	sendBuf[n++] = 0xa5;
+	sendBuf[n++] = 0x5a;				/* 頭帧 */
+	sendBuf[n++] = 2 + len*2;			/* 长度 */
+	sendBuf[n++] = CURVE_84;			/* 指令 */
+
+	sendBuf[n++] = _ch;		/* 通道 */
+	for(i = 0;i < len;i++)
+	{
+		sendBuf[n++] = (rt_uint8_t)(_data[i]>>8 & 0x00ff);
+		sendBuf[n++] = (rt_uint8_t)(_data[i] & 0x00ff);		/* 数据 */
+	}
+
+	for(i = 0;i < n;i++)
+	{
+		uart_putchar(sendBuf[i]);
+    }
+	if(sendBuf)
+		rt_free(sendBuf);
+	return RT_EOK;
+}
+/*
+ * 清理所有曲线
+ */
+rt_uint8_t CurveClear(void)
+{
+	rt_uint8_t d = 0x55;
+	return ScreenSendCommand(WRITE_80, 0xeb, &d, 1);
+}
+/*
+ * 设置曲线Y轴量程
+ */
+rt_uint8_t SetVD_Central(rt_uint16_t range)
+{
+	rt_uint8_t _range[2] = {(range/2) & 0x00ff, (range/2)>>8 & 0x00ff};
+	rt_uint8_t _amp[2] = {0, 0};
+	rt_uint16_t amp_value = 430 * 256 / range;
+	_amp[1] = amp_value>>8 & 0x00ff;
+	_amp[0] = amp_value & 0x00ff;
+
+	for(rt_uint8_t i = 0; i<4; i++)
+	{
+		ScreenSendData(CURVE1_DESC | 0x06 | (0x20*i), _range, 2); /* 设置Y轴量程 */
+		rt_thread_delay(10);
+		ScreenSendData(CURVE1_DESC | 0x08 | (0x20*i), _amp, 2); /* 设置Y轴放大倍数 */
+		rt_thread_delay(10);
+	}
+
+	return 0;
+}
+/*
+ * 设置曲线x轴放大倍数
+ */
+rt_uint8_t SetX_amp(rt_uint8_t _amp)
+{
+	rt_uint8_t temp[2] = {_amp, 0};
+	for(rt_uint8_t i = 0; i<4; i++)
+	{
+		temp[1] = i;
+		ScreenSendData(CURVE1_DESC | 0x09 | (0x20*i), temp, 2);
+		rt_thread_delay(5);
+	}
+	return 0;
+}
 rt_err_t uart_open(const char *name)
 {
     rt_err_t res;
@@ -1068,9 +1218,7 @@ void Function_UartScreen(void* parameter)
 	{
 		uart_rx_data = uart_getchar();
 		GetUartScreenCMD(uart_rx_data);
-		//rt_kprintf("%x\r\n", uart_rx_data);
-		rt_thread_delay(10);
+		rt_thread_delay(50);
 	}
 }
-
 

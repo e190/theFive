@@ -1,3 +1,9 @@
+/**
+ *	ADI¹«Ë¾ AD1110Ð¾Æ¬
+ *
+ *	15sps
+ *
+ */
 #include "drv_ad1110.h"
 
 #define METHOD 1

@@ -4,12 +4,13 @@
 #include "bsp_G780.h"
 #include "ServerData.h"
 #include "bsp_rfid.h"
+#include "Uart_Screen.h"
 //#include "bsp_tmc5130.h"
 //#include "TMC5130.h"
 #include "DataBase.h"
 
 rt_device_t dhidd;
-char data[64] = "this is hid test \n";
+
 void GpioDeviceInit(void)
 {                
 	rt_pin_mode(RunLED_gpio,PIN_MODE_OUTPUT);     //设置Pin为输出模式。
@@ -25,8 +26,8 @@ void GpioDeviceInit(void)
 	rt_pin_mode(LED8_gpio,PIN_MODE_OUTPUT);
 
 	rt_pin_mode(SD_IN_gpio, PIN_MODE_INPUT_PULLUP);
-//	rt_pin_mode(91,PIN_MODE_OUTPUT);
-//	rt_pin_write(91, !(_Bool)rt_pin_read(91));
+	rt_pin_mode(15,PIN_MODE_OUTPUT);   //  PF5
+	rt_pin_write(15, !rt_pin_read(15));
 }
 
 
@@ -34,7 +35,7 @@ void Function_RunLED(void* parameter)
 {
 	rt_uint8_t aa = 0;
 	rt_uint8_t addr = 5,bb = 0;
-
+	char data[64] = "this is hid test \n";
 	GpioDeviceInit();
 
 	while(1)
@@ -53,7 +54,6 @@ void Function_RunLED(void* parameter)
 //				aa = 0;
 //				rt_kprintf("------------------------\n");
 //			}
-
 			rt_device_write(dhidd, addr, data, 65);
 		}	
 		else if(2 == aa)
@@ -77,6 +77,7 @@ void Function_RunLED(void* parameter)
 				rt_kprintf("sd card mount to / failed!\n");
 			}
 		}
+
 		rt_thread_delay(500);       //等待500ms
 	}
 }

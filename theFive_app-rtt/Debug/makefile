@@ -20,7 +20,6 @@ RM := rm -rf
 -include rt-thread/components/drivers/spi/sfud/src/subdir.mk
 -include rt-thread/components/drivers/spi/subdir.mk
 -include rt-thread/components/drivers/serial/subdir.mk
--include rt-thread/components/drivers/sdio/subdir.mk
 -include rt-thread/components/drivers/rtc/subdir.mk
 -include rt-thread/components/drivers/misc/subdir.mk
 -include rt-thread/components/drivers/i2c/subdir.mk
@@ -29,12 +28,12 @@ RM := rm -rf
 -include rt-thread/components/dfs/filesystems/elmfat/subdir.mk
 -include rt-thread/components/dfs/filesystems/devfs/subdir.mk
 -include driver/subdir.mk
+-include components/ulog/syslog/subdir.mk
+-include components/ulog/backend/subdir.mk
+-include components/ulog/subdir.mk
 -include components/flash/subdir.mk
 -include components/cm_backtrace/subdir.mk
 -include components/at/src/subdir.mk
--include components/EasyLogger/src/subdir.mk
--include components/EasyLogger/port/subdir.mk
--include components/EasyLogger/plugins/flash/subdir.mk
 -include applications/subdir.mk
 -include Libraries/STM32F4xx_HAL_Driver/Src/subdir.mk
 -include Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc/subdir.mk

@@ -6,7 +6,7 @@
 #include "bsp_StepMotor.h"
 #include "Heat_PID.h"
 
-#define UartScreen_PRIORITY 10         //线程优先级
+#define UartScreen_PRIORITY 11         //线程优先级
 #define UartScreen_STACK_SIZE 1024     //线程栈大小
 #define UartScreen_TIMESLICE 10        //时间片Tick
 
@@ -19,6 +19,7 @@
 #define READ_81  	0x81
 #define WRITE_82  	0x82
 #define READ_83 	0x83
+#define CURVE_84 	0x84
 
 /* LCD寄存器地址 */
 /* */
@@ -33,33 +34,18 @@
 #define SAMPLE3_PRO  		0x1140
 #define SAMPLE4_PRO  		0x1150
 #define SAMPLE1_INFO  		0x1160
-#define SAMPLE2_INFO  		0x1170
-#define SAMPLE3_INFO  		0x1180
-#define SAMPLE4_INFO  		0x1190
-
-#define SAMPLE1_HEAT_TIME  	0x11A0
-#define SAMPLE2_HEAT_TIME  	0x11A2
-#define SAMPLE3_HEAT_TIME  	0x11A4
-#define SAMPLE4_HEAT_TIME  	0x11A6
-#define SAMPLE1_READ_TIME  	0x11A8
-#define SAMPLE2_READ_TIME  	0x11AA
-#define SAMPLE3_READ_TIME  	0x11AC
-#define SAMPLE4_READ_TIME  	0x11AE
-
-#define SAMPLE1_A1_TIME  	0x11B0
-#define SAMPLE2_A1_TIME  	0x11B2
-#define SAMPLE3_A1_TIME  	0x11B4
-#define SAMPLE4_A1_TIME  	0x11B6
-#define SAMPLE1_A2_TIME  	0x11B8
-#define SAMPLE2_A2_TIME  	0x11BA
-#define SAMPLE3_A2_TIME  	0x11BC
-#define SAMPLE4_A2_TIME  	0x11BE
-
-#define SAMPLE1_SURPLUS_TIME  	0x11C0
-#define SAMPLE2_SURPLUS_TIME  	0x11C2
-#define SAMPLE3_SURPLUS_TIME  	0x11C4
-#define SAMPLE4_SURPLUS_TIME  	0x11C6
-
+#define SAMPLE2_INFO  		0x1180
+#define SAMPLE3_INFO  		0x11A0
+#define SAMPLE4_INFO  		0x11C0
+/**********************************/
+#define SAMPLE_CHANNEL  	0x11E0
+#define SAMPLE_PRO  		0x11E5
+#define SAMPLE_MIX_TIME  	0x11F0
+#define SAMPLE_HEAT_TIME  	0x11F2
+#define SAMPLE_READ_TIME  	0x11F4
+#define SAMPLE_A1_TIME  	0x11F6
+#define SAMPLE_A2_TIME  	0x11F8
+/**********************************/
 #define RFID_CARD  			0x4101
 #define RFID_SET   			0x4105
 #define RFID_WET   			0x4107
@@ -93,6 +79,7 @@
 #define BLENDER_TIME2   	0x4923
 #define BLENDER_TIME3   	0x4925
 #define BLENDER_TIME4   	0x4927
+#define DOOR_RANGE   		0x4929
 
 #define TIME_YEAR   		0x4711
 #define TIME_MONTH   		0x4713
@@ -130,28 +117,15 @@
 #define SERVER_PORT   		0x4A78
 
 /* LCD图标寄存器地址 */
-#define SAMPLE1_ICO  		0x1011
-#define SAMPLE2_ICO  		0x1012
-#define SAMPLE3_ICO  		0x1013
-#define SAMPLE4_ICO  		0x1014
-/**************测试******************/
-#define SAMPLE_1_ICO  		0x1015
-#define SAMPLE_2_ICO  		0x1016
-#define SAMPLE_3_ICO  		0x1017
-#define SAMPLE_4_ICO  		0x1018
-#define SAMPLE1_1_ICO  		0x1019
-#define SAMPLE1_2_ICO  		0x101A
-#define SAMPLE2_1_ICO  		0x101B
-#define SAMPLE2_2_ICO  		0x101C
-#define SAMPLE3_1_ICO  		0x101D
-#define SAMPLE3_2_ICO  		0x101E
-#define SAMPLE4_1_ICO  		0x101F
-#define SAMPLE4_2_ICO  		0x1020
+#define SAMPLE1_SWITCH_IOC  0x1011
+#define SAMPLE2_SWITCH_IOC  0x1012
+#define SAMPLE3_SWITCH_IOC  0x1013
+#define SAMPLE4_SWITCH_IOC  0x1014
 
-#define SAMPLE1_SWITCH_IOC  0x1021
-#define SAMPLE2_SWITCH_IOC  0x1022
-#define SAMPLE3_SWITCH_IOC  0x1023
-#define SAMPLE4_SWITCH_IOC  0x1024
+#define SAMPLE1_PROG_IOC  	0x1015
+#define SAMPLE2_PROG_IOC  	0x1016
+#define SAMPLE3_PROG_IOC  	0x1017
+#define SAMPLE4_PROG_IOC  	0x1018
 /********************************/
 
 #define LED1_ICO  			0x4210
@@ -201,17 +175,15 @@
 #define BACK_MANU			0x0011
 
 /* 样本按键 */
-#define SAMPLE_CHANNEL_1	0x1001
-#define SAMPLE_CHANNEL_2	0x1002
-#define SAMPLE_CHANNEL_3	0x1003
-#define SAMPLE_CHANNEL_4	0x1004
-#define SAMPLE_START		0x1005
-#define SAMPLE_STOP			0x1006
+#define SAMPLE_SWITCH_1		0x1001
+#define SAMPLE_SWITCH_2		0x1002
+#define SAMPLE_SWITCH_3		0x1003
+#define SAMPLE_SWITCH_4		0x1004
 
-#define SAMPLE_1_SWITCH		0x1007
-#define SAMPLE_2_SWITCH		0x1008
-#define SAMPLE_3_SWITCH		0x1009
-#define SAMPLE_4_SWITCH		0x100A
+#define SAMPLE_SET_PARA		0x1005
+#define SAMPLE_CURVE		0x1006
+#define SAMPLE_PARA_OK		0x1007
+#define SAMPLE_PARA_CLEAN	0x1008
 
 /* 结果查询按键 */
 #define RESULT_SLIDER		0x3001
@@ -280,6 +252,15 @@
 #define KEY_SERVER_SET		0x4A03
 #define KEY_SERVER_TEST		0x4A04
 
+/* 曲线LCD地址 */
+#define CURVE1_DESC			0x5000
+#define CURVE2_DESC			0x5020
+#define CURVE3_DESC			0x5040
+#define CURVE4_DESC			0x5060
+#define CURVE_X				0x5080
+#define CURVE_Y				0x5085
+#define CURVE_CLEAR			0x5100
+
 struct RealTime_t
 {
 	rt_uint8_t year;
@@ -314,20 +295,34 @@ struct ServerSetBuf_t
 	char _port[6];
 };
 
-typedef enum {
-    HEAT_SET_TEMP,
-	HEAT_SET_TIME,
-	HEAT_SET_KP,
-	HEAT_SET_KI,
-	HEAT_SET_KD,
-} HeatConfig;
+struct heat_para_t
+{
+	rt_uint8_t channel;
+	rt_uint8_t CycleTime;
+	rt_uint16_t iSetVal;       //设定值
+	float uKP_Coe;             //比例系数
+	float uKI_Coe;             //积分常数
+	float uKD_Coe;             //微分常数
+};
+
+struct flow_para_t
+{
+	rt_uint8_t channel;
+	rt_uint8_t pro;
+	rt_uint8_t mix_time;
+    rt_uint16_t heat_time;
+    rt_uint16_t read_time;
+    rt_uint16_t a1_time;
+    rt_uint16_t a2_time;
+};
 
 typedef struct 
 {
 	rt_uint8_t rxCount;          //接收buff
     rt_uint8_t txCount;          //发送buff 
     rt_uint8_t rxBuff[20];          //接收buff
-	rt_uint8_t HeatSetChannel;
+    struct heat_para_t heat_para;
+	struct flow_para_t flow_para;
     struct RealTime_t RealTime;
 	struct MotorParaBuf_t MotorPara;
 	struct ServerSetBuf_t ServerSetBuf;

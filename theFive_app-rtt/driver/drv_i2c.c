@@ -139,8 +139,7 @@ static void drv_i2c_gpio_init()
     GPIO_Initure.Speed = GPIO_SPEED_HIGH;
     HAL_GPIO_Init(GPIOD, &GPIO_Initure);
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_0 | GPIO_PIN_1, GPIO_PIN_SET);
-#endif /* RT_USING_I2C_5 */	
-	
+#endif /* RT_USING_I2C_5 */
 }
 
 static void drv_set_sda(struct rt_i2c_bus_device *bus, void *data, rt_int32_t state)

@@ -37,7 +37,7 @@ int main(void)
     rt_assert_set_hook(rtt_user_assert_hook);
 
     /* CmBacktrace 组件初始化 */
-    cm_backtrace_init("theFive", HARDWARE_VERSION, SOFTWARE_VERSION);
+    cm_backtrace_init("theFive_app-rtt", HARDWARE_VERSION, SOFTWARE_VERSION);
 
 	rt_thread_init( &thread_RunLED,
 					"RunLED",                 //线程名称。
