@@ -24,7 +24,7 @@ int ff_convert_init()
         rt_kprintf("Unable to open Unicode to GBK look up table.\r\n");
 	return 0;
 }
-//INIT_APP_EXPORT(ff_convert_init);
+INIT_APP_EXPORT(ff_convert_init);
 
 rt_uint16_t ff_convert(rt_uint16_t src, rt_uint32_t dir)
 {

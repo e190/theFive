@@ -518,7 +518,7 @@ int drv_pwm_init(void)
 #endif
 
 #ifdef BSP_USING_PWM2
-    MX_TIM12_Init();
+    MX_TIM2_Init();
     rt_device_pwm_register(rt_calloc(1,sizeof(struct rt_device_pwm)), "pwm2", &drv_ops, &htim2);
 #endif
 

@@ -58,7 +58,8 @@ static void drv_i2c_gpio_init()
     GPIO_InitTypeDef GPIO_Initure;
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOE_CLK_ENABLE();
+	__HAL_RCC_GPIOD_CLK_ENABLE();
+	__HAL_RCC_GPIOG_CLK_ENABLE();
 	__HAL_RCC_GPIOF_CLK_ENABLE();
 	
 #if defined(RT_USING_I2C_1)	

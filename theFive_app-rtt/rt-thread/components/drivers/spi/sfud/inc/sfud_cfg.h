@@ -33,8 +33,8 @@
 
 /**
  * It will print more information on debug mode.
- * #define RT_DEBUG_SFUD  1: open debug mode */
-#if RT_DEBUG_SFUD
+ * #define RT_DEBUG_SFUD open debug mode */
+#ifdef RT_DEBUG_SFUD
 #define SFUD_DEBUG_MODE
 #endif
 
@@ -51,9 +51,7 @@
 #ifdef RT_SFUD_USING_FLASH_INFO_TABLE
 #define SFUD_USING_FLASH_INFO_TABLE
 #endif
-enum {
-    SFUD_W25Q128FV_DEVICE_INDEX = 0,
-};
-#define SFUD_FLASH_DEVICE_TABLE { [SFUD_W25Q128FV_DEVICE_INDEX] = {.name = "W25Q128BV", .spi.name = "SPI3"} }
+
+#define SFUD_FLASH_DEVICE_TABLE {0}
 
 #endif /* _SFUD_CFG_H_ */

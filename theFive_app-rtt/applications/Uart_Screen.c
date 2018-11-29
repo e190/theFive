@@ -6,6 +6,8 @@
 #include "SenseData.h"
 #include "TMC5130.h"
 #include "dc_motor.h"
+#include "bsp_rfid.h"
+#include "usb_hid.h"
 
 UartBuff_t UartBuff;
 
@@ -290,7 +292,7 @@ static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
 								&switch_config.en_Heat_3, &switch_config.en_Heat_4};
 	char str[12] = {0};
 
-	if(_ch)
+	if(_ch > 0 && _ch < 5)
 	{
 		ScreenDisICON(temp_ico[_ch-1], _config);
 		heat_start_stop(pHeatTemp[_ch-1], _config);
@@ -315,7 +317,7 @@ static int set_heat_para(rt_uint8_t _ch)
 										  &HeatHandle_3, &HeatHandle_4};
 	char str[12] = {0};
 
-	if(_ch)
+	if(_ch > 0 && _ch < 5)
 	{
 		pHeatTemp[_ch-1]->iSetVal = UartBuff.heat_para.iSetVal;
 		pHeatTemp[_ch-1]->CycleTime = UartBuff.heat_para.CycleTime;
@@ -343,13 +345,18 @@ static int display_heat_para(rt_uint8_t _ch)
 										  &HeatHandle_3, &HeatHandle_4};
 	rt_uint16_t tt = 0;
 
-	if(_ch)
+	if(_ch > 0 && _ch < 5)
 	{
+		UartBuff.heat_para.iSetVal = pHeatTemp[_ch-1]->iSetVal;
+		UartBuff.heat_para.CycleTime = pHeatTemp[_ch-1]->CycleTime;
+		UartBuff.heat_para.uKP_Coe = pHeatTemp[_ch-1]->PID.uKP_Coe;
+		UartBuff.heat_para.uKI_Coe = pHeatTemp[_ch-1]->PID.uKI_Coe;
+		UartBuff.heat_para.uKD_Coe = pHeatTemp[_ch-1]->PID.uKD_Coe;
 		tt = (rt_uint16_t)pHeatTemp[_ch-1]->iSetVal;
 		ScreenSendData_2bytes(TEMP_SET, tt);
 		tt = (rt_uint16_t)pHeatTemp[_ch-1]->CycleTime;
 		ScreenSendData_2bytes(TEMP_TIME, tt);
-		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKP_Coe * 100);
+		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKP_Coe * 10);
 		ScreenSendData_2bytes(TEMP_KP, tt);
 		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKI_Coe * 100);
 		ScreenSendData_2bytes(TEMP_KI, tt);
@@ -360,9 +367,64 @@ static int display_heat_para(rt_uint8_t _ch)
 	return RT_EOK;
 }
 /**
+ *	获取串口屏亮度、熄屏时间、熄屏亮度
+ */
+static void get_lcd_light(void)
+{
+	rt_uint8_t read_len = 0x01;  // 读取的长度
+	ScreenSendCommand(READ_81, 0x16, &read_len, 1);
+	//rt_thread_delay(10);
+	ScreenSendCommand(READ_81, 0x17, &read_len, 1);
+	//rt_thread_delay(10);
+	ScreenSendCommand(READ_81, 0x18, &read_len, 1);
+}
+/**
+ *	设置串口屏亮度
+ */
+static int set_lcd_light(struct set_screen_t* pScreen)
+{
+	rt_uint8_t wirte_buf[2] = {0x01, 0};
+	rt_uint8_t register_addr;
+
+	if(pScreen->drak_time !=  pScreen->old_drak_time)   // 熄屏时间
+	{
+		register_addr = 0x18;
+		wirte_buf[1] = pScreen->drak_time;
+		pScreen->old_drak_time = pScreen->drak_time;
+		ScreenSendCommand(WRITE_80, register_addr, wirte_buf, sizeof(wirte_buf));
+	}
+	if(pScreen->crruent_light !=  pScreen->old_crruent_light) //当前亮度
+	{
+		register_addr = 0x16;
+		wirte_buf[1] = pScreen->crruent_light;
+		pScreen->old_crruent_light = pScreen->crruent_light;
+		ScreenSendCommand(WRITE_80, register_addr, wirte_buf, sizeof(wirte_buf));
+	}
+	if(pScreen->drak_light !=  pScreen->old_drak_light) // 熄屏亮度
+	{
+		register_addr = 0x17;
+		wirte_buf[1] = pScreen->drak_light;
+		pScreen->old_drak_light = pScreen->drak_light;
+		ScreenSendCommand(WRITE_80, register_addr, wirte_buf, sizeof(wirte_buf));
+	}
+
+	/*0x1d :CONFIG_EN  (0x5a:R1~RC重新设置并保存，0xa5:只重新设置R1~RC，不保存)  */
+	wirte_buf[1] = 0x5a;
+	ScreenSendCommand(WRITE_80, 0x1d, wirte_buf, sizeof(wirte_buf));
+
+	return RT_EOK;
+}
+/**
+ *	显示串口屏亮度数据到 屏幕
+ */
+static void dis_lcd_light(struct set_screen_t* pScreen)
+{
+
+}
+/**
  *	设置串口屏时间
  */
-static int set_LCD_time(void)
+static int set_lcd_time(void)
 {
 	/*
 	 * 5A A5 0A 80 1F 5A 15 07 03  00 16 05 59
@@ -376,13 +438,6 @@ static int set_LCD_time(void)
 
 	ScreenSendCommand(WRITE_80, 0x20, wirte_buf, sizeof(wirte_buf));
 
-	return RT_EOK;
-}
-/**
- *	设置串口屏亮度
- */
-static int set_LCD_light(void)
-{
 	return RT_EOK;
 }
 /**
@@ -439,16 +494,18 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case LIGHT:		
 		switch_config.en_Light_1 = 1;
-		switch_config.en_Light_2 = 1;
-		switch_config.en_Light_3 = 1;
-		switch_config.en_Light_4 = 1;
+//		switch_config.en_Light_2 = 1;
+//		switch_config.en_Light_3 = 1;
+//		switch_config.en_Light_4 = 1;
 		break;
 	case TEMPERATURE:
 		switch_config.en_Temp_1 = 1;
 		switch_config.en_Temp_2 = 1;
 		switch_config.en_Temp_3 = 1;
 		switch_config.en_Temp_4 = 1;
-
+		break;
+	case SCREEN:
+		get_lcd_light();
 		break;
 	case DC_MOTOR:
 		break;
@@ -462,11 +519,57 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	case SERVER:
 		rt_kprintf(" SERVER\n");
 		break;
-	case RFID_OK:
-		rt_kprintf(" RFID_OK\n");
+	case RFID_READ:
+		if(0 == rfid_ReadBlock(UartBuff.rfid.block_num,
+								UartBuff.rfid.rev_buf))
+		{
+			rt_kprintf("block:");
+			for(rt_uint8_t i = 0;i<18;i++)
+			{
+				rt_kprintf("%x ",UartBuff.rfid.rev_buf[i]);
+			}
+			rt_kprintf("\r\n");
+		}
 		break;
-	case RFID_CLEAR:
-		rt_kprintf(" RFID_CLEAR\n");
+	case RFID_SLEEP:
+		send_result_windos(2, 589, 478, 0.315);
+		break;
+	case RFID_WAKE:
+	{
+		send_start_windos(2, 1);
+		break;
+	}
+	case RFID_CLOSE:
+	{
+		char dbuf[164];// = {0xd5, 0xa0, 4, 1, 0, 100, 0, 0x0d};
+		for(rt_uint8_t i=0;i<sizeof(dbuf);i++)
+		{
+			dbuf[i] = i;
+		}
+		usb_hid_write(dbuf, sizeof(dbuf));
+		//send_data_windos(1, 300, 0);
+		break;
+	}
+	case RFID_OPEN:
+	{
+		send_data_windos(2, 100, 0);
+		break;
+	}
+	case RFID_AUTO:
+	{
+		send_start_windos(1, 1);
+		break;
+	}
+	case RFID_MANUAL://手动寻卡
+		if(0 == rfid_SearchCard(UartBuff.rfid.rev_buf))
+		{
+			rt_kprintf("id:");
+			for(rt_uint8_t i = 0;i<7;i++)
+			{
+				rt_kprintf("%x ",UartBuff.rfid.rev_buf[i]);
+			}
+			rt_kprintf("\r\n");
+		}
 		break;
 	case LIGHT_SWITCH_1:	
 	case LIGHT_SWITCH_2:
@@ -484,6 +587,9 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case TEMP_STOP:
 		heat_switch(UartBuff.heat_para.channel, 0);
+		break;
+	case SCREEN_OK:
+		set_lcd_light(&UartBuff.set_screen);
 		break;
 	case STEPMOTOR_START:
 		if(UartBuff.MotorPara.h_Motor)
@@ -553,7 +659,7 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		rt_kprintf(" CALI_OK\n");
 		break;
 	case SET_TIME_OK:
-		set_LCD_time();
+		set_lcd_time();
 		rt_kprintf(" SET_TIME_OK\n");
 		break;
 	case SET_TIME_CANCEL:
@@ -659,7 +765,7 @@ static rt_uint8_t d2h(rt_uint8_t _dec)
  *
  * @return
  */
-static void DealCmd(const rt_uint8_t* _ucData)
+static void DumpCmd(const rt_uint8_t* _ucData)
 {
 	rt_uint16_t _addr = 0;
 	rt_uint16_t _data = 0;
@@ -701,7 +807,8 @@ static void DealCmd(const rt_uint8_t* _ucData)
 		case RESULT_SLIDER:			
 			rt_kprintf("RESULT_SLIDER %d\n", _data);
 			break;
-		case RFID_SET:
+		case RFID_BLOCK_NUM:
+			UartBuff.rfid.block_num = _data;
 			break;
 		case TEMP_CHANNEL:
 			rt_memset(string, 0, sizeof(string));
@@ -716,13 +823,25 @@ static void DealCmd(const rt_uint8_t* _ucData)
 			UartBuff.heat_para.CycleTime = _data;
 			break;
 		case TEMP_KP:		
-			UartBuff.heat_para.uKP_Coe = (float)_data / 100;
+			UartBuff.heat_para.uKP_Coe = (float)_data / 10;
 			break;
 		case TEMP_KI:			
 			UartBuff.heat_para.uKI_Coe = (float)_data / 100;
 			break;
 		case TEMP_KD:			
 			UartBuff.heat_para.uKD_Coe = (float)_data / 100;
+			break;
+		case SCREEN_AUTO_TIME:
+			rt_kprintf("auto time: %d\n", _data);
+			UartBuff.set_screen.drak_time = _data;
+			break;
+		case SCREEN_CURRENT:
+			rt_kprintf("current: %d\n", _data);
+			UartBuff.set_screen.crruent_light = _data;
+			break;
+		case SCREEN_DRAK:
+			rt_kprintf("drak: %d\n", _data);
+			UartBuff.set_screen.drak_light = _data;
 			break;
 		case TIME_YEAR:
 			UartBuff.RealTime.year = _data;
@@ -897,8 +1016,9 @@ static void DealCmd(const rt_uint8_t* _ucData)
 	}
 	else if(0x81 == _ucData[0])
 	{
-		if(0x20 == _ucData[1])  // 获取串口屏RTC
+		switch(_ucData[1])
 		{
+		case 0x20: // 获取串口屏RTC
 			UartBuff.RealTime.year = _ucData[3];
 			ScreenSendData_2bytes(TIME_YEAR, h2d(UartBuff.RealTime.year)+2000);
 			UartBuff.RealTime.month = _ucData[4];
@@ -912,6 +1032,24 @@ static void DealCmd(const rt_uint8_t* _ucData)
 			/* 设置 片上RTC */
 			set_time(UartBuff.RealTime.hour, UartBuff.RealTime.minute, 0);
 			set_date(UartBuff.RealTime.year, UartBuff.RealTime.month, UartBuff.RealTime.day);
+			break;
+		case 0x16:
+			rt_kprintf("R6:%x\n", _ucData[3]);
+			UartBuff.set_screen.old_crruent_light = \
+					UartBuff.set_screen.crruent_light = _ucData[3];
+			break;
+		case 0x17:
+			rt_kprintf("R7:%x\n", _ucData[3]);
+			UartBuff.set_screen.old_drak_light = \
+					UartBuff.set_screen.drak_light = _ucData[3];
+			break;
+		case 0x18:
+			rt_kprintf("R8:%x\n", _ucData[3]);
+			UartBuff.set_screen.old_drak_time = \
+					UartBuff.set_screen.drak_time = _ucData[3];
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -928,36 +1066,36 @@ static void GetUartScreenCMD(rt_uint8_t _reData)
 	static uint8_t len = 0;
 	switch (len)
     {
-    	case 0:
-			if(0xa5 == _reData)   //接收帧头
-				len ++;
-			else
-				len = 0;
-			break;
-		case 1:
-			if(0x5a == _reData)   //接收帧头
-				len ++;
-			else
-				len = 0;
-    		break;
-    	case 2:
-			UartBuff.rxCount = _reData;
-			if(UartBuff.rxCount > 20)			
-				len = 0;			
-			else
-				len ++;
-    		break;
-		case 3:			
-			UartBuff.rxBuff[pos++] = _reData;
-			if(pos >= UartBuff.rxCount)
-			{
-				len = 0;
-				pos = 0;
-				DealCmd(UartBuff.rxBuff);
-			}
-    		break;
-    	default:
-    		break;
+	case 0:
+		if(0xa5 == _reData)   //接收帧头
+			len ++;
+		else
+			len = 0;
+		break;
+	case 1:
+		if(0x5a == _reData)   //接收帧头
+			len ++;
+		else
+			len = 0;
+		break;
+	case 2:
+		UartBuff.rxCount = _reData;
+		if(UartBuff.rxCount > 20)
+			len = 0;
+		else
+			len ++;
+		break;
+	case 3:
+		UartBuff.rxBuff[pos++] = _reData;
+		if(pos >= UartBuff.rxCount)
+		{
+			len = 0;
+			pos = 0;
+			DumpCmd(UartBuff.rxBuff);
+		}
+		break;
+	default:
+		break;
     }
 }
 /**

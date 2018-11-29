@@ -60,6 +60,7 @@ driver/drv_spi.o: ../driver/drv_spi.c ../driver/board.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/waitqueue.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/pipe.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/poll.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/ringblk_buf.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rtc.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/spi.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/usb_device.h \
@@ -69,6 +70,7 @@ driver/drv_spi.o: ../driver/drv_spi.c ../driver/board.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c_dev.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/cputime.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h
 
@@ -196,6 +198,8 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/i
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/poll.h:
 
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/ipc/ringblk_buf.h:
+
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rtc.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/spi.h:
@@ -213,6 +217,8 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/d
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/cputime.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h:
 

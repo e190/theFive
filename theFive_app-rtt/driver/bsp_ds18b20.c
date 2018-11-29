@@ -20,10 +20,15 @@ rt_err_t ds18b20_reset(OneWire_t* OneWire)
 {           
 	uint8_t i;
 	uint16_t k;
-	register rt_base_t level;
 
-	/* disable interrupt */
-    level = rt_hw_interrupt_disable();
+	/*
+		复位时序, 见DS18B20 page 15
+
+		首先主机拉低DQ，持续最少 480us
+		然后释放DQ，等待DQ被上拉电阻拉高，约 15-60us
+		DS18B20 将驱动DQ为低 60-240us， 这个信号叫 presence pulse  (在位脉冲,表示DS18B20准备就绪 可以接受命令)
+		如果主机检测到这个低应答信号，表示DS18B20复位成功
+	*/
 
 	/* 复位，如果失败则返回0 */
 	for (i = 0; i < 1; i++)
@@ -64,8 +69,6 @@ rt_err_t ds18b20_reset(OneWire_t* OneWire)
 
 		break;
 	}
-
-	rt_hw_interrupt_enable(level);/* 使能全局中断 */
 
 	bsp_udelay(5);
 

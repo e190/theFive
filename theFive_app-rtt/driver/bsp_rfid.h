@@ -1,7 +1,6 @@
 #ifndef __BSP_RFID_H
 #define __BSP_RFID_H
 #include <rthw.h>
-#include <rtdevice.h>
 
 #define	    WRITE_M104X 	0xb0
 #define	    READ_M104X		0xb1
@@ -129,10 +128,10 @@
 #define 	COMM_PROGRAME_ISP			0xf2	//isp	
 #define 	COMM_PRODUCT_NAME			0xf3	//????
 
-//rt_uint8_t SetCard(void);
-//rt_uint8_t SearchCard(void);
-//rt_uint8_t ReadWallet(void);
-//rt_uint8_t ReadBlock(void);
+rt_uint8_t rfid_SetCard(void);
+rt_uint8_t rfid_SearchCard(rt_uint8_t *rev);
+rt_uint8_t rfid_ReadWallet(rt_uint8_t num, rt_uint8_t *rev);
+rt_uint8_t rfid_ReadBlock(rt_uint8_t num, rt_uint8_t *rev);
 void TestRFID(void);
 
 int rfid_hw_init(void);

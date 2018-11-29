@@ -265,7 +265,7 @@ void HAL_TIM_OC_MspInit(TIM_HandleTypeDef* htim_base)
 		TIM3_GPIOInit();
 		
 		/* 配置定时器中断优先级并使能 */
-		HAL_NVIC_SetPriority(TIM3_IRQn, 10, 0);
+		HAL_NVIC_SetPriority(TIM3_IRQn, 4, 0);
 		HAL_NVIC_EnableIRQ(TIM3_IRQn);
 	}
 }
@@ -373,7 +373,6 @@ static rt_uint8_t M3_optofun(void)
 static rt_uint8_t M4_optofun(void)
 {
 	return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5);
-	//return HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_0);
 }
 
 /**
@@ -437,7 +436,6 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 		{
 			StepMotor_ConutStep(motor[i]);
 		}
-	
 	}
 #else	
 	if(NowMotor)	

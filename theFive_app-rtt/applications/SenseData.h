@@ -65,6 +65,7 @@ typedef enum {
 	FLOW_RUN,
 
 }flow_status;
+
 /* ״̬ */
 struct status_config_t
 {
@@ -84,6 +85,7 @@ struct status_config_t
 extern struct light_handle_t h_light_1, h_light_2, h_light_3, h_light_4;
 extern struct switch_config_t switch_config;
 extern struct status_config_t status_config;
+void en_sense_light(rt_uint8_t _ch, rt_uint8_t config);
 rt_uint8_t get_cup_status(rt_uint8_t _ch);
 rt_uint8_t Get_AdsData(rt_uint8_t _config, rt_uint32_t* out_data);
 extern void Function_SenseData(void* parameter);

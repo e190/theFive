@@ -17,11 +17,8 @@ struct flash_para_t{
 
 struct mix_door_para_t
 {
-	rt_uint8_t mix_potency_1;	//搅拌力度   （1~10）
-	rt_uint8_t mix_potency_2;
-	rt_uint8_t mix_potency_3;
-	rt_uint8_t mix_potency_4;
-	rt_uint16_t door_range; 	//开门幅度   （50~80）
+	rt_uint8_t mix_potency;	//搅拌力度   （1~10）
+	rt_uint8_t door_range; 	//开门幅度   （50~80）
 };
 
 struct flash_heat_para_t

@@ -5,11 +5,12 @@
 #include "ServerData.h"
 #include "bsp_rfid.h"
 #include "Uart_Screen.h"
+#include "usb_hid.h"
 //#include "bsp_tmc5130.h"
 //#include "TMC5130.h"
 #include "DataBase.h"
 
-rt_device_t dhidd;
+
 
 void GpioDeviceInit(void)
 {                
@@ -28,22 +29,33 @@ void GpioDeviceInit(void)
 	rt_pin_mode(SD_IN_gpio, PIN_MODE_INPUT_PULLUP);
 	rt_pin_mode(15,PIN_MODE_OUTPUT);   //  PF5
 	rt_pin_write(15, !rt_pin_read(15));
+	rt_pin_mode(13,PIN_MODE_OUTPUT);   //  PF3
+	rt_pin_write(13, !rt_pin_read(15));
 }
 
 
 void Function_RunLED(void* parameter)
 {
+	rt_uint8_t temp_count = 0;
 	rt_uint8_t aa = 0;
 	rt_uint8_t addr = 5,bb = 0;
-	char data[64] = "this is hid test \n";
+
 	GpioDeviceInit();
 
 	while(1)
 	{
 		rt_pin_write(RunLED_gpio, !rt_pin_read(RunLED_gpio)); //GPIO输出状态为：当前状态的反向状态。
+		hid_write_timeout();
+		cycle_temp_heat();
+//		if(++temp_count > 4)
+//		{
+//			temp_count = 0;
+//			cycle_temp_heat();
+//		}
 //		if(0 == rt_pin_read(SD_IN_gpio))
 //			rt_kprintf("sd coming\n");
-
+//		if(0 == rt_pin_read(118))
+//			rt_kprintf("RFID coming\n");
 		if(1 == aa)
 		{
 			aa = 0;
@@ -54,28 +66,25 @@ void Function_RunLED(void* parameter)
 //				aa = 0;
 //				rt_kprintf("------------------------\n");
 //			}
-			rt_device_write(dhidd, addr, data, 65);
 		}	
 		else if(2 == aa)
 		{
 			aa = 0;			
-			dhidd = rt_device_find("hidd");
-			if(dhidd != RT_NULL)
-				rt_device_open(dhidd, RT_DEVICE_FLAG_RDWR);
 			//flash_read_demo(bb);
 		}
 		else if(3 == aa)
 		{
 			aa = 0;
+			TestRFID();
 			//load_flash();
-			if(dfs_mount("sd0", "/", "elm", 0, 0) == 0)
-			{
-				rt_kprintf("sd card mount to / success!\n");
-			}
-			else
-			{
-				rt_kprintf("sd card mount to / failed!\n");
-			}
+//			if(dfs_mount("sd0", "/", "elm", 0, 0) == 0)
+//			{
+//				rt_kprintf("sd card mount to / success!\n");
+//			}
+//			else
+//			{
+//				rt_kprintf("sd card mount to / failed!\n");
+//			}
 		}
 
 		rt_thread_delay(500);       //等待500ms

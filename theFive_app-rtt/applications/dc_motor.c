@@ -234,7 +234,7 @@ int blender_init(void)
 	}
 
 	configuration.period = 10000000;    // 10e9 / period = frequency
-	configuration.pulse = configuration.period / 5;
+	configuration.pulse = configuration.period / 10 * 7;
 	for(rt_uint8_t i=0;i<4;i++)
 	{
 		configuration.channel = i;

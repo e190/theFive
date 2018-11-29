@@ -23,6 +23,7 @@ RM := rm -rf
 -include rt-thread/components/drivers/rtc/subdir.mk
 -include rt-thread/components/drivers/misc/subdir.mk
 -include rt-thread/components/drivers/i2c/subdir.mk
+-include rt-thread/components/drivers/cputime/subdir.mk
 -include rt-thread/components/dfs/src/subdir.mk
 -include rt-thread/components/dfs/filesystems/elmfat/option/subdir.mk
 -include rt-thread/components/dfs/filesystems/elmfat/subdir.mk

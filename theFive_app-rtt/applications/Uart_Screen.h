@@ -8,7 +8,7 @@
 
 #define UartScreen_PRIORITY 11         //线程优先级
 #define UartScreen_STACK_SIZE 1024     //线程栈大小
-#define UartScreen_TIMESLICE 10        //时间片Tick
+#define UartScreen_TIMESLICE 20        //时间片Tick
 
 #define RT_SCREEN_DEVICE_NAME "uart2"
 
@@ -46,9 +46,14 @@
 #define SAMPLE_A1_TIME  	0x11F6
 #define SAMPLE_A2_TIME  	0x11F8
 /**********************************/
-#define RFID_CARD  			0x4101
-#define RFID_SET   			0x4105
-#define RFID_WET   			0x4107
+#define RFID_ID  			0x4121
+#define RFID_CURRENT  		0x4125
+#define RFID_DIS_INIT   	0x4129
+#define RFID_DIS_REG   		0x412D
+#define RFID_BLOCK_NUM   	0x4131
+#define RFID_DIS_READ   	0x4135
+#define RFID_DIS_WRITE   	0x4139
+
 
 #define LIGHT_1   			0x4221
 #define LIGHT_2   			0x4223
@@ -71,7 +76,7 @@
 #define TEMP_KD   			0x4353
 #define TEMP_INFO   		0x4355
 
-#define SCREEN_AUTO 		0x4410
+#define SCREEN_AUTO_TIME 	0x4410
 #define SCREEN_CURRENT 		0x4412
 #define SCREEN_DRAK 		0x4414
 
@@ -201,8 +206,17 @@
 #define DC_MOTOR			0x4900
 #define SERVER				0x4A00
 
-#define RFID_OK				0x4101
-#define RFID_CLEAR			0x4102
+#define RFID_INIT			0x4101
+#define RFID_RECHARGE		0x4102
+#define RFID_PAY			0x4103
+#define RFID_READ			0x4104
+#define RFID_WRITE			0x4105
+#define RFID_SLEEP			0x4106
+#define RFID_WAKE			0x4107
+#define RFID_CLOSE			0x4108
+#define RFID_OPEN			0x4109
+#define RFID_AUTO			0x410A
+#define RFID_MANUAL			0x410B
 
 #define LIGHT_SWITCH_1		0x4201
 #define LIGHT_SWITCH_2		0x4202
@@ -269,7 +283,20 @@ struct RealTime_t
 	rt_uint8_t hour;
 	rt_uint8_t minute;
 };
-
+struct rfid_t
+{
+	rt_uint8_t block_num;
+	rt_uint8_t rev_buf[20];
+};
+struct set_screen_t
+{
+	rt_uint8_t drak_time;
+	rt_uint8_t crruent_light;
+	rt_uint8_t drak_light;
+	rt_uint8_t old_drak_time;
+	rt_uint8_t old_crruent_light;
+	rt_uint8_t old_drak_light;
+};
 struct MotorParaBuf_t
 {
 	rt_uint8_t channel;
@@ -321,6 +348,8 @@ typedef struct
 	rt_uint8_t rxCount;          //接收buff
     rt_uint8_t txCount;          //发送buff 
     rt_uint8_t rxBuff[20];          //接收buff
+    struct rfid_t rfid;
+    struct set_screen_t set_screen;
     struct heat_para_t heat_para;
 	struct flow_para_t flow_para;
     struct RealTime_t RealTime;

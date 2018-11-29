@@ -3,7 +3,7 @@
 #include <rtthread.h>
 
 #define CHANNEL_PRIORITY 10         //线程优先级
-#define CHANNEL_STACK_SIZE 512      //线程栈大小
+#define CHANNEL_STACK_SIZE 1024      //线程栈大小
 #define CHANNEL_TIMESLICE 10        //时间片Tick
 
 #define EN_CHANNEL_1	0x01
@@ -16,10 +16,14 @@
 #define DIS_CHANNEL_3	0x40
 #define DIS_CHANNEL_4	0x80
 
+//#define DEFAULT_HEAT_TIME	300
+//#define DEFAULT_READ_TIME	320
+//#define DEFAULT_A1_TIME		150
+//#define DEFAULT_A2_TIME		300
 #define DEFAULT_HEAT_TIME	5
-#define DEFAULT_READ_TIME	60
-#define DEFAULT_A1_TIME		30
-#define DEFAULT_A2_TIME		50
+#define DEFAULT_READ_TIME	320
+#define DEFAULT_A1_TIME		150
+#define DEFAULT_A2_TIME		300
 
 typedef struct 
 {
@@ -46,6 +50,8 @@ extern sample_param_t sample_param_1;
 extern sample_param_t sample_param_2;
 extern sample_param_t sample_param_3;
 extern sample_param_t sample_param_4;
+
+void float_print(float f_data);
 
 int worktask_init(void);
 int stepmotor_backzero(rt_uint8_t _motor_id);

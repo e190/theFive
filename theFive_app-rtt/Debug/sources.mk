@@ -32,6 +32,7 @@ rt-thread/components/dfs/filesystems/devfs \
 rt-thread/components/dfs/filesystems/elmfat \
 rt-thread/components/dfs/filesystems/elmfat/option \
 rt-thread/components/dfs/src \
+rt-thread/components/drivers/cputime \
 rt-thread/components/drivers/i2c \
 rt-thread/components/drivers/misc \
 rt-thread/components/drivers/rtc \

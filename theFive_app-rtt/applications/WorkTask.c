@@ -6,6 +6,7 @@
 #include "Uart_Screen.h"
 #include "bsp_StepMotor.h"
 #include "dc_motor.h"
+#include "usb_hid.h"
 
 /* 工作事件标志 */
 #define EVENT_MOTOR_1	(1 << 0)
@@ -220,17 +221,34 @@ int stepmotor_backzero(rt_uint8_t _motor_id)
 
 	return 0;
 }
+/**
+ *	打印浮点型数据(实现四位小数转换)
+ */
+void float_print(float f_data)
+{
+	char str[10] = {0}; // destination string
+	rt_int16_t d, f;
 
+	d = (rt_int16_t) f_data * 10000; // Decimal precision: 4 digits
+	f = ( f_data * 10000 ) - d; // Decimal precision: 4 digits
+	if(f_data < 0)
+		rt_sprintf (str, "-%d.%04d", (rt_uint16_t)f_data, abs(f) );
+	else
+		rt_sprintf (str, "%d.%04d", (rt_int16_t)f_data, abs(f) ); // Decimal precision: 4 digits
+	rt_kprintf("%s\n", str);
+}
+/**
+ *	计算样本结果
+ */
 static float sample_calculate(rt_uint16_t _a1, rt_uint16_t _a2)
 {
-	char str[10] = {0};
-	float _d_value = (float)_a1 / (float)_a2;
-	sprintf(str, "%f", _d_value);
-	rt_kprintf("_d_value: %s\n", str);
-	rt_memset(str, 0, sizeof(str));
+
+	float _d_value = (float)_a2 / (float)_a1;
+	rt_kprintf("_d_value: ");
+	float_print(_d_value);
 	float _result = log10(_d_value);
-	sprintf(str, "%f", _result);
-	rt_kprintf("result: %s\n", str);
+	rt_kprintf("_result: ");
+	float_print(_result);
 
 	return _result;
 }
@@ -245,10 +263,8 @@ void sample_task(rt_uint8_t _ch)
 											&sample_param_3, &sample_param_4};
 	rt_uint8_t _work_event[4] = {EVENT_CHANNEL_1, EVENT_CHANNEL_2, EVENT_CHANNEL_3, EVENT_CHANNEL_4};
 	struct light_handle_t *p_light[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
-	rt_uint8_t* en_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,
-								&switch_config.en_Light_3, &switch_config.en_Light_4};
 	rt_uint16_t LCD_info = SAMPLE1_INFO + (_ch-1) * 32;
-	char str[25] = {0};
+	char str[4][25] = {0};
 
 	/* 搅拌5s */
 	switch_blender(_ch-1, 1);
@@ -269,22 +285,23 @@ void sample_task(rt_uint8_t _ch)
 	switch_blender(_ch-1, 0);
 	/* 读值8min */
 	cnt[_ch-1] = psample_param[_ch-1]->read_time;   //开始信号
-	*en_light[_ch-1] = 1;
+	send_start_windos(_ch-1, 1);
+	en_sense_light(_ch-1, 1);
 	rt_event_recv(&work_event, _work_event[_ch-1], RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
-	*en_light[_ch-1] = 0;
-	rt_kprintf("输出结果：\n");
+	en_sense_light(_ch-1, 0);
+	rt_kprintf("\n%d输出结果：\n", _ch);
 	rt_kprintf("A1_1: %d\n", p_light[_ch-1]->ave_a1_1);
 	rt_kprintf("A1_2: %d\n", p_light[_ch-1]->ave_a1_2);
 
 	rt_kprintf("A2_1: %d\n", p_light[_ch-1]->ave_a2_1);
 	rt_kprintf("A2_2: %d\n", p_light[_ch-1]->ave_a2_2);
-	sample_calculate(p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a1_2);
+	float _log = sample_calculate(p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a2_1);
+	send_result_windos(_ch-1, p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a2_1, _log);
 	p_light[_ch-1]->ave_a1_1 = 0;
 	p_light[_ch-1]->ave_a1_2 = 0;
 	p_light[_ch-1]->ave_a2_1 = 0;
 	p_light[_ch-1]->ave_a2_2 = 0;
-
-	rt_sprintf(str, "测试完成，请继续");
+	rt_sprintf(str[_ch-1], "测试完成，请继续");
 	ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
 }
 /**
@@ -318,7 +335,7 @@ rt_uint8_t channel_init(rt_uint8_t _ch)
 	{
 		count[_ch]++;
 		rt_thread_delay(100);
-		if(count[_ch] == 80)
+		if(count[_ch] == 100)
 			return RT_ERROR;
 	}
 	count[_ch] = 0;
@@ -330,6 +347,7 @@ rt_uint8_t channel_init(rt_uint8_t _ch)
 		{
 			rt_sprintf(str, "无杯，请放试剂再测试");
 			ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
+			*cup_en[_ch] = 0;
 			return RT_ERROR;
 		}
 	}
@@ -357,6 +375,7 @@ void channel_end(rt_uint8_t _ch)
 
 	ppwork[_ch] = RT_NULL;
 	cnt[_ch] = -1;
+	en_sense_light(_ch, 0);
 	motor_set_end_indicate(motor[_ch], RT_NULL);
 	switch_blender(_ch, 0);
 	ScreenDisICON(SAMPLE1_SWITCH_IOC + _ch, 0); //显示开始
@@ -380,7 +399,7 @@ void Function_Channel_2(void* parameter)
 void Function_Channel_3(void* parameter)
 {
 	if(channel_init(2) == RT_EOK)
-		test_task(3);
+		sample_task(3);
 	channel_end(2);
 }
 void Function_Channel_4(void* parameter)
@@ -460,7 +479,7 @@ int worktask_init(void)
 {
 	/* 初始化事件对象 */
 	rt_event_init(&work_event, "work_event", RT_IPC_FLAG_FIFO);
-	
+	open_usb_hid();
 	return RT_EOK;
 }
 INIT_APP_EXPORT(worktask_init);

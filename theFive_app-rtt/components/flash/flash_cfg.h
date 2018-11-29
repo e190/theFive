@@ -23,8 +23,14 @@
 #ifndef FLASH_CFG_H_
 #define FLASH_CFG_H_
 
-//#include <stddef.h>
+#include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define EF_USING_ENV
 #define FLASH_DEBUG
 
@@ -92,11 +98,7 @@ typedef enum {
 /* easyflash.c */
 EfErrCode easyflash_init(void);
 
-/* ef_log.c */
-EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size);
-EfErrCode ef_log_write(const uint32_t *log, size_t size);
-EfErrCode ef_log_clean(void);
-size_t ef_log_get_used_size(void);
-
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* EASYFLASH_H_ */

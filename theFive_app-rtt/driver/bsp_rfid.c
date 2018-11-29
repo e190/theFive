@@ -1,3 +1,12 @@
+/**
+ *		write  									read
+ *		0a 25 00 0a aa aa aa aa aa aa 25	  	02 da d8
+ *		0a 25 00 0a aa aa aa aa aa aa 25		06 25 e5 00 00 00 c6
+ *		0a 21 00 09 aa				  22		12 21 11 0c 0f 00 12 fd 00 12 fd 58 58 58 58 ce
+ *
+ */
+#include <board.h>
+#include <rtdevice.h>
 #include "bsp_rfid.h"
 
 #if 0
@@ -45,6 +54,10 @@ __exit:
 	
     return result; 
 }
+/**
+ *	读
+ *
+ */
 rt_err_t rfid_read_reg(rt_uint8_t *buf, rt_uint8_t len)
 {
     struct rt_i2c_msg msgs;
@@ -63,7 +76,11 @@ rt_err_t rfid_read_reg(rt_uint8_t *buf, rt_uint8_t len)
         return -RT_ERROR;
     }
 }
-rt_uint8_t SetCard(void)
+/**
+ *	设置卡
+ *
+ */
+rt_uint8_t rfid_SetCard(void)
 {
 	//设置打开天线和关闭自动寻卡
 	rt_uint8_t ComSet[] = {0x03, COMM_CONTROL_ANTENNA, 0x11};
@@ -97,7 +114,7 @@ rt_uint8_t SetCard(void)
  *
  * @return
  */	
-rt_uint8_t SearchCard(rt_uint8_t *rev)
+rt_uint8_t rfid_SearchCard(rt_uint8_t *rev)
 {
 	rt_uint8_t ComSearchCard[]  = {0x03, COMM_MIFARE_SEARCH_CARD, 0x00};
 	rt_uint8_t cStatus;	
@@ -108,7 +125,7 @@ rt_uint8_t SearchCard(rt_uint8_t *rev)
 		cStatus = 1;
 		goto __exit;
 	}
-	rt_thread_delay(18);
+	rt_thread_delay(10);
 	cStatus = rfid_read_reg(rev,7);	
 	if(0 != cStatus)
 	{
@@ -128,17 +145,14 @@ __exit:
  *  
  * @param  num：块号
  *		   buf：初始值，4字节
- * @return
+ * @return	0 ： OK
  */
 rt_uint8_t InitWallet(rt_uint8_t num, rt_uint8_t *buf)
 {
 	rt_uint8_t ComIntiPurse[] = {0x0E, 
 								 COMM_INIT_PURSE, 
-								 0x00, 0x05, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa , 0x78, 0x56, 0x34, 0x12};
-	
-	// 钱包在 INC & DEC	后的结果
-//	rt_uint8_t pursevalue[]     
-//	= {0x79,0x56,0x34, 0x12};
+								 0x00, 0x05, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
+								 0x78, 0x56, 0x34, 0x12};	//初始化钱包No.5 的值为0x12345678
 	
 	rt_uint8_t _rev[3] = {0};
 	rt_uint8_t cStatus;
@@ -174,7 +188,7 @@ __exit:
  *		   rev:接收钱包值，4字节
  * @return
  */
-rt_uint8_t ReadWallet(rt_uint8_t num, rt_uint8_t *rev)
+rt_uint8_t rfid_ReadWallet(rt_uint8_t num, rt_uint8_t *rev)
 {
 	rt_uint8_t ComReadPurse[] = {0x0A, 
 								 COMM_READ_PURSE, 
@@ -291,7 +305,7 @@ __exit:
  *		   rev:接收值，16字节
  * @return
  */
-rt_uint8_t ReadBlock(rt_uint8_t num, rt_uint8_t *rev)
+rt_uint8_t rfid_ReadBlock(rt_uint8_t num, rt_uint8_t *rev)
 {
 	rt_uint8_t cReadBlock[] = {0x0A, 
 							   COMM_READ_BLOCK, 
@@ -305,8 +319,8 @@ rt_uint8_t ReadBlock(rt_uint8_t num, rt_uint8_t *rev)
 		cStatus = 1;
 		goto __exit;
 	}
-	rt_thread_delay(18);
-	cStatus = rfid_read_reg(rev,17);
+	rt_thread_delay(10);
+	cStatus = rfid_read_reg(rev, 18);
 	if(0 != cStatus)
 	{
 		cStatus = 2;
@@ -367,8 +381,11 @@ __exit:
 void TestRFID(void)
 {
 	rt_uint8_t cReceBuf[20] = {0};	//接收缓冲区	
-	if(0 == SearchCard(cReceBuf))
+	rt_uint8_t block_num = 10, wallet_num = 10;
+
+	if(0 == rfid_SearchCard(cReceBuf))
 	{
+		rt_kprintf("id:");
 		for(rt_uint8_t i = 0;i<7;i++)
 		{
 			rt_kprintf("%x  ",cReceBuf[i]);
@@ -377,8 +394,9 @@ void TestRFID(void)
 		rt_memset(cReceBuf, 0, 7);
 	}
 	
-	if(ReadBlock(50, cReceBuf) == 0)
+	if(rfid_ReadBlock(block_num, cReceBuf) == 0)
 	{
+		rt_kprintf("block:");
 		for(rt_uint8_t i = 0;i<12;i++)
 		{
 			rt_kprintf("%x  ",cReceBuf[i]);
@@ -386,8 +404,10 @@ void TestRFID(void)
 		rt_kprintf("\r\n");
 		rt_memset(cReceBuf, 0, 7);
 	}
-	if(ReadWallet(6, cReceBuf) == 0)
+	rt_thread_delay(10);
+	if(rfid_ReadWallet(wallet_num, cReceBuf) == 0)
 	{
+		rt_kprintf("wallet:");
 		for(rt_uint8_t i = 0;i<7;i++)
 		{
 			rt_kprintf("%x  ",cReceBuf[i]);
@@ -400,6 +420,7 @@ void TestRFID(void)
 //返回值: 0,成功 / -1,错误代码
 int rfid_hw_init(void)
 {
+	GPIO_InitTypeDef GPIO_Initure;
     rfid_i2c_bus = rt_i2c_bus_device_find(RFID_I2CBUS_NAME);  /*查找I2C设备*/
 
     if (rfid_i2c_bus == RT_NULL)
@@ -407,20 +428,23 @@ int rfid_hw_init(void)
         RFIDDEBUG("can't find ad1110 %s device\r\n", rfid_i2c_bus);
         return -RT_ERROR;
     }
+    /*	RFID power ctrl*/
+    GPIO_Initure.Pin = GPIO_PIN_5;
+    GPIO_Initure.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_Initure.Pull = GPIO_NOPULL;
+    GPIO_Initure.Speed = GPIO_SPEED_HIGH;
+    HAL_GPIO_Init(GPIOD, &GPIO_Initure);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_RESET);
+
+    /*	RFID detection*/
+    GPIO_Initure.Pin = GPIO_PIN_4;
+    GPIO_Initure.Mode = GPIO_MODE_INPUT;
+    HAL_GPIO_Init(GPIOD, &GPIO_Initure);
 
     RFIDDEBUG("rfid set i2c bus to %s\r\n", rfid_i2c_bus);
 
     return RT_EOK;
 }
 INIT_APP_EXPORT(rfid_hw_init);
-
-
-
-
-
-
-
-
-
 
 

@@ -116,7 +116,9 @@
 #define RT_USING_SFUD
 #define RT_SFUD_USING_SFDP
 #define RT_SFUD_USING_FLASH_INFO_TABLE
-#define RT_DEBUG_SFUD  0
+//#define RT_DEBUG_SFUD  0
+
+#define RT_USING_CPUTIME
 
 /* Using USB */
 #define RT_USING_USB_DEVICE
@@ -166,6 +168,7 @@
 #define ULOG_OUTPUT_LEVEL
 #define ULOG_OUTPUT_TAG
 #define ULOG_BACKEND_USING_CONSOLE
+//#define ULOG_BACKEND_USING_FLASH
 #define ULOG_SW_VERSION_NUM 0x00100
 
 /* IoT - internet of things */

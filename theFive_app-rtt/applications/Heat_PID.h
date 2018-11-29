@@ -44,6 +44,7 @@ extern struct HeatSystem_t HeatHandle_1, HeatHandle_2, HeatHandle_3, HeatHandle_
 float pid_calculate(struct HeatSystem_t* h_heat);
 int set_heat_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent);
 rt_err_t heat_start_stop(struct HeatSystem_t* h_heat, HeatSwitch _status);
+void cycle_temp_heat(void);
 
 extern void Function_Heat_PID(void* parameter);
 #endif
