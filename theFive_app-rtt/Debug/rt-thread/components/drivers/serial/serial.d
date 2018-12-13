@@ -36,12 +36,7 @@ rt-thread/components/drivers/serial/serial.o: \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/cputime.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdbg.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_posix.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_file.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_fs.h \
- D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_poll.h
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdbg.h
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h:
 
@@ -116,13 +111,3 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/d
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdbg.h:
-
-D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_posix.h:
-
-D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_file.h:
-
-D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs.h:
-
-D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_fs.h:
-
-D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\dfs\include/dfs_poll.h:

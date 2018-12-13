@@ -174,7 +174,7 @@ static rt_uint32_t log_index2addr(size_t index) {
  *
  * @return result
  */
-EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size) {
+EfErrCode ef_log_read(size_t index, rt_uint32_t *log, size_t size) {
     EfErrCode result = F_NO_ERR;
     size_t cur_using_size = log_get_used_size();
     size_t read_size_temp = 0;
@@ -276,7 +276,7 @@ EfErrCode ef_log_read(size_t index, uint32_t *log, size_t size) {
  *
  * @return result
  */
-EfErrCode ef_log_write(const uint32_t *log, size_t size) {
+EfErrCode ef_log_write(const rt_uint32_t *log, size_t size) {
     EfErrCode _ret = F_NO_ERR;
     size_t write_size = 0, writable_size = 0;
     rt_uint32_t sector_header, write_addr = log_end_addr, erase_addr;

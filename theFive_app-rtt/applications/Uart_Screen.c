@@ -1,10 +1,10 @@
+#include <SysMonitor.h>
 #include "Uart_Screen.h"
-#include "RunLED.h"
 #include "ServerData.h"
 #include "WorkTask.h"
 #include "bsp_RMD8.h"
 #include "SenseData.h"
-#include "TMC5130.h"
+//#include "TMC5130.h"
 #include "dc_motor.h"
 #include "bsp_rfid.h"
 #include "usb_hid.h"
@@ -85,6 +85,10 @@ static rt_uint8_t choose_channel(rt_uint32_t _addr, rt_uint8_t _channel)
 		rt_sprintf(str, "四");
 		ScreenSendCommand(WRITE_82, _addr, (rt_uint8_t*)str,rt_strlen(str));
 		break;
+	case 0x0f:
+		rt_sprintf(str, "ALL");
+		ScreenSendCommand(WRITE_82, _addr, (rt_uint8_t*)str,rt_strlen(str));
+		break;
 	default:
 		_channel = 0;
 		break;
@@ -125,15 +129,17 @@ static int sample_start(rt_uint16_t _addr)
 		rt_sprintf(str, "请放入试剂，开始测试");
 		ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
 		ScreenSendCommand(WRITE_82, LCD_info + 32, (rt_uint8_t*)str, sizeof(str));
-		door_start(ch/2, 1);
+		door_start(ch/2, DOOR_OPEN);
 		break;
 	case FLOW_ADD:
-		door_start(ch/2, 0);
+		if(door_start(ch/2, DOOR_CLOSE) == RT_ETIMEOUT)
+			break;
+		//door_start(ch/2, DOOR_CLOSE);
 		*sample_status[ch] = FLOW_RUN;
 		ScreenDisICON(SAMPLE1_SWITCH_IOC + ch, 1); //显示停止
 		rt_sprintf(str, "准备中···");
 		ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
-		_rev = work_create(ch);	//创建任务
+		_rev = work_create(ch, 1);	//创建任务
 		if(_rev != RT_EOK)
 			rt_kprintf("create work failed\n");
 		break;
@@ -282,6 +288,8 @@ static int blender_switch(rt_uint16_t _addr)
 }
 /**
  *	加热系统 开关
+ * _config 1：开始加热
+ * 		   0：停止加热
  */
 static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
 {
@@ -300,6 +308,10 @@ static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
 		rt_memset(str, 0, sizeof(str));
 		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
 	}
+	else if(_ch == 0x0f)
+	{
+		all_heat_start_stop(_config);
+	}
 	else
 	{
 		rt_sprintf(str, "请选择通道！");
@@ -307,6 +319,18 @@ static int heat_switch(rt_uint8_t _ch, rt_uint8_t _config)
 	}
 
 	return RT_EOK;
+}
+static rt_uint8_t get_heat_status(void)
+{
+	rt_uint8_t *en_heat[4] = {&switch_config.en_Heat_1, &switch_config.en_Heat_2,  \
+									&switch_config.en_Heat_3, &switch_config.en_Heat_4};
+	for(rt_uint8_t i = 0; i<4; i++)
+	{
+		if(*en_heat[i])
+			ScreenDisICON(TEMP1_ICO + i, 1);
+		else
+			ScreenDisICON(TEMP1_ICO + i, 0);
+	}
 }
 /**
  *	设置加热系统参数
@@ -454,6 +478,23 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	
 	switch (keyval)
 	{
+	case SKIP_MANU:
+		ScreenPage(1);
+		status_config.system_init = 1;
+		switch_config.temp_dis = 0;
+		break;
+	case BACK_MANU:
+		switch_config.en_Light_1 = 0;
+		switch_config.en_Light_2 = 0;
+		switch_config.en_Light_3 = 0;
+		switch_config.en_Light_4 = 0;
+		switch_config.en_Temp_1 = 0;
+		switch_config.en_Temp_2 = 0;
+		switch_config.en_Temp_3 = 0;
+		switch_config.en_Temp_4 = 0;
+		switch_config.temp_dis = 0;
+		rt_kprintf(" BACK_MANU\n");
+		break;
 	case SAMPLE:
 		dis_sample_status();
 		break;
@@ -466,17 +507,7 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	case SYSTEM:
 		rt_kprintf(" SYSTEM\n");
 		break;
-	case BACK_MANU:
-		switch_config.en_Light_1 = 0;
-		switch_config.en_Light_2 = 0;
-		switch_config.en_Light_3 = 0;
-		switch_config.en_Light_4 = 0;
-		switch_config.en_Temp_1 = 0;
-		switch_config.en_Temp_2 = 0;
-		switch_config.en_Temp_3 = 0;
-		switch_config.en_Temp_4 = 0;
-		rt_kprintf(" BACK_MANU\n");
-		break;
+
 	case SAMPLE_SWITCH_1:
 	case SAMPLE_SWITCH_2:
 	case SAMPLE_SWITCH_3:
@@ -494,15 +525,17 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case LIGHT:		
 		switch_config.en_Light_1 = 1;
-//		switch_config.en_Light_2 = 1;
-//		switch_config.en_Light_3 = 1;
-//		switch_config.en_Light_4 = 1;
+		switch_config.en_Light_2 = 1;
+		switch_config.en_Light_3 = 1;
+		switch_config.en_Light_4 = 1;
 		break;
 	case TEMPERATURE:
 		switch_config.en_Temp_1 = 1;
 		switch_config.en_Temp_2 = 1;
 		switch_config.en_Temp_3 = 1;
 		switch_config.en_Temp_4 = 1;
+		switch_config.temp_dis = 1;
+		get_heat_status();
 		break;
 	case SCREEN:
 		get_lcd_light();
@@ -639,15 +672,19 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case DOOR_OPEN_1://左门开
 		door_start(0, DOOR_OPEN);
+		//test_door(0, DOOR_OPEN);
 		break;
 	case DOOR_CLOSE_1://左门关
 		door_start(0, DOOR_CLOSE);
+		//test_door(0, DOOR_CLOSE);
 		break;
 	case DOOR_OPEN_2://右门开
 		door_start(1, DOOR_OPEN);
+		//test_door(1, DOOR_OPEN);
 		break;
 	case DOOR_CLOSE_2://右门关
 		door_start(1, DOOR_CLOSE);
+		//test_door(1, DOOR_CLOSE);
 		break;
 	case DCMOTOR_SWITCH_1://搅拌1
 	case DCMOTOR_SWITCH_2://搅拌2
@@ -680,51 +717,13 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	case PRINTER_FORMAT_3:
 		break;
 	case KEY_SERVER_ACTIVATE:		
-		//_ret = device_updata(&send_server_data, &rev_server_data);
-		_ret = device_activate(&send_server_data, &rev_server_data);
-		rt_memset(string, 0, 30);
-		ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,30);
-		if(RT_EOK == _ret)
-		{
-			
-			rt_sprintf(string, "服务器激活成功！");
-			ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
-		else
-		{
-			rt_sprintf(string, "服务器激活失败，错误代码：%d.",_ret);
-			ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
+		//server_start(2);
 		break;
 	case KEY_SERVER_TEST:
-		_ret = device_test(&send_server_data, &rev_server_data);
-		rt_memset(string, 0, 30);
-		ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,30);
-		if(RT_EOK == _ret)
-		{
-			rt_sprintf(string, "服务器测试成功！");
-			ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
-		else
-		{
-			rt_sprintf(string, "服务器测试失败，错误代码：%d.",_ret);
-			ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
+		//server_start(6);
 		break;
 	case KEY_SERVER_UPLOAD:	
-		_ret = device_sample(&send_server_data, &server_sample);
-		rt_memset(string, 0, 30);
-		ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,30);
-		if(RT_EOK == _ret)
-		{
-			rt_sprintf(string, "上传数据服务器成功！");
-			ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
-		else
-		{
-			rt_sprintf(string, "上传数据失败，错误代码：%d.",_ret);
-			ScreenSendCommand(WRITE_82, SERVER_INFO, (rt_uint8_t*)string,rt_strlen(string));
-		}
+		//server_start(1);
 		break;
 	case KEY_SERVER_SET:
 		rt_kprintf("ip : %s\r\n",UartBuff.ServerSetBuf._ip);
@@ -817,7 +816,7 @@ static void DumpCmd(const rt_uint8_t* _ucData)
 			display_heat_para(UartBuff.heat_para.channel);
 			break;
 		case TEMP_SET:
-			UartBuff.heat_para.iSetVal = _data * 10;
+			UartBuff.heat_para.iSetVal = _data;
 			break;
 		case TEMP_TIME:
 			UartBuff.heat_para.CycleTime = _data;
@@ -1019,19 +1018,19 @@ static void DumpCmd(const rt_uint8_t* _ucData)
 		switch(_ucData[1])
 		{
 		case 0x20: // 获取串口屏RTC
-			UartBuff.RealTime.year = _ucData[3];
-			ScreenSendData_2bytes(TIME_YEAR, h2d(UartBuff.RealTime.year)+2000);
-			UartBuff.RealTime.month = _ucData[4];
+			UartBuff.RealTime.year = h2d(_ucData[3]);
+			ScreenSendData_2bytes(TIME_YEAR, UartBuff.RealTime.year + 2000);
+			UartBuff.RealTime.month = h2d(_ucData[4]);
 			ScreenSendData_2bytes(TIME_MONTH, h2d(UartBuff.RealTime.month));
-			UartBuff.RealTime.day = _ucData[5];
+			UartBuff.RealTime.day = h2d(_ucData[5]);
 			ScreenSendData_2bytes(TIME_DAY, h2d(UartBuff.RealTime.day));
-			UartBuff.RealTime.hour = _ucData[7];
+			UartBuff.RealTime.hour = h2d(_ucData[7]);
 			ScreenSendData_2bytes(TIME_HOUR, h2d(UartBuff.RealTime.hour));
-			UartBuff.RealTime.minute = _ucData[8];
+			UartBuff.RealTime.minute = h2d(_ucData[8]);
 			ScreenSendData_2bytes(TIME_MINUTE, h2d(UartBuff.RealTime.minute));
 			/* 设置 片上RTC */
 			set_time(UartBuff.RealTime.hour, UartBuff.RealTime.minute, 0);
-			set_date(UartBuff.RealTime.year, UartBuff.RealTime.month, UartBuff.RealTime.day);
+			set_date(UartBuff.RealTime.year + 2000, UartBuff.RealTime.month, UartBuff.RealTime.day);
 			break;
 		case 0x16:
 			rt_kprintf("R6:%x\n", _ucData[3]);
@@ -1222,6 +1221,12 @@ rt_uint8_t ScreenDisICON(rt_uint16_t s_addr, rt_uint8_t status)
 	
 	return RT_EOK;
 }
+
+rt_uint8_t ScreenPage(rt_uint8_t page)
+{
+	return ScreenSendCommand(WRITE_80, 4, &page, 1);
+}
+
 /**
  * @brief  写入曲线
  *
@@ -1350,8 +1355,9 @@ rt_err_t uart_open(const char *name)
 void Function_UartScreen(void* parameter)
 {
 	rt_uint8_t uart_rx_data;
-	uart_open(RT_SCREEN_DEVICE_NAME);
 	
+    /* 串口屏初始化 */
+	uart_open(RT_SCREEN_DEVICE_NAME);
 	while(1)
 	{
 		uart_rx_data = uart_getchar();

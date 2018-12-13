@@ -1,3 +1,5 @@
+#include <rtthread.h>
+#include <drivers/pin.h>
 #include <stdio.h>
 #include <string.h>
 #include "Heat_PID.h"
@@ -20,7 +22,7 @@ float pid_calculate(struct HeatSystem_t* h_heat)
 	float _temp = 0;
 	PID_Value* _pid = &h_heat->PID;
 	
-	if(h_heat->iCurVal < 200)	//低于20度，不正常
+	if(h_heat->iCurVal < 100)	//低于20度，不正常
 		return 0;
 	_pid->err = h_heat->iSetVal - h_heat->iCurVal;
 	if (_pid->err > 10)
@@ -96,7 +98,7 @@ _exit:
  *	return : 1 --> 温度到达37
  *			 0 --> 温度 未到
  */
-rt_uint8_t get_temp_status(rt_uint8_t _ch)
+rt_uint8_t get_temp_a_status(rt_uint8_t _ch)
 {
 	rt_uint8_t* temp_status[4] = {&status_config.temp1_status, &status_config.temp2_status,
 									&status_config.temp3_status, &status_config.temp4_status};
@@ -104,16 +106,62 @@ rt_uint8_t get_temp_status(rt_uint8_t _ch)
 	return *temp_status[_ch];
 }
 /**
+ *	获取温度状态
+ *
+ *	return : 0 --> 温度到达37
+ *			 1 --> 温度 未到
+ */
+rt_uint8_t get_temp_status(void)
+{
+	rt_uint8_t temp_status = 0;
+
+	for(rt_uint8_t i=0; i<4; i++)
+	{
+		if(get_temp_a_status(i))
+			temp_status++;
+	}
+	if(temp_status == 4)
+		return RT_EOK;
+	else
+		return RT_ERROR;
+}
+void dis_temp_status(void)
+{
+	char string[30] = {0};
+	rt_uint8_t new_status, old_status = 2;
+
+	if(status_config.system_init)
+		return;
+	new_status = get_temp_status();
+	if(new_status != old_status)
+	{
+		if(new_status == 0)
+		{
+			rt_sprintf(string, "当前温度合适！");
+			ScreenSendCommand(WRITE_82, INIT_INFO, (rt_uint8_t*)string, rt_strlen(string));
+			ScreenPage(1);
+			status_config.system_init = 1;
+			switch_config.temp_dis = 0;
+		}
+		else
+		{
+			rt_sprintf(string, "当前温度不足，正在加热模块！");
+			ScreenSendCommand(WRITE_82, INIT_INFO, (rt_uint8_t*)string, rt_strlen(string));
+		}
+		old_status = new_status;
+	}
+}
+
+/**
  * @brief  获取实时温度(目前1s刷新)
  *
  * _ch : 通道
  * @return 返回温度值的100倍
  */
-rt_uint16_t GetTempAndDisplay(rt_uint8_t _ch)
+rt_uint16_t GetTemp(rt_uint8_t _ch)
 {
 	static rt_uint16_t _val[4] = {0};
 	OneWire_t *pOneWire[4] = {&OneWire1, &OneWire2, &OneWire3, &OneWire4};
-	rt_uint16_t dis_addr[4] = {TEMP_1, TEMP_2, TEMP_3, TEMP_4};
 	rt_uint8_t* temp_status[4] = {&status_config.temp1_status, &status_config.temp2_status,
 									&status_config.temp3_status, &status_config.temp4_status};
 	static rt_uint8_t print_count = 0;
@@ -126,8 +174,7 @@ rt_uint16_t GetTempAndDisplay(rt_uint8_t _ch)
 		//rt_kprintf("%d\n", _val[_ch]);
 	}
 	//rt_kprintf("ch%d: %d\n", _ch+1, _val[_ch]);
-	ScreenSendData_2bytes(dis_addr[_ch], _val[_ch]);
-	if(_val[_ch] > 3690 && _val[_ch] < 3710)   // 标记温度状态
+	if(_val[_ch] > 368 && _val[_ch] < 372)   // 标记温度状态
 		*temp_status[_ch] = 1;
 	else
 		*temp_status[_ch] = 0;
@@ -153,11 +200,15 @@ void cycle_temp_heat(void)
 			if(++cycle_heat_count[i] == pHeatHandle[i]->CycleTime)
 			{
 				cycle_heat_count[i] = 0;
-				pHeatHandle[i]->iCurVal = (float)GetTempAndDisplay(i);
+				pHeatHandle[i]->iCurVal = (float)GetTemp(i);
 				if(*en_heat[i])
 				{
 					pHeatHandle[i]->duty = (rt_uint16_t)pid_calculate(pHeatHandle[i]);
 					set_heat_duty(pHeatHandle[i], pHeatHandle[i]->duty);
+				}
+				if(switch_config.temp_dis)
+				{
+					ScreenSendData_2bytes(TEMP_1 + i * 4, pHeatHandle[i]->iCurVal);
 				}
 			}
 		}
@@ -204,6 +255,8 @@ static int heat_pwm_init(void)
 }
 /*
  * 开始加热
+ * _status 1：开始加热
+ * 		   0：停止加热
  */
 rt_err_t heat_start_stop(struct HeatSystem_t* h_heat, HeatSwitch _status)
 {
@@ -214,6 +267,29 @@ rt_err_t heat_start_stop(struct HeatSystem_t* h_heat, HeatSwitch _status)
 		return rt_device_control(heat_dev, PWM_CMD_ENABLE, &configuration);
 	else
 		return rt_device_control(heat_dev, PWM_CMD_DISABLE, &configuration);
+}
+/*
+ * 所有通道开始加热
+ * _config 1：开始加热
+ * 		   0：停止加热
+ */
+rt_err_t all_heat_start_stop(HeatSwitch _config)
+{
+	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
+										  &HeatHandle_3, &HeatHandle_4};
+	rt_uint8_t* en_heat[4] = {&switch_config.en_Heat_1, &switch_config.en_Heat_2,
+								&switch_config.en_Heat_3, &switch_config.en_Heat_4};
+
+	for(rt_uint8_t i=0; i<4; i++)
+	{
+		if(heat_start_stop(pHeatTemp[i], _config) != RT_EOK)
+		{
+			rt_kprintf("control heat %d: faild! \n", i);
+			return RT_ERROR;
+		}
+		*en_heat[i] = _config;
+	}
+	return RT_EOK;
 }
 /*
  *

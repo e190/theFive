@@ -13,8 +13,9 @@
 
 #include <drivers/mmcsd_core.h>
 
+#define LOG_TAG  "sdio.blo"
 #define DBG_ENABLE
-#define DBG_SECTION_NAME               "[SDIO]"
+#define DBG_SECTION_NAME               "SDIO"
 #ifdef RT_SDIO_DEBUG
 #define DBG_LEVEL                      DBG_LOG
 #else

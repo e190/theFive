@@ -16,18 +16,19 @@
 #define DIS_CHANNEL_3	0x40
 #define DIS_CHANNEL_4	0x80
 
-//#define DEFAULT_HEAT_TIME	300
-//#define DEFAULT_READ_TIME	320
-//#define DEFAULT_A1_TIME		150
-//#define DEFAULT_A2_TIME		300
-#define DEFAULT_HEAT_TIME	5
+#define DEFAULT_HEAT_TIME	300
 #define DEFAULT_READ_TIME	320
 #define DEFAULT_A1_TIME		150
 #define DEFAULT_A2_TIME		300
+//#define DEFAULT_HEAT_TIME	5
+//#define DEFAULT_READ_TIME	320
+//#define DEFAULT_A1_TIME		150
+//#define DEFAULT_A2_TIME		300
 
 typedef struct 
 {
 	rt_uint8_t mix_time;
+	rt_uint8_t read0_time;
     rt_uint16_t heat_time;
     rt_uint16_t read_time;
     rt_uint16_t a1_time;
@@ -55,7 +56,7 @@ void float_print(float f_data);
 
 int worktask_init(void);
 int stepmotor_backzero(rt_uint8_t _motor_id);
-int work_create(const rt_uint8_t config);
-rt_uint8_t work_cancel(const rt_uint8_t config);
+int work_create(const rt_uint8_t _ch, rt_uint8_t _type);
+rt_uint8_t work_cancel(const rt_uint8_t _ch);
 
 #endif

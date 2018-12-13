@@ -1,4 +1,5 @@
 rt-thread/components/finsh/cmd.o: ../rt-thread/components/finsh/cmd.c \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtthread.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\applications/rtconfig.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtdebug.h \
@@ -16,6 +17,8 @@ rt-thread/components/finsh/cmd.o: ../rt-thread/components/finsh/cmd.c \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\finsh/finsh_api.h \
  ../rt-thread/components/finsh/finsh.h \
  ../rt-thread/components/finsh/finsh_api.h
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rthw.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\include/rtthread.h:
 

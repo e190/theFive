@@ -38,12 +38,12 @@ rt_err_t dump_hid_data(const uint8_t *data, rt_size_t size)
     return -RT_ERROR;
 }
 
-void HID_Report_Received(hid_report_t report)
-{
-    rt_kprintf("\nHID Recived:");
-    rt_kprintf("\nReport ID %02x \n", report->report_id);
-    dump_hid_data(report->report, report->size);
-}
+//void HID_Report_Received(hid_report_t report)
+//{
+//    rt_kprintf("\nHID Recived:");
+//    rt_kprintf("\nReport ID %02x \n", report->report_id);
+//    dump_hid_data(report->report, report->size);
+//}
 
 void usb_hid_write_buf(const rt_uint8_t* _data, rt_size_t size)
 {
@@ -119,9 +119,14 @@ rt_err_t usb_hid_write(const rt_uint8_t* buffer, rt_size_t size)
 void send_start_windos(rt_uint8_t _ch, rt_uint8_t _status)
 {
 	char dbuf[6] = {0xd5, 0xc0, 2, _ch, _status, 0x0d};
-	usb_hid_write(dbuf, sizeof(dbuf));
+	usb_hid_write_buf(dbuf, sizeof(dbuf));
 }
-
+/**
+ *	发送测量数据到上位机
+ *	_ch：通道
+ *	_data:数据
+ *	unit：单位（0 –>普通数据   1-->A1、A2标记点）
+ */
 void send_data_windos(rt_uint8_t _ch, rt_uint16_t _data, rt_uint8_t unit)
 {
 	char dbuf[8] = {0xd5, 0xa0, 4, _ch, 0, 100, unit, 0x0d};

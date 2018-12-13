@@ -23,8 +23,14 @@ struct light_handle_t
 	rt_uint16_t dis_addr_2;		//740地址
 	rt_uint16_t dis_icon_1;
 	rt_uint16_t dis_icon_2;
-	rt_int8_t a1_status;
-	rt_int8_t a2_status;
+	rt_int8_t* pA_count;
+	rt_uint32_t* pA_ave_1;
+	rt_uint32_t* pA_ave_2;
+	rt_int8_t a0_count;
+	rt_int8_t a1_count;
+	rt_int8_t a2_count;
+	rt_uint32_t ave_a0_1;
+	rt_uint32_t ave_a0_2;
 	rt_uint32_t ave_a1_1;
 	rt_uint32_t ave_a1_2;
 	rt_uint32_t ave_a2_1;
@@ -46,6 +52,7 @@ struct switch_config_t
 	rt_uint8_t en_Temp_2;
 	rt_uint8_t en_Temp_3;
 	rt_uint8_t en_Temp_4;
+	rt_uint8_t temp_dis; //显示温度
 	rt_uint8_t en_Heat_1;//加热使能
 	rt_uint8_t en_Heat_2;
 	rt_uint8_t en_Heat_3;
@@ -69,6 +76,7 @@ typedef enum {
 /* 状态 */
 struct status_config_t
 {
+	rt_uint8_t system_init;
 	flow_status flow1_status; //流程状态
 	flow_status flow2_status;
 	flow_status flow3_status;

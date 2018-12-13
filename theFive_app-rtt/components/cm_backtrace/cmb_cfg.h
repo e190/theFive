@@ -29,8 +29,15 @@
 #ifndef _CMB_CFG_H_
 #define _CMB_CFG_H_
 
+#define LOG_TAG  "cm_b"
+#define DBG_ENABLE
+#define DBG_SECTION_NAME               "cmb"
+#define DBG_LEVEL                      DBG_INFO
+#define DBG_COLOR
+#include <rtdbg.h>
+
 /* print line, must config by user */
-#define cmb_println(...)          rt_kprintf(__VA_ARGS__);rt_kprintf("\r\n")     /* e.g., printf(__VA_ARGS__);printf("\r\n") */
+#define cmb_println(...)          LOG_E(__VA_ARGS__)    /* e.g., printf(__VA_ARGS__);printf("\r\n") */
 /* enable bare metal(no OS) platform */
 /* #define CMB_USING_BARE_METAL_PLATFORM */
 /* enable OS platform */

@@ -1,10 +1,6 @@
 eclipse.preferences.version=1
-encoding//components/EasyFlash-v3.1.0/README.md=UTF-8
-encoding//components/EasyFlash-v3.1.0/docs/zh/port.md=UTF-8
-encoding//components/EasyFlash-v3.1.0/ports/README.md=UTF-8
-encoding//components/cm_backtrace/README.md=UTF-8
-encoding//components/ulog/backend/README.md=UTF-8
-encoding//components/webclient/README.md=UTF-8
-encoding//components/webclient/docs/principle.md=UTF-8
+encoding//Libraries/HAL_Drivers/drv_soft_i2c.c=UTF-8
+encoding//Libraries/HAL_Drivers/drv_spi.c=UTF-8
+encoding//Libraries/HAL_Drivers/drv_usart.c=UTF-8
 encoding//rt-thread/components/drivers/rtc/README.md=UTF-8
 encoding//rt-thread/components/drivers/spi/sfud/README.md=UTF-8

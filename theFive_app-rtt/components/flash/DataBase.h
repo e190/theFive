@@ -29,6 +29,7 @@ struct flash_heat_para_t
 	float 		uKI_Coe;             //积分常数
 	float 		uKD_Coe;             //微分常数
 };
+
 // 存储数据
 struct sample_data_t{
 	char data[500];

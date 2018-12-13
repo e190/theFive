@@ -1,8 +1,8 @@
+#include <SysMonitor.h>
 #include "SenseData.h"
 #include "drv_ad1110.h"
 #include "Uart_Screen.h"
 #include "dc_motor.h"
-#include "RunLED.h"
 #include "usb_hid.h"
 
 struct light_handle_t h_light_1;
@@ -180,6 +180,7 @@ static void cycle_read_light(void)
 	rt_uint8_t *en_read_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,  \
 									&switch_config.en_Light_3, &switch_config.en_Light_4};
 	struct light_handle_t *ppLight[4] = {&h_light_1, &h_light_2, &h_light_3, &h_light_4};
+	static rt_uint32_t ave_buf[4][2] = {{0,0}};
 	rt_uint8_t a1_a2_flag[4] = {0};
 	rt_uint32_t read_buf[2];
 
@@ -191,38 +192,25 @@ static void cycle_read_light(void)
 				continue;
 			dis_light_result(i, read_buf);
 
-			if(ppLight[i]->a1_status > 0)
+			if(ppLight[i]->pA_count != RT_NULL)
 			{
-				ppLight[i]->ave_a1_1 += read_buf[0];
-				ppLight[i]->ave_a1_2 += read_buf[1];
+				ave_buf[i][0] += read_buf[0];
+				ave_buf[i][1] += read_buf[1];
 				a1_a2_flag[i] = 1;
 				rt_kprintf("*");
-				ppLight[i]->a1_status--;
+				ppLight[i]->pA_count[0]--;
+				if(ppLight[i]->pA_count[0] == 0)
+				{
+					a1_a2_flag[i] = 0;
+					ppLight[i]->pA_count[0] = -1;
+					ppLight[i]->pA_count = RT_NULL;
+					//ppLight[i]->pA_ave_1 = ave_buf[i][0] / 10;
+					//ppLight[i]->pA_ave_2 = ave_buf[i][1] / 10;
+				}
 			}
-			else if(ppLight[i]->a1_status == 0)
-			{
-				a1_a2_flag[i] = 0;
-				ppLight[i]->a1_status = -1;
-				ppLight[i]->ave_a1_1 /= 10;
-				ppLight[i]->ave_a1_2 /= 10;
-			}
-			if(ppLight[i]->a2_status > 0)
-			{
- 				ppLight[i]->ave_a2_1 += read_buf[0];
-				ppLight[i]->ave_a2_2 += read_buf[1];
-				a1_a2_flag[i] = 1;
-				rt_kprintf("*");
-				ppLight[i]->a2_status--;
-			}
-			else if(ppLight[i]->a2_status == 0)
-			{
-				a1_a2_flag[i] = 0;
-				ppLight[i]->a2_status = -1;
-				ppLight[i]->ave_a2_1 /= 10;
-				ppLight[i]->ave_a2_2 /= 10;
-			}
-			send_data_windos(i, read_buf[0], a1_a2_flag[i]);
-			rt_kprintf("ch%d: %d  ", i, read_buf[0]);
+
+			//send_data_windos(i, read_buf[0], a1_a2_flag[i]);
+			//rt_kprintf("ch%d: %d  ", i, read_buf[0]);
 		}
 	}
 }
@@ -230,15 +218,13 @@ void Function_SenseData(void* parameter)
 {
 	light_para_init();
 	cup_gpio_init();
-	door_start(0, 0);
-	door_start(1, 0);
 
 	while(1)
 	{
 		cycle_read_light();
 		cup_cheak();
 		door_sense_scan();
-		HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_5);
+		//HAL_GPIO_TogglePin(GPIOF, GPIO_PIN_5);
 		rt_thread_delay(100); 
 	}
 }

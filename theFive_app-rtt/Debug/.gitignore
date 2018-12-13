@@ -1,0 +1,6 @@
+/Libraries/
+/applications/
+/board/
+/components/
+/rt-thread/
+/objects.mk

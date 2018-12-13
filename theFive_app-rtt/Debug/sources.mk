@@ -17,21 +17,14 @@ C_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
-Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc \
-Libraries/CMSIS/Device/ST/STM32F4xx/Source/Templates \
-Libraries/STM32F4xx_HAL_Driver/Src \
+Libraries/HAL_Drivers \
+Libraries/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates/gcc \
+Libraries/STM32F4xx_HAL/CMSIS/Device/ST/STM32F4xx/Source/Templates \
+Libraries/STM32F4xx_HAL/STM32F4xx_HAL_Driver/Src \
 applications \
-components/at/src \
+board \
 components/cm_backtrace \
 components/flash \
-components/ulog/backend \
-components/ulog/syslog \
-components/ulog \
-driver \
-rt-thread/components/dfs/filesystems/devfs \
-rt-thread/components/dfs/filesystems/elmfat \
-rt-thread/components/dfs/filesystems/elmfat/option \
-rt-thread/components/dfs/src \
 rt-thread/components/drivers/cputime \
 rt-thread/components/drivers/i2c \
 rt-thread/components/drivers/misc \
@@ -43,9 +36,18 @@ rt-thread/components/drivers/src \
 rt-thread/components/drivers/usb/usbdevice/class \
 rt-thread/components/drivers/usb/usbdevice/core \
 rt-thread/components/finsh \
+rt-thread/components/libc/compilers/common \
 rt-thread/components/libc/compilers/newlib \
+rt-thread/components/net/at/at_socket \
+rt-thread/components/net/at/src \
+rt-thread/components/net/sal_socket/impl \
+rt-thread/components/net/sal_socket/socket \
+rt-thread/components/net/sal_socket/src \
+rt-thread/components/utilities/cJSON-v1.0.2 \
+rt-thread/components/utilities/ulog/backend \
+rt-thread/components/utilities/ulog/syslog \
+rt-thread/components/utilities/ulog \
 rt-thread/libcpu/arm/common \
 rt-thread/libcpu/arm/cortex-m4 \
-rt-thread/packages/cJSON-v1.0.2 \
 rt-thread/src \
 

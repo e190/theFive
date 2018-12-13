@@ -21,13 +21,13 @@
 
 /* 事件控制块 */
 static struct rt_event work_event;
-rt_thread_t work1 = RT_NULL;
-rt_thread_t work2 = RT_NULL;
-rt_thread_t work3 = RT_NULL;
-rt_thread_t work4 = RT_NULL;
+static rt_thread_t work1 = RT_NULL;
+static rt_thread_t work2 = RT_NULL;
+static rt_thread_t work3 = RT_NULL;
+static rt_thread_t work4 = RT_NULL;
 /* 定时器的控制块 */
 static rt_timer_t timer;
-struct task_thread_para_t task_thread_para = {1, 2, 3, 4};
+static rt_uint8_t task_thread_para[4] = {0};
 
 static int cnt[4] = {-1, -1, -1, -1};
 typedef void (*pwork_t)(void *parameter);
@@ -35,6 +35,7 @@ typedef void (*pmotor_cb_t)(void);
 
 sample_param_t sample_param_1 = {
 								0,
+								10,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
@@ -42,6 +43,7 @@ sample_param_t sample_param_1 = {
 								};
 sample_param_t sample_param_2 = {
 								0,
+								10,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
@@ -49,6 +51,7 @@ sample_param_t sample_param_2 = {
 								};
 sample_param_t sample_param_3 = {
 								0,
+								10,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
@@ -56,6 +59,7 @@ sample_param_t sample_param_3 = {
 								};
 sample_param_t sample_param_4 = {
 								0,
+								10,
 								DEFAULT_HEAT_TIME,
 								DEFAULT_READ_TIME,
 								DEFAULT_A1_TIME,
@@ -104,15 +108,29 @@ static void timeout(void *parameter)
 	{
 	    if (cnt[i] > 0)    
 		{
+			if(sample_param[i]->a1_time == (sample_param[i]->read0_time - cnt[i] + 9)
+					&& *en_read_light[i])
+			{
+				ppLight[i]->a0_count = 10;
+				ppLight[i]->pA_count = &ppLight[i]->a0_count;
+				ppLight[i]->pA_ave_1 = &ppLight[i]->ave_a0_1;
+				ppLight[i]->pA_ave_2 = &ppLight[i]->ave_a0_2;
+			}
 			if(sample_param[i]->a1_time == (sample_param[i]->read_time - cnt[i] + 9)
 					&& *en_read_light[i])
 			{
-				ppLight[i]->a1_status = 10;
+				ppLight[i]->a1_count = 10;
+				ppLight[i]->pA_count = &ppLight[i]->a1_count;
+				ppLight[i]->pA_ave_1 = &ppLight[i]->ave_a1_1;
+				ppLight[i]->pA_ave_2 = &ppLight[i]->ave_a2_2;
 			}
 			if(sample_param[i]->a2_time == (sample_param[i]->read_time - cnt[i] + 9)
 					&& *en_read_light[i])
 			{
-				ppLight[i]->a2_status = 10;
+				ppLight[i]->a2_count = 10;
+				ppLight[i]->pA_count = &ppLight[i]->a2_count;
+				ppLight[i]->pA_ave_1 = &ppLight[i]->ave_a2_1;
+				ppLight[i]->pA_ave_2 = &ppLight[i]->ave_a2_2;
 			}
 			sample_param[i]->surplus_time--;
 			total_time = sample_param[i]->total_time - sample_param[i]->surplus_time;
@@ -246,9 +264,9 @@ static float sample_calculate(rt_uint16_t _a1, rt_uint16_t _a2)
 	float _d_value = (float)_a2 / (float)_a1;
 	rt_kprintf("_d_value: ");
 	float_print(_d_value);
-	float _result = log10(_d_value);
+	float _result = 0;//log10(_d_value);
 	rt_kprintf("_result: ");
-	float_print(_result);
+	//float_print(_result);
 
 	return _result;
 }
@@ -275,6 +293,8 @@ void sample_task(rt_uint8_t _ch)
 	ScreenDisICON(SAMPLE1_PROG_IOC + _ch - 1, 1); //显示进度条
 	rt_event_recv(&work_event, _work_event[_ch-1],
 				  RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
+	/* 读闭光值 */
+	cnt[_ch-1] = psample_param[_ch-1]->read0_time;
 	/* 加入R2 */
 	StepMotor_AxisMoveRel_sync(_ch, 5300, 150, 150, 10000);
 	rt_thread_delay(50);
@@ -284,8 +304,9 @@ void sample_task(rt_uint8_t _ch)
 	rt_thread_delay(5000);
 	switch_blender(_ch-1, 0);
 	/* 读值8min */
+	p_light[_ch-1]->pA_count = RT_NULL;
 	cnt[_ch-1] = psample_param[_ch-1]->read_time;   //开始信号
-	send_start_windos(_ch-1, 1);
+	//send_start_windos(_ch-1, 1);
 	en_sense_light(_ch-1, 1);
 	rt_event_recv(&work_event, _work_event[_ch-1], RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, RT_NULL);
 	en_sense_light(_ch-1, 0);
@@ -296,7 +317,7 @@ void sample_task(rt_uint8_t _ch)
 	rt_kprintf("A2_1: %d\n", p_light[_ch-1]->ave_a2_1);
 	rt_kprintf("A2_2: %d\n", p_light[_ch-1]->ave_a2_2);
 	float _log = sample_calculate(p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a2_1);
-	send_result_windos(_ch-1, p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a2_1, _log);
+	//send_result_windos(_ch-1, p_light[_ch-1]->ave_a1_1, p_light[_ch-1]->ave_a2_1, _log);
 	p_light[_ch-1]->ave_a1_1 = 0;
 	p_light[_ch-1]->ave_a1_2 = 0;
 	p_light[_ch-1]->ave_a2_1 = 0;
@@ -320,7 +341,7 @@ static void test_task(rt_uint8_t _ch)
  */
 rt_uint8_t channel_init(rt_uint8_t _ch)
 {
-	rt_uint32_t count[4] = {0};
+	static rt_uint32_t count[4] = {0};
 	MotorHandle_t* motor[4] = {&Motor1, &Motor2, &Motor3, &Motor4};
 	pmotor_cb_t pmotor_cb[4] = {motor_1_cb, motor_2_cb, motor_3_cb, motor_4_cb};
 	rt_uint8_t* cup_en[4] = {&switch_config.en_cup_1, &switch_config.en_cup_2,
@@ -331,12 +352,9 @@ rt_uint8_t channel_init(rt_uint8_t _ch)
 	char str[25] = {0};
 
 	*cup_en[_ch] = 1;
-	while(get_door_status(_ch/2))
+	if(wait_door(_ch/2, DOOR_CLOSE) != RT_EOK)
 	{
-		count[_ch]++;
-		rt_thread_delay(100);
-		if(count[_ch] == 100)
-			return RT_ERROR;
+		return RT_ERROR;
 	}
 	count[_ch] = 0;
 	while(0 == get_cup_status(_ch))
@@ -360,6 +378,7 @@ rt_uint8_t channel_init(rt_uint8_t _ch)
 	rt_sprintf(str, "正在检测中·····");
 	ScreenSendCommand(WRITE_82, LCD_info, (rt_uint8_t*)str, sizeof(str));
 	*cup_en[_ch] = 0;
+	count[_ch] = 0;
 
 	return RT_EOK;
 }
@@ -386,29 +405,80 @@ void channel_end(rt_uint8_t _ch)
  */
 void Function_Channel_1(void* parameter)
 {
-	if(channel_init(0) == RT_EOK)
-		sample_task(1);
-	channel_end(0);
+	rt_uint8_t type = *(rt_uint8_t*)parameter;
+
+	switch (type)
+	{
+	case 1:
+		if(channel_init(0) == RT_EOK)
+			sample_task(1);
+		channel_end(0);
+		break;
+	case 2:
+		stepmotor_backzero(1);
+		break;
+	default:
+		break;
+	}
 }
 void Function_Channel_2(void* parameter)
 {
-	if(channel_init(1) == RT_EOK)
-		sample_task(2);
-	channel_end(1);
+	rt_uint8_t type = *(rt_uint8_t*)parameter;
+
+	switch (type)
+	{
+	case 1:
+		if(channel_init(1) == RT_EOK)
+			sample_task(2);
+		channel_end(1);
+		break;
+	case 2:
+		stepmotor_backzero(2);
+		break;
+	default:
+		break;
+	}
 }
 void Function_Channel_3(void* parameter)
 {
-	if(channel_init(2) == RT_EOK)
-		sample_task(3);
-	channel_end(2);
+	rt_uint8_t type = *(rt_uint8_t*)parameter;
+
+	switch (type)
+	{
+	case 1:
+		if(channel_init(2) == RT_EOK)
+			sample_task(3);
+		channel_end(2);
+		break;
+	case 2:
+
+		stepmotor_backzero(3);
+		break;
+	default:
+		break;
+	}
+
 }
 void Function_Channel_4(void* parameter)
 {	
-	rt_kprintf("work4 start\n");
-	if(channel_init(3) == RT_EOK)
-		sample_task(4);
-	channel_end(3);
-	rt_kprintf("work4 done\n");
+	rt_uint8_t type = *(rt_uint8_t*)parameter;
+
+	switch (type)
+	{
+	case 1:
+		rt_kprintf("work4 start\n");
+		if(channel_init(3) == RT_EOK)
+			sample_task(4);
+		channel_end(3);
+		rt_kprintf("work4 done\n");
+		break;
+	case 2:
+		stepmotor_backzero(4);
+		break;
+	default:
+		break;
+	}
+
 }
 
 
@@ -419,12 +489,11 @@ void Function_Channel_4(void* parameter)
  *
  * @return
  */
-int work_create(const rt_uint8_t _ch)
+int work_create(const rt_uint8_t _ch, rt_uint8_t _type)
 {
 	int result = RT_EOK;
 	char *workname[4] = {"Cnl_1", "Cnl_2", "Cnl_3", "Cnl_4"};
 	pwork_t work[4] = {Function_Channel_1, Function_Channel_2, Function_Channel_3, Function_Channel_4};
-	work1 = work2 = work3 = work4 = RT_NULL;
 	rt_thread_t *hth[4] = {&work1, &work2, &work3, &work4};
 	
 	if(timer == RT_NULL)
@@ -439,10 +508,10 @@ int work_create(const rt_uint8_t _ch)
 		/* 启动定时器 */
 		if (timer != RT_NULL) rt_timer_start(timer);
 	}
-
+	task_thread_para[_ch] = _type;
 	*hth[_ch] = rt_thread_create(workname[_ch],            //线程名称。
-								 work[_ch],      			   //线程入口函数。
-								 &task_thread_para.ch_1 + _ch, //线程入口参数。
+								 work[_ch],      		   //线程入口函数。
+								 &task_thread_para[_ch],   //线程入口参数。
 								 CHANNEL_STACK_SIZE,       //线程栈大小。
 								 CHANNEL_PRIORITY,         //线程优先级。
 								 CHANNEL_TIMESLICE);       //时间片Tick。
@@ -453,7 +522,7 @@ int work_create(const rt_uint8_t _ch)
 	}
 	else
 	{
-		rt_kprintf("addr: %x\n",*hth[_ch]);
+		rt_kprintf("addr %d: %x\n", _ch, *hth[_ch]);
 		rt_thread_startup(*hth[_ch]);
 	}
 	
@@ -466,7 +535,7 @@ rt_uint8_t work_cancel(const rt_uint8_t _ch)
 {
 	rt_thread_t *hth[4] = {&work1, &work2, &work3, &work4};
 	rt_uint8_t _rev;
-	
+	rt_kprintf("delete addr %d: %x\n", _ch, *hth[_ch]);
 	work_timer_delete();
 	_rev = rt_thread_suspend(*hth[_ch]);
 	_rev = rt_thread_delete(*hth[_ch]);
@@ -479,7 +548,8 @@ int worktask_init(void)
 {
 	/* 初始化事件对象 */
 	rt_event_init(&work_event, "work_event", RT_IPC_FLAG_FIFO);
-	open_usb_hid();
+	//open_usb_hid();
+
 	return RT_EOK;
 }
 INIT_APP_EXPORT(worktask_init);

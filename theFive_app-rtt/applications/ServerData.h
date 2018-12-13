@@ -4,14 +4,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#define SERVER_SAMPLE  			"sample"
-#define SERVER_ACTIVATE  		"activate"
-#define SERVER_TEST  			"test"
-#define SERVER_TIME   			"time"
-#define SERVER_QC   			"qc"
-#define SERVER_STANDARD   		"standard"
-#define SERVER_LOCATION         "location"
-#define SERVER_UPDATA        	"update"
+#define SERVER_THREAD_STACK_SIZE          1024
+#define SERVER_THREAD_PRIORITY            (RT_THREAD_PRIORITY_MAX/2)
+
+typedef enum {
+	sample = 1,
+    activate,
+	qc,
+	standard,
+	updata,
+	test,
+	real_time,
+	location
+}UploadType;
 
 typedef struct 
 {
@@ -20,7 +25,7 @@ typedef struct
 	char device_id[10];
 	char device_ip[15];
 	char service[10];
-	char error_code[4];
+	char error_code[5];
 	char LAC[5];
 	char CID[10];
 	char time[10];
@@ -41,17 +46,7 @@ typedef struct
 	
 }server_sample_t;
 
-extern server_data_t send_server_data;
-extern server_data_t rev_server_data;
-extern server_sample_t server_sample;
 
-rt_uint8_t ConnectServer(server_data_t* _send_data, const char* type);
-rt_uint8_t UploadSampleServer(server_data_t* _send_data, server_sample_t* _sample);	
-rt_uint8_t GetTimeForServer(server_data_t* _send_data);
-rt_uint8_t SendPositionToServer(server_data_t* _send_data);
-rt_uint8_t AnalyseJSONFromServer(char *text);
-rt_uint8_t device_activate(server_data_t* send_data, server_data_t* rev_data);
-rt_uint8_t device_test(server_data_t* send_data, server_data_t* rev_data);
-rt_uint8_t device_sample(server_data_t* send_data, server_sample_t* sample);
-rt_uint8_t device_updata(server_data_t* send_data, server_data_t* rev_data);
+int server_start(rt_uint8_t _task);
+
 #endif

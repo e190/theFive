@@ -14,8 +14,9 @@
 #include <drivers/mmc.h>
 #include <drivers/sdio.h>
 
+#define LOG_TAG  "sdio.mmc"
 #define DBG_ENABLE
-#define DBG_SECTION_NAME               "[SDIO]"
+#define DBG_SECTION_NAME               "SDIO"
 #ifdef RT_SDIO_DEBUG
 #define DBG_LEVEL                      DBG_LOG
 #else
@@ -749,5 +750,5 @@ int rt_mmcsd_core_init(void)
 
 	return 0;
 }
-INIT_PREV_EXPORT(rt_mmcsd_core_init);
+//INIT_PREV_EXPORT(rt_mmcsd_core_init);
 

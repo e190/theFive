@@ -28,6 +28,7 @@
  */
 #define KEY_RETURN  		0x0010
 /* LCD显示寄存器地址 */
+#define INIT_INFO 			0x0100
 
 #define SAMPLE1_PRO 		0x1120
 #define SAMPLE2_PRO  		0x1130
@@ -177,7 +178,8 @@
 #define FIND				0x3000
 #define SYSTEM				0x4000
 
-#define BACK_MANU			0x0011
+#define SKIP_MANU			0x0012	//跳过
+#define BACK_MANU			0x0011	//返回
 
 /* 样本按键 */
 #define SAMPLE_SWITCH_1		0x1001
@@ -275,6 +277,8 @@
 #define CURVE_Y				0x5085
 #define CURVE_CLEAR			0x5100
 
+
+
 struct RealTime_t
 {
 	rt_uint8_t year;
@@ -363,5 +367,6 @@ rt_uint8_t ScreenSendData(rt_uint16_t s_addr, rt_uint8_t* str, rt_uint8_t len);
 rt_uint8_t ScreenSendData_2bytes(rt_uint16_t s_addr, rt_uint16_t _data);
 rt_uint8_t ScreenSendCommand(rt_uint8_t _cmd, rt_uint16_t s_addr, rt_uint8_t* str, rt_uint8_t len);
 rt_uint8_t ScreenDisICON(rt_uint16_t s_addr, rt_uint8_t status);
+rt_uint8_t ScreenPage(rt_uint8_t page);
 extern void Function_UartScreen(void* parameter);
 #endif

@@ -390,7 +390,7 @@ static void dump_report(struct hid_report * report)
 {
     rt_kprintf("\nHID Recived:");
     rt_kprintf("\nReport ID %02x \n", report->report_id);
-    dump_data(report->report, report->size);
+    dump_data(report->report,report->size);
 }
 
 static rt_err_t _ep_out_handler(ufunction_t func, rt_size_t size)
