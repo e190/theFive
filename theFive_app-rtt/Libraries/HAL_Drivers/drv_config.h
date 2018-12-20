@@ -16,5 +16,7 @@
 
 #include "config/uart_config.h"
 #include "config/spi_config.h"
+#include "config/sdio_config.h"
+#include "config/pwm_config.h"
 
 #endif

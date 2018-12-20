@@ -34,32 +34,7 @@ void TIM6_Init(uint16_t arr,uint16_t psc)
     HAL_TIM_Base_Start_IT(&TIM6_Handler); //使能定时器6和定时器6更新中断：TIM_IT_UPDATE  
 	HAL_TIM_Base_Start(&TIM6_Handler);		// 使能定时器	
 }
-/**
-* @brief  
-*         定时器底册驱动，开启时钟，设置中断优先级
-*					此函数会被HAL_TIM_Base_Init()函数调用
-* @param 
-* 
-* @retval 
-*/
 
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
-{
-	if(htim->Instance == TIM6)
-	{
-		__HAL_RCC_TIM6_CLK_ENABLE();           		  //使能TIM3时钟		
-		HAL_NVIC_SetPriority(TIM6_DAC_IRQn,0,0);    //设置中断优先级，抢占优先级1，子优先级3
-		HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);          //开启ITM6中断   
-	}
-}
-void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
-{
-	if(tim_baseHandle->Instance == TIM6)
-	{
-		__HAL_RCC_TIM6_CLK_DISABLE();           //使能TIM3时钟	
-		HAL_NVIC_DisableIRQ(TIM6_DAC_IRQn);          //开启ITM6中断   
-	}
-}
 /**
 * @brief  
 *         定时器6中断服务函数

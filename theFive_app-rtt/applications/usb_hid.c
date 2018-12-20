@@ -38,12 +38,12 @@ rt_err_t dump_hid_data(const uint8_t *data, rt_size_t size)
     return -RT_ERROR;
 }
 
-//void HID_Report_Received(hid_report_t report)
-//{
-//    rt_kprintf("\nHID Recived:");
-//    rt_kprintf("\nReport ID %02x \n", report->report_id);
-//    dump_hid_data(report->report, report->size);
-//}
+void HID_Report_Received(hid_report_t report)
+{
+    rt_kprintf("\nHID Recived:");
+    rt_kprintf("\nReport ID %02x \n", report->report_id);
+    dump_hid_data(report->report, report->size);
+}
 
 void usb_hid_write_buf(const rt_uint8_t* _data, rt_size_t size)
 {
@@ -57,7 +57,6 @@ void usb_hid_write_buf(const rt_uint8_t* _data, rt_size_t size)
 	buf_size = rt_ringbuffer_data_len(&hid_buf);
 	if(buf_size > 50)
 	{
-		//rt_kprintf("full\n");
 		rt_ringbuffer_get(&hid_buf, _buf, buf_size);
 		usb_hid_write(_buf, buf_size);
 	}

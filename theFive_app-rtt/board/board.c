@@ -63,21 +63,32 @@ void SystemClock_Config(void)
 }
 void MX_GPIO_Init(void)
 {
-  /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
+	/* GPIO Ports Clock Enable */
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOD_CLK_ENABLE();
+	__HAL_RCC_GPIOF_CLK_ENABLE();
+	__HAL_RCC_GPIOG_CLK_ENABLE();
 }
 
 #ifdef RT_USING_PIN
 int board_pin_init(void)
 {
-    rt_pin_mode(LED0_PIN, PIN_MODE_OUTPUT);
-    //rt_pin_mode(LED1_PIN, PIN_MODE_OUTPUT);
+    rt_pin_mode(RUN_LED_PIN, PIN_MODE_OUTPUT);
+    rt_pin_mode(BUZZER_PIN, PIN_MODE_OUTPUT);
+    rt_pin_mode(TEST_PIN, PIN_MODE_OUTPUT);
+    rt_pin_mode(SD_IN_PIN, PIN_MODE_INPUT_PULLUP);
 
+	/* ÷±…‰LED */
+	rt_pin_mode(LED1_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED2_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED3_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED4_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED5_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED6_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED7_gpio,PIN_MODE_OUTPUT);
+	rt_pin_mode(LED8_gpio,PIN_MODE_OUTPUT);
     return 0;
 }
 INIT_BOARD_EXPORT(board_pin_init);

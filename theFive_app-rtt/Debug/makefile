@@ -29,11 +29,17 @@ RM := rm -rf
 -include rt-thread/components/drivers/spi/sfud/src/subdir.mk
 -include rt-thread/components/drivers/spi/subdir.mk
 -include rt-thread/components/drivers/serial/subdir.mk
+-include rt-thread/components/drivers/sdio/subdir.mk
 -include rt-thread/components/drivers/rtc/subdir.mk
 -include rt-thread/components/drivers/misc/subdir.mk
 -include rt-thread/components/drivers/i2c/subdir.mk
 -include rt-thread/components/drivers/cputime/subdir.mk
+-include rt-thread/components/dfs/src/subdir.mk
+-include rt-thread/components/dfs/filesystems/elmfat/option/subdir.mk
+-include rt-thread/components/dfs/filesystems/elmfat/subdir.mk
+-include rt-thread/components/dfs/filesystems/devfs/subdir.mk
 -include components/flash/subdir.mk
+-include components/fal/src/subdir.mk
 -include components/cm_backtrace/subdir.mk
 -include board/subdir.mk
 -include applications/subdir.mk

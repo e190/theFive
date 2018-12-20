@@ -16,14 +16,31 @@
 #define DIS_CHANNEL_3	0x40
 #define DIS_CHANNEL_4	0x80
 
-#define DEFAULT_HEAT_TIME	300
-#define DEFAULT_READ_TIME	320
-#define DEFAULT_A1_TIME		150
-#define DEFAULT_A2_TIME		300
-//#define DEFAULT_HEAT_TIME	5
-//#define DEFAULT_READ_TIME	320
-//#define DEFAULT_A1_TIME		150
-//#define DEFAULT_A2_TIME		300
+#if 1
+#define DEFAULT_PARAM           \
+    {                           \
+        .read0_time = 10,       \
+		.heat_time = 5,         \
+        .read_time = 320,       \
+        .a1_time = 150,       	\
+        .a2_time = 300,       	\
+    }
+#else
+#define DEFAULT_PARAM           \
+    {                           \
+        .read0_time = 10,       \
+		.heat_time = 300,       \
+        .read_time = 320,       \
+        .a1_time = 150,       	\
+        .a2_time = 300,       	\
+    }
+#endif
+
+enum workType{
+	smaple = 1,
+	motorZero,
+	work_test,
+};
 
 typedef struct 
 {
@@ -58,5 +75,8 @@ int worktask_init(void);
 int stepmotor_backzero(rt_uint8_t _motor_id);
 int work_create(const rt_uint8_t _ch, rt_uint8_t _type);
 rt_uint8_t work_cancel(const rt_uint8_t _ch);
+rt_uint8_t work_is_ready(const rt_uint8_t _ch);
+rt_uint8_t all_work_is_ready(void);
+rt_uint8_t wait_all_work(void);
 
 #endif

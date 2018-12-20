@@ -1,11 +1,18 @@
 #include <rtthread.h>
-#include <drivers/pin.h>
 #include <stdio.h>
 #include <string.h>
 #include "Heat_PID.h"
 #include "bsp_ds18b20.h"
 #include "Uart_Screen.h"
 #include "SenseData.h"
+#include "DataBase.h"
+
+#define LOG_TAG  "heat"
+#define DBG_ENABLE
+#define DBG_SECTION_NAME               "pid"
+#define DBG_LEVEL                      DBG_INFO
+#define DBG_COLOR
+#include <rtdbg.h>
 
 struct HeatSystem_t HeatHandle_1, HeatHandle_2, HeatHandle_3, HeatHandle_4;
 rt_device_t heat_dev;
@@ -20,11 +27,11 @@ float pid_calculate(struct HeatSystem_t* h_heat)
 {
 	rt_uint8_t index = 0;
 	float _temp = 0;
-	PID_Value* _pid = &h_heat->PID;
+	struct PID_Value* _pid = &h_heat->PID;
 	
-	if(h_heat->iCurVal < 100)	//低于20度，不正常
+	if(h_heat->iCurVal < 100)	//低于10度，不正常
 		return 0;
-	_pid->err = h_heat->iSetVal - h_heat->iCurVal;
+	_pid->err = _pid->iSetVal - h_heat->iCurVal;
 	if (_pid->err > 10)
 	{
 		index = 0;
@@ -49,28 +56,77 @@ float pid_calculate(struct HeatSystem_t* h_heat)
 
 	return _temp;
 }
-
-void set_heat_pos()
+/**
+ *	设置加热系统参数
+ *	_ch ： 通道号  （0 - 3）
+ */
+void set_heat_para(rt_uint8_t _ch, const struct PID_Value* handle)
 {
+	struct PID_Value* pPid_pos[4] = {&HeatHandle_1.PID, &HeatHandle_2.PID,
+										  &HeatHandle_3.PID, &HeatHandle_4.PID};
+	RT_ASSERT(_ch < 4);
 
+	/* 判断参数是否有修改 */
+	if(rt_memcmp(pPid_pos[_ch], handle, sizeof(struct PID_Value) - 12))
+	{
+		if(handle->iSetVal != 0)
+		{
+			pPid_pos[_ch]->iSetVal = handle->iSetVal;
+		}
+
+		if(handle->CycleTime != 0)
+		{
+			pPid_pos[_ch]->CycleTime = handle->CycleTime;
+		}
+
+		if(handle->uKP_Coe != 0)
+		{
+			pPid_pos[_ch]->uKP_Coe = handle->uKP_Coe;
+		}
+
+		if(handle->uKI_Coe != 0)
+		{
+			pPid_pos[_ch]->uKI_Coe = handle->uKI_Coe;
+		}
+
+		if(handle->uKD_Coe != 0)
+		{
+			pPid_pos[_ch]->uKD_Coe = handle->uKD_Coe;
+		}
+
+		set_system_para_cache(HEAT_PARA_POS + sizeof(struct PID_Value) * (_ch - 1),
+				pPid_pos[_ch], sizeof(struct PID_Value));
+		fresh_system_para();
+	}
+}
+/**
+ *	读取加热系统参数
+ *	_ch ： 通道号  （0 - 3）
+ */
+int read_heat_para(rt_uint8_t _ch, struct PID_Value* handle)
+{
+	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
+										  &HeatHandle_3, &HeatHandle_4};
+	RT_ASSERT(_ch < 4);
+
+	rt_memcpy(handle, &pHeatTemp[_ch]->PID, sizeof(struct PID_Value));
+
+	return RT_EOK;
 }
 /*
  * 初始化加热系统
  * PID : P-->4  I-->0.02 D-->50
- *
+ *	_ch ： 通道号  （1 - 4）
  */
 void heat_para_init(struct HeatSystem_t* h_heat, rt_uint8_t _ch)
 {
 	h_heat->PWM_channel = _ch;
-	h_heat->PID.uKP_Coe = 20;
-	h_heat->PID.uKI_Coe = 0.1;
-	h_heat->PID.uKD_Coe = 80;
-	h_heat->PID.liEkVal[0] = 0;
-	h_heat->PID.liEkVal[1] = 0;
-	h_heat->PID.liEkVal[2] = 0;
-	h_heat->iSetVal = 370;
+	h_heat->PID.integral = 0;
+	h_heat->PID.err_last = 0;
+	h_heat->PID.err = 0;
 	h_heat->iCurVal = 0;
-	h_heat->CycleTime = 2;
+	get_system_para_cache(HEAT_PARA_POS + sizeof(h_heat->PID) * (_ch - 1),
+			&h_heat->PID, sizeof(h_heat->PID));
 }
 /*
  * 设置PWM占空比
@@ -84,7 +140,7 @@ int set_heat_duty(struct HeatSystem_t* h_heat, rt_uint16_t percent)
 	pulse = (TIME_FREQUENCY / 100) * percent ;
 	if( rt_device_write(heat_dev, h_heat->PWM_channel, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
 	{
-		rt_kprintf("write pwm channel %d: faild! \n", h_heat->PWM_channel);
+		LOG_E("write pwm channel %d: faild! \n", h_heat->PWM_channel);
 		result = -RT_ERROR;
 		goto _exit;
 	}	
@@ -193,11 +249,11 @@ void cycle_temp_heat(void)
 	struct HeatSystem_t *pHeatHandle[4] = {&HeatHandle_1, &HeatHandle_2, &HeatHandle_3, &HeatHandle_4};
 	static rt_uint8_t cycle_heat_count[4] = {0};
 
-	for(rt_uint8_t i = 0; i<4; i++)
+	for(rt_uint8_t i = 0; i < 4; i++)
 	{
 		if(*en_read_temp[i] || *en_heat[i])
 		{
-			if(++cycle_heat_count[i] == pHeatHandle[i]->CycleTime)
+			if(++cycle_heat_count[i] == pHeatHandle[i]->PID.CycleTime)
 			{
 				cycle_heat_count[i] = 0;
 				pHeatHandle[i]->iCurVal = (float)GetTemp(i);
@@ -222,30 +278,29 @@ static int heat_pwm_init(void)
 	heat_dev = rt_device_find(heat_name);
 	if(!heat_dev)
 	{
-		rt_kprintf("%s not found!\n", heat_name);
+		LOG_E("%s not found!\n", heat_name);
 		result = -RT_ERROR;
 		goto _exit;
 	}
 	result = rt_device_open(heat_dev, RT_DEVICE_FLAG_RDWR);
 	if(result != RT_EOK)
 	{
-		rt_kprintf("open %s faild! \n", heat_name);
+		LOG_E("open %s faild! \n", heat_name);
 		result = -RT_EIO;
 		goto _exit;
 	}
 
 	configuration.period = TIME_FREQUENCY;    // 10e9 / period = frequency
 	configuration.pulse = configuration.period / 2;
-	for(rt_uint8_t i=0;i<4;i++)
+	for(rt_uint8_t i = 0; i < 4; i++)
 	{
-		configuration.channel = i;
+		configuration.channel = i + 1;
 		if( rt_device_control(heat_dev, PWM_CMD_SET, &configuration) != RT_EOK )
 		{
-			rt_kprintf("control PWM_CMD_SET channel %d: faild! \n", configuration.channel);
+			LOG_E("control PWM_CMD_SET channel %d: faild! \n", configuration.channel);
 			result = -RT_ERROR;
 			goto _exit;
 		}
-		//rt_device_control(heat_dev, PWM_CMD_ENABLE, &configuration);
 	}
 	configuration.channel = 0;
 	//rt_device_control(heat_dev, PWM_CMD_ENABLE, &configuration);
@@ -264,7 +319,17 @@ rt_err_t heat_start_stop(struct HeatSystem_t* h_heat, HeatSwitch _status)
 		
 	configuration.channel = h_heat->PWM_channel;
 	if(_status == HEAT_START)
+	{
+		if(h_heat->PID.iSetVal == 0)
+		{
+			LOG_E("PID para error");
+			return RT_ERROR;
+		}
+		h_heat->PID.integral = 0;
+		h_heat->PID.err_last = 0;
+		h_heat->PID.err = 0;
 		return rt_device_control(heat_dev, PWM_CMD_ENABLE, &configuration);
+	}
 	else
 		return rt_device_control(heat_dev, PWM_CMD_DISABLE, &configuration);
 }
@@ -280,11 +345,11 @@ rt_err_t all_heat_start_stop(HeatSwitch _config)
 	rt_uint8_t* en_heat[4] = {&switch_config.en_Heat_1, &switch_config.en_Heat_2,
 								&switch_config.en_Heat_3, &switch_config.en_Heat_4};
 
-	for(rt_uint8_t i=0; i<4; i++)
+	for(rt_uint8_t i = 0; i < 4; i++)
 	{
 		if(heat_start_stop(pHeatTemp[i], _config) != RT_EOK)
 		{
-			rt_kprintf("control heat %d: faild! \n", i);
+			LOG_E("control heat %d: faild! \n", i);
 			return RT_ERROR;
 		}
 		*en_heat[i] = _config;
@@ -292,16 +357,15 @@ rt_err_t all_heat_start_stop(HeatSwitch _config)
 	return RT_EOK;
 }
 /*
- *
+ *	初始化加热系统
  */
 int head_system_init(void)
 {
 	heat_pwm_init();
-	heat_para_init(&HeatHandle_1, 0);
-	heat_para_init(&HeatHandle_2, 1);
-	heat_para_init(&HeatHandle_3, 2);
-	heat_para_init(&HeatHandle_4, 3);
+	heat_para_init(&HeatHandle_1, 1);
+	heat_para_init(&HeatHandle_2, 2);
+	heat_para_init(&HeatHandle_3, 3);
+	heat_para_init(&HeatHandle_4, 4);
 
 	return 0;
 }
-INIT_APP_EXPORT(head_system_init);

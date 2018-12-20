@@ -10,11 +10,6 @@
 #define SenseData_STACK_SIZE 1024      //线程栈大小
 #define SenseData_TIMESLICE 50        //时间片Tick
 
-#define CupSense1_gpio     12
-#define CupSense2_gpio     7
-#define CupSense3_gpio     5
-#define CupSense4_gpio     4
-
 struct light_handle_t
 {
 	rt_uint8_t channel;			// 通道
@@ -23,9 +18,9 @@ struct light_handle_t
 	rt_uint16_t dis_addr_2;		//740地址
 	rt_uint16_t dis_icon_1;
 	rt_uint16_t dis_icon_2;
-	rt_int8_t* pA_count;
-	rt_uint32_t* pA_ave_1;
-	rt_uint32_t* pA_ave_2;
+	rt_int8_t* pA_count;	//公共指针
+	rt_uint32_t* pA_ave_1;	//公共指针
+	rt_uint32_t* pA_ave_2;	//公共指针
 	rt_int8_t a0_count;
 	rt_int8_t a1_count;
 	rt_int8_t a2_count;
@@ -93,7 +88,7 @@ struct status_config_t
 extern struct light_handle_t h_light_1, h_light_2, h_light_3, h_light_4;
 extern struct switch_config_t switch_config;
 extern struct status_config_t status_config;
-void en_sense_light(rt_uint8_t _ch, rt_uint8_t config);
+void en_sense_light(rt_uint8_t _ch, rt_uint8_t config, rt_uint8_t led_sw);
 rt_uint8_t get_cup_status(rt_uint8_t _ch);
 rt_uint8_t Get_AdsData(rt_uint8_t _config, rt_uint32_t* out_data);
 extern void Function_SenseData(void* parameter);

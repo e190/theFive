@@ -75,7 +75,7 @@ rt_uint8_t wait_door(rt_uint8_t door_ch, DoorStatus _status)
 		rt_thread_delay(100);
 		if(count[door_ch] == 100)
 		{
-			rt_kprintf("door%d wait timeout\n", door_ch);
+			//rt_kprintf("door%d wait timeout\n", door_ch);
 			return RT_ERROR;
 		}
 	}
@@ -194,7 +194,7 @@ rt_err_t switch_blender(rt_uint8_t _ch, rt_uint8_t _ctl)
 	struct rt_pwm_configuration _configuration;
 
 	RT_ASSERT(blender_dev);
-	_configuration.channel = 3 - _ch;
+	_configuration.channel = 4 - _ch;
 	if(0 == _ctl)
 		return rt_device_control(blender_dev, PWM_CMD_DISABLE, &_configuration);
 	else
@@ -218,9 +218,9 @@ int set_blender_duty(rt_uint8_t _ch, rt_uint8_t percent)
 	pulse = 1000000 * (10 - percent) ;
 	RT_ASSERT(blender_dev);
 
-	if( rt_device_write(blender_dev, 3-_ch, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
+	if( rt_device_write(blender_dev, 4 - _ch, &pulse, sizeof(rt_uint32_t)) != sizeof(rt_uint32_t))
 	{
-		rt_kprintf("write pwm channel %d: faild! \n", 3-_ch);
+		rt_kprintf("write pwm channel %d: faild! \n", 4 -_ch);
 		result = -RT_ERROR;
 		goto _exit;
 	}
@@ -294,9 +294,9 @@ int blender_init(void)
 
 	configuration.period = 10000000;    // 10e9 / period = frequency
 	configuration.pulse = configuration.period / 10 * 7;
-	for(rt_uint8_t i=0;i<4;i++)
+	for(rt_uint8_t i = 0; i < 4; i++)
 	{
-		configuration.channel = i;
+		configuration.channel = i + 1;
 		if( rt_device_control(blender_dev, PWM_CMD_SET, &configuration) != RT_EOK )
 		{
 			rt_kprintf("control PWM_CMD_SET channel %d: faild! \n", configuration.channel);
@@ -306,7 +306,7 @@ int blender_init(void)
 	}
 
 	//rt_device_control(blender_dev, PWM_CMD_ENABLE, &configuration);
-
+	rt_kprintf("blender PWM init success! \n", blender_name);
 	_exit:
 		return result;
 }

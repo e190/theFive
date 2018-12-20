@@ -31,21 +31,9 @@
 extern "C" {
 #endif
 
-#define EF_USING_ENV
-#define FLASH_DEBUG
-
 #define TOTAL_SIZE		0x1000000	//flash×ÜÈÝÁ¿16mb (0~0x1000000)
 /* the minimum size of flash erasure */
 #define ERASE_MIN_SIZE  4096
-
-#define DATA_START_ADDR   ERASE_MIN_SIZE * 2
-#define IAP_START_ADDR    0
-#define LOG_START_ADDR    0
-
-#define SYS_SIZE		0x1000
-#define LOG_AREA_SIZE	0x1000
-#define IAP_AREA_SIZE	0x1000
-#define DATA_AREA_SIZE	0x3000
 
 /* sector header size, includes the sector magic code and status magic code */
 #define SECTOR_HEADER_SIZE         4
@@ -62,18 +50,6 @@ enum {
     /* ENV parameters part byte size */
 	SYSTEM_PARAM_PART_INDEX_ADDR = 16,
 };
-
-/* EasyFlash debug print function. Must be implement by user. */
-#define EF_DEBUG(...) ef_log_debug(__FILE__, __LINE__, __VA_ARGS__)
-/* EasyFlash routine print function. Must be implement by user. */
-#define EF_INFO(...)  ef_log_info(__VA_ARGS__)
-/* EasyFlash assert for developer. */
-#define EF_ASSERT(EXPR)                                                       \
-if (!(EXPR))                                                                  \
-{                                                                             \
-    EF_DEBUG("(%s) has assert failed at %s.\n", #EXPR, __FUNCTION__);         \
-    while (1);                                                                \
-}
 
 /* EasyFlash software version number */
 #define EF_SW_VERSION                  "3.1.0"
@@ -95,8 +71,6 @@ typedef enum {
     EF_SECTOR_FULL,
 }EfSecrorStatus;
 
-/* easyflash.c */
-EfErrCode easyflash_init(void);
 
 #ifdef __cplusplus
 }

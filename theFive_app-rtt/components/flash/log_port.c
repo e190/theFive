@@ -1,7 +1,11 @@
 #include <rthw.h>
 #include <rtthread.h>
 #include "flash_cfg.h"
-#include "flash_port.h"
+
+
+//#define Flash_DEBUG
+#define LOG_TAG             "flash.log"
+#include <flash_log.h>
 
 /* the stored logs start address and end address. It's like a ring buffer implemented on flash. */
 static uint32_t log_start_addr = 0, log_end_addr = 0;
@@ -21,12 +25,12 @@ static void find_cur_using_sector(void);
 EfErrCode ef_log_init(void) {
     EfErrCode result = F_NO_ERR;
 
-    EF_ASSERT(LOG_AREA_SIZE);
-    EF_ASSERT(ERASE_MIN_SIZE);
+    RT_ASSERT(LOG_AREA_SIZE);
+    RT_ASSERT(ERASE_MIN_SIZE);
     /* the log area size must be an integral multiple of erase minimum size. */
-    EF_ASSERT(LOG_AREA_SIZE % ERASE_MIN_SIZE == 0);
+    RT_ASSERT(LOG_AREA_SIZE % ERASE_MIN_SIZE == 0);
     /* the log area size must be more than twice of ERASE_MIN_SIZE */
-    EF_ASSERT(LOG_AREA_SIZE / ERASE_MIN_SIZE >= 2);
+    RT_ASSERT(LOG_AREA_SIZE / ERASE_MIN_SIZE >= 2);
 
     log_area_start_addr = LOG_START_ADDR;
 
@@ -184,11 +188,11 @@ EfErrCode ef_log_read(size_t index, rt_uint32_t *log, size_t size) {
         return result;
     }
 
-    EF_ASSERT(size % 4 == 0);
-    EF_ASSERT(index < cur_using_size);
+    RT_ASSERT(size % 4 == 0);
+    RT_ASSERT(index < cur_using_size);
 
     if (index + size > cur_using_size) {
-        EF_DEBUG("Warning: Log read size out of bound. Cut read size.\n");
+        LOG_W("Warning: Log read size out of bound. Cut read size.\n");
         size = cur_using_size - index;
     }
     /* must be call this function after initialize OK */
@@ -281,7 +285,7 @@ EfErrCode ef_log_write(const rt_uint32_t *log, size_t size) {
     size_t write_size = 0, writable_size = 0;
     rt_uint32_t sector_header, write_addr = log_end_addr, erase_addr;
 
-    EF_ASSERT(size % 4 == 0);
+    RT_ASSERT(size % 4 == 0);
     /* must be call this function after initialize OK */
     if (!init_ok) {
         return F_DATA_INIT_FAILED;
@@ -294,7 +298,7 @@ EfErrCode ef_log_write(const rt_uint32_t *log, size_t size) {
     	{
     		write_cache(log_end_addr, log, writable_size);
         	set_header_used_size(ERASE_MIN_SIZE);
-          	_ret = save_cache_to_flash(cur_using_sector);
+          	_ret = fresh_cache_to_flash(cur_using_sector);
     	}/*如果writable_size = 0，刚好一块scetion用完*/
     	cur_using_sector += 1;
     	writable_size = log_end_addr + size - ERASE_MIN_SIZE;
@@ -305,7 +309,7 @@ EfErrCode ef_log_write(const rt_uint32_t *log, size_t size) {
 
     write_cache(log_end_addr, log, writable_size);
 	set_header_used_size(log_end_addr + writable_size);
-  	_ret = save_cache_to_flash(cur_using_sector);
+  	_ret = fresh_cache_to_flash(cur_using_sector);
   	log_end_addr += writable_size;
   	if(log_end_addr < log_start_addr)
   		log_start_addr = log_end_addr + 1;

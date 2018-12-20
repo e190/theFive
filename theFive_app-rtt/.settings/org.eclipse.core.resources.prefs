@@ -2,5 +2,6 @@ eclipse.preferences.version=1
 encoding//Libraries/HAL_Drivers/drv_soft_i2c.c=UTF-8
 encoding//Libraries/HAL_Drivers/drv_spi.c=UTF-8
 encoding//Libraries/HAL_Drivers/drv_usart.c=UTF-8
+encoding//components/fal/README.md=UTF-8
 encoding//rt-thread/components/drivers/rtc/README.md=UTF-8
 encoding//rt-thread/components/drivers/spi/sfud/README.md=UTF-8

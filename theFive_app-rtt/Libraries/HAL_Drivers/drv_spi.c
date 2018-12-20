@@ -18,7 +18,7 @@
 #include "drv_spi.h"
 #include "drv_config.h"
 
-#define DRV_DEBUG
+//#define DRV_DEBUG
 #define LOG_TAG              "drv.spi"
 #include <drv_log.h>
 

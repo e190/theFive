@@ -1,4 +1,4 @@
-#include <SysMonitor.h>
+#include "board.h"
 #include "SenseData.h"
 #include "drv_ad1110.h"
 #include "Uart_Screen.h"
@@ -99,14 +99,14 @@ static int light_para_init(void)
  * _config : 1 --> en
  * 			 0 --> dis
  */
-void en_sense_light(rt_uint8_t _ch, rt_uint8_t config)
+void en_sense_light(rt_uint8_t _ch, rt_uint8_t config, rt_uint8_t led_sw)
 {
 	rt_uint8_t* en_light[4] = {&switch_config.en_Light_1, &switch_config.en_Light_2,
 								&switch_config.en_Light_3, &switch_config.en_Light_4};
 	rt_uint8_t led_gpio[4] = {LED1_gpio, LED3_gpio, LED5_gpio, LED7_gpio};
 	RT_ASSERT(_ch < 4);
 	RT_ASSERT(config < 2);
-	rt_pin_write(led_gpio[_ch], config);
+	rt_pin_write(led_gpio[_ch], led_sw);
 	*en_light[_ch] = config;
 }
 /*
@@ -197,20 +197,24 @@ static void cycle_read_light(void)
 				ave_buf[i][0] += read_buf[0];
 				ave_buf[i][1] += read_buf[1];
 				a1_a2_flag[i] = 1;
-				rt_kprintf("*");
-				ppLight[i]->pA_count[0]--;
-				if(ppLight[i]->pA_count[0] == 0)
+				//rt_kprintf("* %d\n", *ppLight[i]->pA_count);
+				*ppLight[i]->pA_count -= 1;
+				if(*ppLight[i]->pA_count == 0)
 				{
 					a1_a2_flag[i] = 0;
 					ppLight[i]->pA_count[0] = -1;
 					ppLight[i]->pA_count = RT_NULL;
-					//ppLight[i]->pA_ave_1 = ave_buf[i][0] / 10;
-					//ppLight[i]->pA_ave_2 = ave_buf[i][1] / 10;
+					*ppLight[i]->pA_ave_1 = ave_buf[i][0] / 10;
+					*ppLight[i]->pA_ave_2 = ave_buf[i][1] / 10;
+					ppLight[i]->pA_ave_1 = RT_NULL;
+					ppLight[i]->pA_ave_2 = RT_NULL;
+					ave_buf[i][0] = 0;
+					ave_buf[i][1] = 0;
 				}
 			}
 
-			//send_data_windos(i, read_buf[0], a1_a2_flag[i]);
-			//rt_kprintf("ch%d: %d  ", i, read_buf[0]);
+			send_data_windos(i, read_buf[0], a1_a2_flag[i]);
+			rt_kprintf("ch%d: %d  ", i, read_buf[0]);
 		}
 	}
 }

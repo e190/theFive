@@ -7,7 +7,7 @@
 #include "Heat_PID.h"
 
 #define UartScreen_PRIORITY 11         //线程优先级
-#define UartScreen_STACK_SIZE 1024     //线程栈大小
+#define UartScreen_STACK_SIZE 1280     //线程栈大小
 #define UartScreen_TIMESLICE 20        //时间片Tick
 
 #define RT_SCREEN_DEVICE_NAME "uart2"
@@ -122,6 +122,13 @@
 #define SERVER_IP   		0x4A5A
 #define SERVER_PORT   		0x4A78
 
+#define DEVICE_NAME   		0x4C10
+#define SOFT_VER   			0x4C20
+#define HARD_VER   			0x4C30
+#define UPDATE  			0x4C40
+#define RUN_TIME  			0x4C50
+#define CODE   				0x4D10
+
 /* LCD图标寄存器地址 */
 #define SAMPLE1_SWITCH_IOC  0x1011
 #define SAMPLE2_SWITCH_IOC  0x1012
@@ -207,6 +214,9 @@
 #define PRINTER				0x4800
 #define DC_MOTOR			0x4900
 #define SERVER				0x4A00
+#define MEMORY				0x4B00
+#define ABOUT				0x4C00
+#define DEVELOP				0x4D00
 
 #define RFID_INIT			0x4101
 #define RFID_RECHARGE		0x4102

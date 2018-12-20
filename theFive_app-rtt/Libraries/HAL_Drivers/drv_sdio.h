@@ -1,54 +1,46 @@
 /*
- * File      : stm32_sdio.h
- * This file is part of RT-Thread RTOS
- * COPYRIGHT (C) 2006 - 2018, RT-Thread Development Team
+ * Copyright (c) 2006-2018, RT-Thread Development Team
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along
- *  with this program; if not, write to the Free Software Foundation, Inc.,
- *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Change Logs:
  * Date           Author       Notes
- * 2018-6-22      tyx          first
+ * 2018-12-13     BalanceTWK   first version
  */
 
-#ifndef __STM32_SDIO_H__
-#define __STM32_SDIO_H__
+#ifndef _DRV_SDIO_H
+#define _DRV_SDIO_H
+#include <rtthread.h>
+#include "rtdevice.h"
+#include <rthw.h>
+#include <drv_common.h>
+#include "drv_dma.h"
+#include <string.h>
+#include <drivers/mmcsd_core.h>
+#include <drivers/sdio.h>
 
-//#include <rtthread.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define SDIO_BUFF_SIZE       4096
+#define SDIO_MAX_FREQ        2000000
+#define SDIO_ALIGN_LEN       32
 
 #ifndef SDIO_BASE_ADDRESS
-#define SDIO_BASE_ADDRESS                   (0x40012800U)
+#define SDIO_BASE_ADDRESS    (0x40012800U)
 #endif
 
 #ifndef SDIO_CLOCK_FREQ
-#define SDIO_CLOCK_FREQ                     (48U * 1000 * 1000)
+#define SDIO_CLOCK_FREQ      (48U * 1000 * 1000)
 #endif
 
 #ifndef SDIO_BUFF_SIZE
-#define SDIO_BUFF_SIZE   (4096)
+#define SDIO_BUFF_SIZE       (4096)
 #endif
 
-#ifndef SDIO_ALIGN
-#define SDIO_ALIGN       (32)
+#ifndef SDIO_ALIGN_LEN
+#define SDIO_ALIGN_LEN       (32)
 #endif
 
 #ifndef SDIO_MAX_FREQ
-#define SDIO_MAX_FREQ    (24 * 1000 * 1000)
+#define SDIO_MAX_FREQ        (24 * 1000 * 1000)
 #endif
 
 #define HW_SDIO_IT_CCRCFAIL                    (0x01U << 0)
@@ -164,11 +156,23 @@ struct stm32_sdio_des
     sdio_clk_get clk_get;
 };
 
-struct rt_mmcsd_host *sdio_host_create(struct stm32_sdio_des *sdio_des);
-void rthw_sdio_irq_process(struct rt_mmcsd_host *host);
+struct stm32_sdio_config
+{
+    SDIO_TypeDef *Instance;
+    struct dma_config dma_rx, dma_tx;
+};
 
-#ifdef __cplusplus
-}
-#endif
+/* stm32 sdio dirver class */
+struct stm32_sdio_class
+{
+    struct stm32_sdio_des *des;
+    const struct stm32_sdio_config *cfg;
+    struct rt_mmcsd_host host;
+    struct
+    {
+        DMA_HandleTypeDef handle_rx;
+        DMA_HandleTypeDef handle_tx;
+    } dma;
+};
 
 #endif

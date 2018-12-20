@@ -259,7 +259,7 @@ static void uart_isr(struct rt_serial_device *serial)
 #else
         ch = uart->handle.Instance->DR;
 #endif
-        ch = ch;
+        ch += ch;
     }
 #endif
     else

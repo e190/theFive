@@ -12,7 +12,7 @@
   - 最小占用：RAM:0.1KB ROM:3.6KB
 - 设计思路：
   - **什么是 SFDP** ：它是 JEDEC （固态技术协会）制定的串行 Flash 功能的参数表标准，最新版 V1.6B （[点击这里查看](https://www.jedec.org/standards-documents/docs/jesd216b)）。该标准规定了，每个 Flash 中会存在一个参数表，该表中会存放 Flash 容量、写粒度、擦除命令、地址模式等 Flash 规格参数。目前，除了部分厂家旧款 Flash 型号会不支持该标准，其他绝大多数新出厂的 Flash 均已支持 SFDP 标准。所以该库在初始化时会优先读取 SFDP 表参数。
-  - **不支持 SFDP 怎么办** ：如果该 Flash 不支持 SFDP 标准，SFUD 会查询配置文件 ( [`/sfud/inc/sfud_flash_def.h`](https://github.com/armink/SFUD/blob/4bee2d0417a7ce853cc7aa3639b03fe825611fd9/sfud/inc/sfud_flash_def.h#L116-L142) ) 中提供的 **Flash 参数信息表** 中是否支持该款 Flash。如果不支持，则可以在配置文件中添加该款 Flash 的参数信息（添加方法详细见 [2.5 添加库目前不支持的 Flash](#25-添加库目前不支持的-flash)）。获取到了 Flash 的规格参数后，就可以实现对 Flash 的全部操作。
+  - **不支持 SFDP 怎么办** ：如果该 Flash 不支持 SFDP 标准，SFUD 会查询配置文件 ( [`/sfud/inc/sfud_flash_def.h`](https://github.com/armink/SFUD/blob/4bee2d0417a7ce853cc7aa3639b03fe825611fd9/sfud/inc/sfud_flash_def.h#L116-L142) ) 中提供的 **Flash 参数信息表** 中是否支持该款 Flash。如果不支持，则可以在配置文件中添加该款 Flash 的参数信息（添加方法详细见 [2.5 添加库目前不支持的 Flash](25-添加库目前不支持的-flash)）。获取到了 Flash 的规格参数后，就可以实现对 Flash 的全部操作。
 
 ## 1、为什么选择 SFUD
 
@@ -106,7 +106,7 @@ sfud_err sfud_qspi_fast_read_enable(sfud_flash *flash, uint8_t data_line_width)
 
 #### 2.2.4 获取 Flash 设备对象
 
-在 SFUD 配置文件中会定义 Flash 设备表，负责存放所有将要使用的 Flash 设备对象，所以 SFUD 支持多个 Flash 设备同时驱动。设备表的配置在 `/sfud/inc/sfud_cfg.h` 中 `SFUD_FLASH_DEVICE_TABLE` 宏定义，详细配置方法参照 [2.3 配置方法 Flash](#23-配置方法)）。本方法通过 Flash 设备位于设备表中索引值来返回 Flash 设备对象，超出设备表范围返回 `NULL` 。
+在 SFUD 配置文件中会定义 Flash 设备表，负责存放所有将要使用的 Flash 设备对象，所以 SFUD 支持多个 Flash 设备同时驱动。设备表的配置在 `/sfud/inc/sfud_cfg.h` 中 `SFUD_FLASH_DEVICE_TABLE` 宏定义，详细配置方法参照 [2.3 配置方法 Flash](23-配置方法)）。本方法通过 Flash 设备位于设备表中索引值来返回 Flash 设备对象，超出设备表范围返回 `NULL` 。
 
 ```C
 sfud_flash *sfud_get_device(size_t index)

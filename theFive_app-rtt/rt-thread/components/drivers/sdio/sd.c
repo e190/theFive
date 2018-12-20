@@ -11,7 +11,6 @@
 #include <drivers/mmcsd_core.h>
 #include <drivers/sd.h>
 
-#define LOG_TAG  "sdio.sd"
 #define DBG_ENABLE
 #define DBG_SECTION_NAME               "SDIO"
 #ifdef RT_SDIO_DEBUG

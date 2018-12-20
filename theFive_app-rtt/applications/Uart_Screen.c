@@ -1,15 +1,15 @@
-#include <SysMonitor.h>
+#include "board.h"
 #include "Uart_Screen.h"
 #include "ServerData.h"
 #include "WorkTask.h"
 #include "bsp_RMD8.h"
 #include "SenseData.h"
-//#include "TMC5130.h"
 #include "dc_motor.h"
 #include "bsp_rfid.h"
 #include "usb_hid.h"
+#include "DataBase.h"
 
-UartBuff_t UartBuff;
+static UartBuff_t UartBuff;
 
 /* 串口接收事件标志 */
 #define UART_RX_EVENT (1 << 0)
@@ -31,7 +31,7 @@ static rt_err_t uart_intput(rt_device_t dev, rt_size_t size)
     return RT_EOK;
 }
  
-rt_uint8_t uart_getchar(void)
+static rt_uint8_t uart_getchar(void)
 {
     rt_uint32_t e;
     rt_uint8_t ch;
@@ -45,7 +45,7 @@ rt_uint8_t uart_getchar(void)
 
     return ch;
 }
-void uart_putchar(const rt_uint8_t c)
+static void uart_putchar(const rt_uint8_t c)
 {
     rt_size_t len = 0;
     rt_uint32_t timeout = 0;
@@ -61,7 +61,7 @@ void uart_putchar(const rt_uint8_t c)
  *  
  * @param 
  *
- * @return
+ * @return	返回通道号： 1 - 4
  */
 static rt_uint8_t choose_channel(rt_uint32_t _addr, rt_uint8_t _channel)
 {
@@ -199,7 +199,10 @@ static int set_sample_para(rt_uint8_t _ch)
 		psample_param[_ch-1]->a1_time = UartBuff.flow_para.a1_time;
 		psample_param[_ch-1]->a2_time = UartBuff.flow_para.a2_time;
 		rt_memset(str, 0, sizeof(str));
-		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
+		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str, sizeof(str));
+		set_system_para_cache(sizeof(sample_param_t) * (_ch - 1),
+				psample_param[_ch-1], sizeof(sample_param_t));
+		fresh_system_para();
 	}
 	else
 	{
@@ -240,7 +243,7 @@ static int light_switch(rt_uint16_t _addr)
 	static rt_uint8_t en_led[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 	rt_uint8_t led_gpio[8] = {LED1_gpio, LED2_gpio, LED3_gpio, LED4_gpio,
 								LED5_gpio, LED6_gpio, LED7_gpio, LED8_gpio};
-	
+
 	if(_addr < LIGHT_SWITCH_1 || _addr > LIGHT_SWITCH_8)
 		return RT_ERROR;
 	rt_uint8_t num =  _addr - LIGHT_SWITCH_1;
@@ -333,21 +336,22 @@ static rt_uint8_t get_heat_status(void)
 	}
 }
 /**
- *	设置加热系统参数
+ *	修改加热系统参数  modification
+ *	_ch ： 通道号  （1 - 4）
  */
-static int set_heat_para(rt_uint8_t _ch)
+static int mod_heat_para(rt_uint8_t _ch)
 {
-	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
-										  &HeatHandle_3, &HeatHandle_4};
+	struct PID_Value pid_handle;
 	char str[12] = {0};
 
 	if(_ch > 0 && _ch < 5)
 	{
-		pHeatTemp[_ch-1]->iSetVal = UartBuff.heat_para.iSetVal;
-		pHeatTemp[_ch-1]->CycleTime = UartBuff.heat_para.CycleTime;
-		pHeatTemp[_ch-1]->PID.uKP_Coe = UartBuff.heat_para.uKP_Coe;
-		pHeatTemp[_ch-1]->PID.uKI_Coe = UartBuff.heat_para.uKI_Coe;
-		pHeatTemp[_ch-1]->PID.uKD_Coe = UartBuff.heat_para.uKD_Coe;
+		pid_handle.iSetVal = UartBuff.heat_para.iSetVal;
+		pid_handle.CycleTime = UartBuff.heat_para.CycleTime;
+		pid_handle.uKP_Coe = UartBuff.heat_para.uKP_Coe;
+		pid_handle.uKI_Coe = UartBuff.heat_para.uKI_Coe;
+		pid_handle.uKD_Coe = UartBuff.heat_para.uKD_Coe;
+		set_heat_para(_ch - 1, &pid_handle);
 
 		rt_memset(str, 0, sizeof(str));
 		ScreenSendCommand(WRITE_82, TEMP_INFO, (rt_uint8_t*)str,sizeof(str));
@@ -362,29 +366,31 @@ static int set_heat_para(rt_uint8_t _ch)
 }
 /**
  *	显示加热系统参数
+ *
+ *	_ch ： 通道号  （1 - 4）
  */
-static int display_heat_para(rt_uint8_t _ch)
+int display_heat_para(rt_uint8_t _ch)
 {
-	struct HeatSystem_t* pHeatTemp[4] = {&HeatHandle_1, &HeatHandle_2,
-										  &HeatHandle_3, &HeatHandle_4};
 	rt_uint16_t tt = 0;
+	struct PID_Value pid_para;
 
 	if(_ch > 0 && _ch < 5)
 	{
-		UartBuff.heat_para.iSetVal = pHeatTemp[_ch-1]->iSetVal;
-		UartBuff.heat_para.CycleTime = pHeatTemp[_ch-1]->CycleTime;
-		UartBuff.heat_para.uKP_Coe = pHeatTemp[_ch-1]->PID.uKP_Coe;
-		UartBuff.heat_para.uKI_Coe = pHeatTemp[_ch-1]->PID.uKI_Coe;
-		UartBuff.heat_para.uKD_Coe = pHeatTemp[_ch-1]->PID.uKD_Coe;
-		tt = (rt_uint16_t)pHeatTemp[_ch-1]->iSetVal;
+		read_heat_para(_ch - 1, &pid_para);
+		UartBuff.heat_para.iSetVal = pid_para.iSetVal;
+		UartBuff.heat_para.CycleTime = pid_para.CycleTime;
+		UartBuff.heat_para.uKP_Coe = pid_para.uKP_Coe;
+		UartBuff.heat_para.uKI_Coe = pid_para.uKI_Coe;
+		UartBuff.heat_para.uKD_Coe = pid_para.uKD_Coe;
+		tt = (rt_uint16_t)pid_para.iSetVal;
 		ScreenSendData_2bytes(TEMP_SET, tt);
-		tt = (rt_uint16_t)pHeatTemp[_ch-1]->CycleTime;
+		tt = (rt_uint16_t)pid_para.CycleTime;
 		ScreenSendData_2bytes(TEMP_TIME, tt);
-		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKP_Coe * 10);
+		tt = (rt_uint16_t)(pid_para.uKP_Coe * 10);
 		ScreenSendData_2bytes(TEMP_KP, tt);
-		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKI_Coe * 100);
+		tt = (rt_uint16_t)(pid_para.uKI_Coe * 100);
 		ScreenSendData_2bytes(TEMP_KI, tt);
-		tt = (rt_uint16_t)(pHeatTemp[_ch-1]->PID.uKD_Coe * 100);
+		tt = (rt_uint16_t)(pid_para.uKD_Coe * 100);
 		ScreenSendData_2bytes(TEMP_KD, tt);
 	}
 
@@ -507,7 +513,6 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	case SYSTEM:
 		rt_kprintf(" SYSTEM\n");
 		break;
-
 	case SAMPLE_SWITCH_1:
 	case SAMPLE_SWITCH_2:
 	case SAMPLE_SWITCH_3:
@@ -523,7 +528,7 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	case RFID:
 		rt_kprintf(" RFID\n");
 		break;
-	case LIGHT:		
+	case LIGHT:
 		switch_config.en_Light_1 = 1;
 		switch_config.en_Light_2 = 1;
 		switch_config.en_Light_3 = 1;
@@ -574,12 +579,12 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 	}
 	case RFID_CLOSE:
 	{
-		char dbuf[164];// = {0xd5, 0xa0, 4, 1, 0, 100, 0, 0x0d};
-		for(rt_uint8_t i=0;i<sizeof(dbuf);i++)
-		{
-			dbuf[i] = i;
-		}
-		usb_hid_write(dbuf, sizeof(dbuf));
+//		char dbuf[164];// = {0xd5, 0xa0, 4, 1, 0, 100, 0, 0x0d};
+//		for(rt_uint8_t i=0;i<sizeof(dbuf);i++)
+//		{
+//			dbuf[i] = i;
+//		}
+//		usb_hid_write(dbuf, sizeof(dbuf));
 		//send_data_windos(1, 300, 0);
 		break;
 	}
@@ -604,7 +609,7 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 			rt_kprintf("\r\n");
 		}
 		break;
-	case LIGHT_SWITCH_1:	
+	case LIGHT_SWITCH_1:
 	case LIGHT_SWITCH_2:
 	case LIGHT_SWITCH_3:
 	case LIGHT_SWITCH_4:
@@ -615,7 +620,7 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		light_switch(keyval);
 		break;
 	case TEMP_OK:
-		set_heat_para(UartBuff.heat_para.channel);
+		mod_heat_para(UartBuff.heat_para.channel);
 		heat_switch(UartBuff.heat_para.channel, 1);
 		break;
 	case TEMP_STOP:
@@ -629,11 +634,11 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		{
 			rt_memset(string, 0, sizeof(string));
 			ScreenSendCommand(WRITE_82, MOTOR_INFO, (rt_uint8_t*)string,sizeof(string));
-			_ret = StepMotor_AxisMoveRel(UartBuff.MotorPara.h_Motor, 
-										 UartBuff.MotorPara.position, 
-										 UartBuff.MotorPara.acceltime, 
+			_ret = StepMotor_AxisMoveRel(UartBuff.MotorPara.h_Motor,
+										 UartBuff.MotorPara.position,
+										 UartBuff.MotorPara.acceltime,
 										 UartBuff.MotorPara.deceltime,
-										 UartBuff.MotorPara.speed);		
+										 UartBuff.MotorPara.speed);
 			if(_ret != 0)
 				rt_kprintf(" error %d\n",_ret);
 		}
@@ -716,18 +721,39 @@ static void LcdKeyValDeal(rt_uint16_t keyval)
 		break;
 	case PRINTER_FORMAT_3:
 		break;
-	case KEY_SERVER_ACTIVATE:		
+	case KEY_SERVER_ACTIVATE:
 		//server_start(2);
 		break;
 	case KEY_SERVER_TEST:
 		//server_start(6);
 		break;
-	case KEY_SERVER_UPLOAD:	
+	case KEY_SERVER_UPLOAD:
 		//server_start(1);
 		break;
 	case KEY_SERVER_SET:
 		rt_kprintf("ip : %s\r\n",UartBuff.ServerSetBuf._ip);
 		rt_kprintf("port : %s\r\n",UartBuff.ServerSetBuf._port);
+		break;
+	case MEMORY:
+
+		break;
+	case ABOUT:
+		rt_sprintf(string, "theFive-五代");
+		ScreenSendCommand(WRITE_82, DEVICE_NAME, (rt_uint8_t*)string, rt_strlen(string));
+		rt_sprintf(string, SOFTWARE_VERSION);
+		ScreenSendCommand(WRITE_82, SOFT_VER, (rt_uint8_t*)string, rt_strlen(string));
+		rt_sprintf(string, HARDWARE_VERSION);
+		ScreenSendCommand(WRITE_82, HARD_VER, (rt_uint8_t*)string, rt_strlen(string));
+		rt_sprintf(string, "2018-12-19");
+		ScreenSendCommand(WRITE_82, UPDATE, (rt_uint8_t*)string, rt_strlen(string));
+		rt_sprintf(string, "5m");
+		ScreenSendCommand(WRITE_82, RUN_TIME, (rt_uint8_t*)string, rt_strlen(string));
+		break;
+	case DEVELOP:
+	{
+		rt_uint8_t key = 0x02;
+		ScreenSendCommand(WRITE_80, 0x4f, &key, 1);
+	}
 		break;
 	default:
 		break;
@@ -947,46 +973,6 @@ static void DumpCmd(const rt_uint8_t* _ucData)
 				ScreenSendCommand(WRITE_82, MOTOR_INFO, (rt_uint8_t*)string,rt_strlen(string));
 			}
 			break;
-/**************测试5130******************/
-			/*
-		case tmc5130_POSITION:
-			UartBuff.MotorPara.tmc5230_position = _data*1000;
-			break;
-		case tmc5130_A1:
-			rt_kprintf("%d\n",_data);
-			tmc5130_writeInt(TMC5130_A1, _data*1000);
-			break;
-		case tmc5130_AMAX:
-			rt_kprintf("%d\n",_data);					
-			tmc5130_writeInt(TMC5130_AMAX, _data*1000);
-			break;
-		case tmc5130_D1:
-			tmc5130_writeInt(TMC5130_D1, _data*1000);			
-			break;
-		case tmc5130_DMAX:
-			tmc5130_writeInt(TMC5130_DMAX, _data*1000);
-			break;
-		case tmc5130_V1:
-			UartBuff.MotorPara.tmc5230_v1 = _data*1000;
-			tmc5130_writeInt(TMC5130_V1, UartBuff.MotorPara.tmc5230_v1);
-			break;
-		case tmc5130_VMAX:		
-			UartBuff.MotorPara.tmc5230_vmax = _data*1000;
-			tmc5130_writeInt(TMC5130_VMAX, UartBuff.MotorPara.tmc5230_vmax);
-			break;
-		case tmc5130_VSTART:
-			tmc5130_writeInt(TMC5130_VSTART, _data*1000);
-			break;
-		case tmc5130_VSTOP:
-			tmc5130_writeInt(TMC5130_VSTOP, _data*1000);
-			break;
-		case tmc5130_IHOLD:
-			tmc5130_setIHold(_data);
-			break;
-		case tmc5130_IRUN:
-			tmc5130_setIRun(_data);
-			break;*/
-/**************测试5130******************/		
 		case SERVER_IP:
 			{
 				rt_uint8_t ip_len = (_ucData[3]-1) * 2;
@@ -1008,6 +994,16 @@ static void DumpCmd(const rt_uint8_t* _ucData)
 			break;
 		case CURVE_X:
 			SetX_amp(_data);
+			break;
+		case CODE:
+		{
+			rt_uint8_t key = 0x03;
+			rt_kprintf("code : %d\n", _data);
+			if(_data == 8888)
+				ScreenPage(78);
+			else
+				ScreenSendCommand(WRITE_80, 0x4f, &key, 1);
+		}
 			break;
 		default:
 			break;
@@ -1109,7 +1105,7 @@ rt_uint8_t ScreenSendCommand(rt_uint8_t _cmd, rt_uint16_t s_addr, rt_uint8_t* st
 	rt_uint8_t* sendBuf = NULL;
 	rt_uint8_t i = 0;
 	rt_uint8_t sendlen = 0;
-		
+
 	sendlen = len + 6;
 	sendBuf = rt_malloc(sendlen);
 	if(RT_NULL == sendBuf)
@@ -1127,17 +1123,18 @@ rt_uint8_t ScreenSendCommand(rt_uint8_t _cmd, rt_uint16_t s_addr, rt_uint8_t* st
 	else
 	{
 		sendBuf[i++] = (rt_uint8_t)(s_addr & 0x00ff);/* 地址 */
-		sendlen -= 1; 
-	}	
+		sendlen -= 1;
+	}
 	rt_memcpy(&sendBuf[i++], str, len);
 	sendBuf[2] = sendlen - 3;			/* 长度 */
-	for(i = 0;i < sendlen;i++)
+	for(i = 0;i < sendlen; i++)
 	{
 		uart_putchar(sendBuf[i]);
     }
 
 	if(sendBuf)
 		rt_free(sendBuf);
+
 	return RT_EOK;
 }
 
@@ -1356,8 +1353,6 @@ void Function_UartScreen(void* parameter)
 {
 	rt_uint8_t uart_rx_data;
 	
-    /* 串口屏初始化 */
-	uart_open(RT_SCREEN_DEVICE_NAME);
 	while(1)
 	{
 		uart_rx_data = uart_getchar();

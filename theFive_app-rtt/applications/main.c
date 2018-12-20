@@ -6,13 +6,8 @@
 #include "Uart_Screen.h"
 #include "Heat_PID.h"
 #include "dc_motor.h"
-
-//#define LOG_TAG  "main"
-//#define DBG_ENABLE
-//#define DBG_SECTION_NAME               "MAIN"
-//#define DBG_LEVEL                      DBG_INFO
-//#define DBG_COLOR
-//#include <rtdbg.h>
+#include "WorkTask.h"
+#include "DataBase.h"
 
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t thread_sys_monitor_stack[SYS_STACK_SIZE];
@@ -36,6 +31,9 @@ int main(void)
     /* CmBacktrace 组件初始化 */
     cm_backtrace_init("theFive_app-rtt", HARDWARE_VERSION, SOFTWARE_VERSION);
 
+    /* 串口屏初始化 */
+	uart_open(RT_SCREEN_DEVICE_NAME);
+
 	rt_thread_init( &thread_sys_monitor,
 					"sys_monitor",                 //线程名称。
 					Function_sys_monitor,     	//线程入口函数。
@@ -55,8 +53,6 @@ int main(void)
 					 UartScreen_STACK_SIZE,  	  //线程栈大小。
 					 UartScreen_PRIORITY,         //线程优先级。
 					 UartScreen_TIMESLICE);       //时间片Tick。
-
-	rt_thread_startup(&thread_UartScreen);
 	
 	rt_thread_init(  &thread_SenseData,
 					 "SenseData",                //线程名称。
@@ -68,8 +64,9 @@ int main(void)
 					 SenseData_TIMESLICE);       //时间片Tick。
 							
 	rt_thread_startup(&thread_SenseData);   //线程创建成功，启动线程。
-
+	rt_pin_write(BUZZER_PIN, 1);
 	rt_thread_delay(1000);
+	rt_pin_write(BUZZER_PIN, 0);
 
 	ScreenPage(74);   //跳到初始化页面
 	door_start(0, DOOR_CLOSE);
@@ -84,13 +81,31 @@ int main(void)
 		rt_kprintf("door wait timeout\n");
 		return 1;
 	}
-//	work_create(0, 1);	//创建任务
-//	work_create(1, 1);	//创建任务
+
 	switch_config.temp_dis = 1;
-	all_heat_start_stop(1);
+
+	/* 初始化flash及系统参数 */
+	load_flash();
+
+	worktask_init();
+	head_system_init();
+
+//	work_create(0, motorZero);	//创建任务
+//	work_create(1, motorZero);
+//	work_create(2, motorZero);
+//	work_create(3, motorZero);
+	if(wait_all_work())
+	{
+		rt_kprintf("work or motor init failed\n");
+		return 1;
+	}
+	//all_heat_start_stop(1);
+
+	rt_thread_startup(&thread_UartScreen);
 	/* 初始化时间 */
 	real_time_init();
-	/* 初始化flash及系统参数 */
+
+	rt_kprintf("theFive initialize success. Firmware version is %s", SOFTWARE_VERSION);
 
     return 0;
 }
@@ -114,7 +129,7 @@ static rt_err_t real_time_init(void)
 }
 static rt_err_t exception_hook(void *context) {
     extern long list_thread(void);
-    uint8_t _continue = 1;
+    rt_uint8_t _continue = 1;
 
     rt_enter_critical();
 

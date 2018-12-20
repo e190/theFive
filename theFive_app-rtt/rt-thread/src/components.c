@@ -155,7 +155,7 @@ int __low_level_init(void)
     return 0;
 }
 #elif defined(__GNUC__)
-extern int main(void);
+//extern int main(void);
 /* Add -eentry to arm-none-eabi-gcc argument */
 int entry(void)
 {

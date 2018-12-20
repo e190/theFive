@@ -32,6 +32,13 @@ rt-thread/components/drivers/spi/spi_flash_sfud.o: \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c_dev.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_core.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_host.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_card.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_cmd.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/sd.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/sdio.h \
+ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/sdio_func_ids.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/cputime.h \
  D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/rt_drv_pwm.h \
@@ -107,6 +114,20 @@ D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/d
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c_dev.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/i2c-bit-ops.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_core.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_host.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_card.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/mmcsd_cmd.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/sd.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/sdio.h:
+
+D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/sdio_func_ids.h:
 
 D:\Code\eclipse-workspace\theFive_app-rtt\rt-thread\components\drivers\include/drivers/pin.h:
 
